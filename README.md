@@ -1,27 +1,33 @@
-# Deadline Defense (MVP)
+# 神木防衛 · Deadline Defense
 
-獨立網頁塔防小遊戲 — 靈感來自 office-themed tower defense，**原創內容**（不使用他人素材/文案）。
+楓之谷風格路線塔防：22 職業卡、10 關 100 波、卡片升級。
 
-部署 Specialist，守住 **Delivery Core**，撐過第一班的 8 波威脅。
+**GitHub:** https://github.com/KevinChu1110/deadline-defense
 
-## 快速開始
+## 本機開發
 
 ```bash
-cd /Users/kevin.chu/develop/sideprojects/deadline-defense
 npm install
 npm run dev
 ```
 
-瀏覽器開啟終端機顯示的 Local URL（通常是 `http://localhost:5173`）。
-
-建置靜態檔：
+建置：
 
 ```bash
 npm run build
 npm run preview
 ```
 
-`dist/` 可直接丟上 Netlify / Cloudflare Pages / GitHub Pages。
+## 部署到 Netlify（Git 連線）
+
+Repo 已含 `netlify.toml`（`npm run build` → publish `dist`）。
+
+1. 開啟：https://app.netlify.com/start/deploy?repository=https://github.com/KevinChu1110/deadline-defense  
+2. 授權 GitHub（若尚未）  
+3. 確認 Build command = `npm run build`、Publish = `dist`  
+4. Deploy  
+
+之後 `git push origin main` 會自動重新部署。
 
 ## 怎麼玩
 
