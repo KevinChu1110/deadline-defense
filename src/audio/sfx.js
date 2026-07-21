@@ -1,13 +1,16 @@
 /**
  * Hybrid audio: sample packs (CC0 Kenney + OGA) with soft procedural fallback.
- * BGM: menu.mp3 (Town Theme, CC0) / battle.mp3 (Battle Theme A, CC0)
+ * BGM via Web Audio loop (reliable after first gesture) + HTMLAudio backup.
+ *
+ * Critical autoplay rule: never await before calling Audio.play() / startBgm
+ * in the same user-gesture stack — await breaks Safari/Chrome gesture chain.
  */
 
 const STORAGE_KEY = "deadline-defense-muted";
-const MASTER_GAIN = 0.72;
-const BGM_MENU_GAIN = 0.28;
-const BGM_BATTLE_GAIN = 0.32;
-const SFX_GAIN = 0.85;
+const MASTER_GAIN = 0.85;
+const BGM_MENU_GAIN = 0.48;
+const BGM_BATTLE_GAIN = 0.55;
+const SFX_GAIN = 0.9;
 
 const SAMPLE_MAP = {
   uiClick: "/audio/ui/click.ogg",
@@ -51,13 +54,17 @@ class SfxEngine {
     this.muted = this._loadMuted();
     this._unlocked = false;
     this._buffers = new Map();
+    this._bgmBuffers = new Map(); // mode -> AudioBuffer
     this._loadPromise = null;
-    this._bgmEl = null;
-    this._bgmMode = null; // 'menu' | 'battle' | null
+    this._bgmLoadPromises = new Map();
+    this._bgmSource = null; // looping BufferSource
+    this._bgmEl = null; // HTMLAudio fallback
+    this._bgmMode = null;
     this._bgmFadeTimer = null;
     this._procBgm = null;
     this.bgmOn = false;
     this._lastPlay = new Map();
+    this._pendingBgmMode = null;
   }
 
   _loadMuted() {
@@ -94,28 +101,41 @@ class SfxEngine {
     this.bgmBus.connect(this.master);
   }
 
-  async unlock() {
+  /**
+   * Call from user gesture. Must stay mostly synchronous so autoplay works.
+   * @returns {Promise<void>}
+   */
+  unlock() {
     this.ensure();
-    if (!this.ctx) {
-      this._unlocked = true;
-      return;
-    }
-    if (this.ctx.state === "suspended") {
+    // Kick resume WITHOUT awaiting — preserves user-gesture chain for Audio.play
+    if (this.ctx && this.ctx.state === "suspended") {
       try {
-        await Promise.race([
-          this.ctx.resume(),
-          new Promise((r) => setTimeout(r, 400)),
-        ]);
+        void this.ctx.resume();
       } catch {
         /* ignore */
       }
     }
     this._unlocked = true;
     void this.preload();
-    // Resume HTMLAudio BGM if needed
-    if (this._bgmEl && !this.muted && this._bgmEl.paused && this.bgmOn) {
-      this._bgmEl.play().catch(() => {});
+    void this._ensureBgmBuffer("menu");
+    void this._ensureBgmBuffer("battle");
+
+    // If something already requested BGM before unlock, start it now
+    if (this._pendingBgmMode && !this.muted) {
+      const m = this._pendingBgmMode;
+      this._pendingBgmMode = null;
+      this.startBgm(m);
+    } else if (this.bgmOn && this._bgmMode && !this.muted) {
+      this._kickBgmPlayback(this._bgmMode);
     }
+
+    // Still return a promise for callers that want to know when ctx is running
+    if (!this.ctx) return Promise.resolve();
+    if (this.ctx.state === "running") return Promise.resolve();
+    return Promise.race([
+      this.ctx.resume().catch(() => {}),
+      new Promise((r) => setTimeout(r, 400)),
+    ]).then(() => undefined);
   }
 
   preload() {
@@ -134,11 +154,43 @@ class SfxEngine {
           const buf = await this.ctx.decodeAudioData(arr.slice(0));
           this._buffers.set(key, buf);
         } catch {
-          /* sample optional; procedural fallback */
+          /* sample optional */
         }
       })
     );
     return this._loadPromise;
+  }
+
+  _ensureBgmBuffer(mode) {
+    if (this._bgmBuffers.has(mode)) return Promise.resolve(this._bgmBuffers.get(mode));
+    if (this._bgmLoadPromises.has(mode)) return this._bgmLoadPromises.get(mode);
+    this.ensure();
+    if (!this.ctx) return Promise.resolve(null);
+
+    const track = BGM_TRACKS[mode];
+    if (!track) return Promise.resolve(null);
+
+    const p = (async () => {
+      try {
+        const res = await fetch(track.src);
+        if (!res.ok) throw new Error(`bgm ${mode} ${res.status}`);
+        const arr = await res.arrayBuffer();
+        const buf = await this.ctx.decodeAudioData(arr.slice(0));
+        this._bgmBuffers.set(mode, buf);
+        // If user already asked for this mode, start now
+        if (this.bgmOn && this._bgmMode === mode && !this.muted && !this._bgmSource) {
+          this._startWebAudioBgm(mode);
+        }
+        return buf;
+      } catch (err) {
+        console.warn("[sfx] BGM decode failed", mode, err);
+        return null;
+      } finally {
+        this._bgmLoadPromises.delete(mode);
+      }
+    })();
+    this._bgmLoadPromises.set(mode, p);
+    return p;
   }
 
   setMuted(muted) {
@@ -150,8 +202,18 @@ class SfxEngine {
       this.master.gain.cancelScheduledValues(t);
       this.master.gain.setTargetAtTime(this.muted ? 0 : MASTER_GAIN, t, 0.04);
     }
+    if (this._bgmEl) {
+      this._bgmEl.muted = this.muted;
+      if (this.muted) {
+        try {
+          this._bgmEl.pause();
+        } catch {
+          /* ignore */
+        }
+      }
+    }
     if (this.muted) {
-      this._pauseBgmEl();
+      this._stopWebAudioBgm(true);
       this._stopProcBgm(true);
     } else if (this._bgmMode) {
       this.startBgm(this._bgmMode);
@@ -168,101 +230,186 @@ class SfxEngine {
    */
   startBgm(mode = "battle") {
     this.ensure();
-    if (!this.ctx || this.muted) {
-      this._bgmMode = mode;
-      return;
-    }
-    if (this.bgmOn && this._bgmMode === mode) {
-      // ensure playing
-      if (this._bgmEl?.paused) this._bgmEl.play().catch(() => {});
-      return;
-    }
     this._bgmMode = mode;
     this.bgmOn = true;
-    void this._playSampleBgm(mode);
+
+    if (this.muted) {
+      this._pendingBgmMode = mode;
+      return;
+    }
+    if (!this.ctx) {
+      this._pendingBgmMode = mode;
+      return;
+    }
+
+    // Kick resume sync (gesture-safe)
+    if (this.ctx.state === "suspended") {
+      try {
+        void this.ctx.resume();
+      } catch {
+        /* ignore */
+      }
+    }
+
+    this._kickBgmPlayback(mode);
   }
 
-  /** @deprecated use startBgm('battle') */
-  startBgmBattle() {
-    this.startBgm("battle");
+  _kickBgmPlayback(mode) {
+    // 1) Web Audio buffer loop if already decoded
+    if (this._bgmBuffers.has(mode)) {
+      this._startWebAudioBgm(mode);
+      return;
+    }
+    // 2) HTMLAudio play immediately (sync call from gesture) while decoding
+    this._startHtmlBgm(mode);
+    // 3) Decode in background → switch to Web Audio loop when ready
+    void this._ensureBgmBuffer(mode).then((buf) => {
+      if (!buf || this.muted || this._bgmMode !== mode || !this.bgmOn) return;
+      this._startWebAudioBgm(mode);
+    });
+  }
+
+  _startWebAudioBgm(mode) {
+    const buf = this._bgmBuffers.get(mode);
+    if (!buf || !this.ctx || this.muted) return;
+
+    // Stop other paths
+    this._stopWebAudioBgm(true);
+    this._stopProcBgm(true);
+    this._pauseHtmlBgm();
+
+    const track = BGM_TRACKS[mode] || BGM_TRACKS.battle;
+    const gain = this.ctx.createGain();
+    gain.gain.value = 0;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    src.connect(gain);
+    gain.connect(this.bgmBus || this.master);
+    try {
+      src.start(0);
+    } catch (e) {
+      console.warn("[sfx] bgm start failed", e);
+      return;
+    }
+    const t = this.ctx.currentTime;
+    gain.gain.linearRampToValueAtTime(track.volume, t + 0.45);
+    this._bgmSource = { src, gain, mode };
+    this.bgmOn = true;
+    this._bgmMode = mode;
+  }
+
+  _stopWebAudioBgm(immediate = false) {
+    if (!this._bgmSource || !this.ctx) {
+      this._bgmSource = null;
+      return;
+    }
+    const { src, gain } = this._bgmSource;
+    const t = this.ctx.currentTime;
+    try {
+      if (immediate) {
+        src.stop(0);
+      } else {
+        gain.gain.cancelScheduledValues(t);
+        gain.gain.linearRampToValueAtTime(0, t + 0.35);
+        src.stop(t + 0.4);
+      }
+    } catch {
+      /* ignore */
+    }
+    this._bgmSource = null;
+  }
+
+  _ensureHtmlEl() {
+    if (this._bgmEl) return this._bgmEl;
+    const el = new Audio();
+    el.loop = true;
+    el.preload = "auto";
+    el.crossOrigin = "anonymous";
+    el.setAttribute("playsinline", "true");
+    // Keep element in DOM — some browsers are pickier with detached Audio
+    el.style.display = "none";
+    try {
+      document.body?.appendChild(el);
+    } catch {
+      /* ignore */
+    }
+    this._bgmEl = el;
+    return el;
+  }
+
+  _startHtmlBgm(mode) {
+    const track = BGM_TRACKS[mode] || BGM_TRACKS.battle;
+    try {
+      const el = this._ensureHtmlEl();
+      const fileKey = track.src.split("/").pop();
+      if (!el.src || !el.src.includes(fileKey)) {
+        el.src = track.src;
+        try {
+          el.load();
+        } catch {
+          /* ignore */
+        }
+      }
+      el.muted = !!this.muted;
+      // Start audible immediately (no 0→fade that leaves silence if fade fails)
+      el.volume = Math.min(1, track.volume);
+      const playResult = el.play();
+      if (playResult && typeof playResult.then === "function") {
+        playResult
+          .then(() => {
+            this._stopProcBgm(true);
+          })
+          .catch((err) => {
+            console.warn("[sfx] HTMLAudio BGM blocked", err?.name || err);
+            // Procedural pad so player still hears *something*
+            if (!this._bgmBuffers.has(mode)) this._startProcBgm(mode);
+          });
+      }
+    } catch (err) {
+      console.warn("[sfx] HTMLAudio BGM error", err);
+      this._startProcBgm(mode);
+    }
+  }
+
+  _pauseHtmlBgm() {
+    if (!this._bgmEl) return;
+    try {
+      this._bgmEl.pause();
+    } catch {
+      /* ignore */
+    }
+  }
+
+  _fadeOutHtmlBgm() {
+    const el = this._bgmEl;
+    if (!el) return;
+    if (this._bgmFadeTimer) clearInterval(this._bgmFadeTimer);
+    const start = el.volume;
+    const steps = 12;
+    let i = 0;
+    this._bgmFadeTimer = setInterval(() => {
+      i++;
+      el.volume = Math.max(0, start * (1 - i / steps));
+      if (i >= steps) {
+        clearInterval(this._bgmFadeTimer);
+        this._bgmFadeTimer = null;
+        try {
+          el.pause();
+        } catch {
+          /* ignore */
+        }
+      }
+    }, 30);
   }
 
   stopBgm() {
     this.bgmOn = false;
     this._bgmMode = null;
-    this._fadeOutBgmEl();
+    this._pendingBgmMode = null;
+    this._stopWebAudioBgm(false);
+    this._fadeOutHtmlBgm();
     this._stopProcBgm(false);
-  }
-
-  async _playSampleBgm(mode) {
-    const track = BGM_TRACKS[mode] || BGM_TRACKS.battle;
-    try {
-      if (!this._bgmEl) {
-        this._bgmEl = new Audio();
-        this._bgmEl.loop = true;
-        this._bgmEl.preload = "auto";
-      }
-      const el = this._bgmEl;
-      const fileKey = track.src.split("/").pop();
-      const needSrc = !el.src || !el.src.includes(fileKey);
-      if (needSrc) {
-        el.src = track.src;
-        el.load();
-      }
-      el.volume = 0;
-      try {
-        await el.play();
-      } catch {
-        // autoplay blocked — fall back to soft procedural bed
-        this._startProcBgm(mode);
-        return;
-      }
-      this._stopProcBgm(true);
-      this._fadeBgmElTo(track.volume, 900);
-    } catch {
-      this._startProcBgm(mode);
-    }
-  }
-
-  _fadeBgmElTo(target, ms = 600) {
-    const el = this._bgmEl;
-    if (!el) return;
-    if (this._bgmFadeTimer) clearInterval(this._bgmFadeTimer);
-    const start = el.volume;
-    const steps = Math.max(8, Math.floor(ms / 30));
-    let i = 0;
-    this._bgmFadeTimer = setInterval(() => {
-      i++;
-      const t = i / steps;
-      el.volume = Math.max(0, Math.min(1, start + (target - start) * t));
-      if (i >= steps) {
-        clearInterval(this._bgmFadeTimer);
-        this._bgmFadeTimer = null;
-      }
-    }, 30);
-  }
-
-  _fadeOutBgmEl() {
-    const el = this._bgmEl;
-    if (!el) return;
-    this._fadeBgmElTo(0, 500);
-    setTimeout(() => {
-      try {
-        el.pause();
-      } catch {
-        /* ignore */
-      }
-    }, 520);
-  }
-
-  _pauseBgmEl() {
-    if (this._bgmEl) {
-      try {
-        this._bgmEl.pause();
-      } catch {
-        /* ignore */
-      }
-    }
   }
 
   /** Soft procedural pad if mp3 fails */
@@ -275,28 +422,27 @@ class SfxEngine {
     bed.gain.value = 0;
     const filter = this.ctx.createBiquadFilter();
     filter.type = "lowpass";
-    filter.frequency.value = mode === "battle" ? 1400 : 1100;
+    filter.frequency.value = mode === "battle" ? 1600 : 1200;
     filter.Q.value = 0.5;
     bed.connect(filter);
     filter.connect(this.bgmBus || this.master);
-    bed.gain.linearRampToValueAtTime(mode === "battle" ? 0.08 : 0.055, t0 + 0.8);
+    // Louder procedural bed so silence isn't the only outcome
+    bed.gain.linearRampToValueAtTime(mode === "battle" ? 0.14 : 0.11, t0 + 0.5);
 
-    // Gentle triad pad (A minor-ish / C major-ish) — triangle only, no harsh square
-    const root = mode === "battle" ? 146.83 : 130.81; // D3 / C3
+    const root = mode === "battle" ? 146.83 : 130.81;
     const thirds = mode === "battle" ? [1, 1.2, 1.5] : [1, 1.25, 1.5];
     const oscs = thirds.map((m, i) => {
       const o = this.ctx.createOscillator();
       o.type = i === 0 ? "triangle" : "sine";
       o.frequency.value = root * m;
       const g = this.ctx.createGain();
-      g.gain.value = 0.35 / thirds.length;
+      g.gain.value = 0.4 / thirds.length;
       o.connect(g);
       g.connect(bed);
       o.start(t0);
       return o;
     });
 
-    // Soft pulse on filter for life
     const lfo = this.ctx.createOscillator();
     const lfoG = this.ctx.createGain();
     lfo.type = "sine";
@@ -306,13 +452,11 @@ class SfxEngine {
     lfoG.connect(filter.frequency);
     lfo.start(t0);
 
-    // Light melody plucks (pentatonic) every ~1.6s
     const melody = this.ctx.createGain();
-    melody.gain.value = 0.035;
+    melody.gain.value = 0.06;
     melody.connect(filter);
-    const scale = mode === "battle"
-      ? [0, 2, 3, 5, 7, 8, 10, 12]
-      : [0, 2, 4, 5, 7, 9, 11, 12];
+    const scale =
+      mode === "battle" ? [0, 2, 3, 5, 7, 8, 10, 12] : [0, 2, 4, 5, 7, 9, 11, 12];
     const base = mode === "battle" ? 293.66 : 261.63;
     let step = 0;
     const tick = () => {
@@ -326,7 +470,7 @@ class SfxEngine {
       o.frequency.setValueAtTime(freq, t);
       const g = this.ctx.createGain();
       g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.5, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.55, t + 0.02);
       g.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
       o.connect(g);
       g.connect(melody);
@@ -335,7 +479,6 @@ class SfxEngine {
     };
     tick();
     const interval = setInterval(tick, mode === "battle" ? 900 : 1600);
-
     this._procBgm = { oscs, lfo, bed, filter, interval, melody };
   }
 
@@ -368,7 +511,6 @@ class SfxEngine {
   }
 
   /**
-   * Play a named cue. Sample-first, soft procedural fallback.
    * @param {string} name
    * @param {{ pitch?: number, heavy?: boolean }} [opts]
    */
@@ -376,9 +518,14 @@ class SfxEngine {
     if (this.muted) return;
     this.ensure();
     if (!this.ctx) return;
-    if (this.ctx.state !== "running") this.ctx.resume?.();
+    if (this.ctx.state !== "running") {
+      try {
+        void this.ctx.resume();
+      } catch {
+        /* ignore */
+      }
+    }
 
-    // Rate-limit spammy combat SFX
     if (name === "shoot" && !this._throttle("shoot", 45)) return;
     if (name === "hit" && !this._throttle("hit", 35)) return;
 
@@ -388,7 +535,6 @@ class SfxEngine {
       this._playBuffer(buf, name, opts);
       return;
     }
-    // not loaded yet — kick preload and use procedural
     void this.preload();
     const fn = FALLBACK[name];
     if (fn) fn(this.ctx, this.sfxBus || this.master, opts);
@@ -406,7 +552,6 @@ class SfxEngine {
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     const pitch = opts.pitch != null ? opts.pitch : 1;
-    // slight random detune for combat variety
     const detune =
       name === "shoot" || name === "hit" || name === "kill"
         ? 0.94 + Math.random() * 0.12
@@ -424,11 +569,9 @@ class SfxEngine {
     if (name === "leak") peak = 0.7;
     g.gain.value = peak;
 
-    // Soft high-cut on combat to reduce harshness
     const filter = this.ctx.createBiquadFilter();
     filter.type = "lowpass";
-    filter.frequency.value =
-      name === "shoot" || name === "hit" ? 4200 : 9000;
+    filter.frequency.value = name === "shoot" || name === "hit" ? 4200 : 9000;
     filter.Q.value = 0.5;
 
     src.connect(filter);
@@ -438,7 +581,7 @@ class SfxEngine {
   }
 }
 
-/* ── Soft procedural fallbacks (triangle/sine heavy, less square/saw) ── */
+/* ── Soft procedural fallbacks ── */
 
 function envGain(ctx, dest, t0, { attack = 0.01, decay = 0.12, peak = 0.3, sustain = 0.0001 } = {}) {
   const g = ctx.createGain();

@@ -1,0 +1,39 @@
+LPC Character Portraits — Credits
+=================================
+
+The portraits in this folder were composed from the Liberated Pixel Cup (LPC)
+Universal Spritesheet asset library. They are NOT official MapleStory assets.
+
+Source generator / sheets
+-------------------------
+Universal LPC Spritesheet Character Generator
+https://github.com/LiberatedPixelCup/Universal-LPC-Spritesheet-Character-Generator
+https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/
+
+License
+-------
+LPC assets are dual-licensed under:
+  - Creative Commons Attribution-ShareAlike 3.0 (CC-BY-SA 3.0)
+  - OpenGameArt.org Attribution 3.0 (OGA-BY 3.0)
+  (some layers may also allow GPL 3.0)
+
+You MUST credit the LPC authors when redistributing these portraits.
+Full per-layer author credits: see the generator's CREDITS.csv:
+https://github.com/LiberatedPixelCup/Universal-LPC-Spritesheet-Character-Generator/blob/master/CREDITS.csv
+
+Liberated Pixel Cup hub:
+https://lpc.opengameart.org/
+
+Composition notes
+-----------------
+22 job idle portraits (down-facing) were layered offline (body + clothes/armor +
+hair + feet + weapon) and recolored for job identity. Scale: 64×64 → 256×256
+nearest-neighbor.
+
+Also used in this project (separate CC0 packs):
+  - Kenney audio (CC0) — public/audio/
+  - OpenGameArt Town Theme RPG / Battle Theme A (CC0) by cynicmusic
+  - 496 RPG icons (CC0) — public/icons/
+
+In-game battlefield unit animation still uses original procedural pixel sprites
+from this project (not LPC / not MapleStory official art).

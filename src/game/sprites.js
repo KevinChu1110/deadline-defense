@@ -685,13 +685,54 @@ export function getSpecialistSprite(typeId, def, { attackT = 0, now = 0 } = {}) 
   return frames.idle[idleIdx];
 }
 
+/** LPC chibi portraits (CC-BY-SA / OGA-BY) — see public/portraits/CREDITS.txt */
+const lpcPortraitCache = new Map(); // typeId -> HTMLImageElement | HTMLCanvasElement
+const lpcPortraitLoading = new Map();
+
+/**
+ * Kick off loading of LPC idle portrait PNGs for UI cards.
+ * Falls back to procedural pixel sprites until loaded.
+ */
+export function preloadLpcPortraits(ids = []) {
+  for (const id of ids) {
+    if (lpcPortraitCache.has(id) || lpcPortraitLoading.has(id)) continue;
+    const img = new Image();
+    img.decoding = "async";
+    const p = new Promise((resolve) => {
+      img.onload = () => {
+        lpcPortraitCache.set(id, img);
+        lpcPortraitLoading.delete(id);
+        resolve(img);
+      };
+      img.onerror = () => {
+        lpcPortraitLoading.delete(id);
+        resolve(null);
+      };
+      img.src = `/portraits/${id}.png`;
+    });
+    lpcPortraitLoading.set(id, p);
+  }
+  return Promise.all([...lpcPortraitLoading.values()]);
+}
+
+export function getLpcPortrait(typeId) {
+  return lpcPortraitCache.get(typeId) || null;
+}
+
 export function getSpecialistPortrait(typeId, def) {
+  const lpc = lpcPortraitCache.get(typeId);
+  if (lpc) return lpc;
+  // fire-and-forget load so next re-render picks it up
+  preloadLpcPortraits([typeId]);
   const d = typeof def === "object" ? def : { id: typeId, color: def };
   const frames = getSpecialistAnimFrames(typeId, d, 4);
   return frames.idle[0];
 }
 
 export function getSpecialistHero(typeId, def) {
+  const lpc = lpcPortraitCache.get(typeId);
+  if (lpc) return lpc;
+  preloadLpcPortraits([typeId]);
   const d = def || { id: typeId, color: "#4a7cff" };
   const frames = getSpecialistAnimFrames(typeId, d, 6);
   return frames.attack[1] || frames.idle[0];

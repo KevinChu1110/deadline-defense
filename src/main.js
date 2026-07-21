@@ -15,7 +15,11 @@ import {
   loadCardProgress,
   buildLeveledDef,
 } from "./data/card-progress.js";
-import { getSpecialistPortrait, getSpecialistHero } from "./game/sprites.js";
+import {
+  getSpecialistPortrait,
+  getSpecialistHero,
+  preloadLpcPortraits,
+} from "./game/sprites.js";
 import { getJobIcon } from "./data/job-icons.js";
 import { sfx } from "./audio/sfx.js";
 import { STAGES, loadProgress, isStageUnlocked, getStageByIndex } from "./data/stages.js";
@@ -236,8 +240,9 @@ function openStageSelect() {
   hideAllOverlays();
   renderStageList();
   setOverlayOpen(els.stageOverlay, true);
+  // Sync unlock + BGM (no await)
   void sfx.unlock();
-  sfx.startBgm("menu");
+  if (!sfx.muted) sfx.startBgm("menu");
   if (game) ui.onState(game.getPublicState());
 }
 
@@ -255,8 +260,12 @@ function openCharacterSelect() {
   setOverlayOpen(els.charOverlay, true);
   document.body.classList.add("char-select-open");
   void sfx.unlock();
-  sfx.startBgm("menu");
   void sfx.preload();
+  if (!sfx.muted) sfx.startBgm("menu");
+  // LPC portraits: reload grid once images arrive
+  void preloadLpcPortraits(SPECIALIST_ORDER).then(() => {
+    if (screen === "char") renderCharacterGrid();
+  });
   ui.onState(game.getPublicState());
 }
 
@@ -520,20 +529,28 @@ function buildCharPickButton(id) {
   const hero = getSpecialistPortrait(id, d);
   const avatarWrap = document.createElement("div");
   avatarWrap.className = "char-avatar-wrap";
-  const c = document.createElement("canvas");
-  c.width = hero.width;
-  c.height = hero.height;
-  c.className = "char-avatar";
-  const ctx = c.getContext("2d");
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(hero, 0, 0);
+  let avatarEl;
+  if (hero instanceof HTMLImageElement) {
+    avatarEl = document.createElement("img");
+    avatarEl.src = hero.src;
+    avatarEl.alt = d.nameZh || id;
+    avatarEl.draggable = false;
+  } else {
+    avatarEl = document.createElement("canvas");
+    avatarEl.width = hero.width;
+    avatarEl.height = hero.height;
+    const ctx = avatarEl.getContext("2d");
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(hero, 0, 0);
+  }
+  avatarEl.className = "char-avatar";
   const icon = document.createElement("img");
   icon.className = "job-weapon-icon";
   icon.src = getJobIcon(id, d.family);
   icon.alt = "";
   icon.draggable = false;
   icon.loading = "lazy";
-  avatarWrap.append(c, icon);
+  avatarWrap.append(avatarEl, icon);
 
   const body = document.createElement("div");
   body.className = "char-pick-body";
@@ -892,21 +909,35 @@ window.addEventListener("keydown", (e) => {
   if (e.key === "m" || e.key === "M") game.toggleMute();
 });
 
+/** First gesture: unlock audio + start menu BGM (must stay sync for autoplay). */
 const unlockOnce = () => {
-  void sfx.unlock().then(() => {
-    void sfx.preload();
-    // Menu / stage / char screens get soft town BGM after first gesture
-    if (screen === "stage" || screen === "char" || !document.body.classList.contains("in-play")) {
+  // Do NOT await before startBgm — awaiting breaks the browser gesture chain.
+  void sfx.unlock();
+  void sfx.preload();
+  if (!sfx.muted) {
+    if (screen === "play" && game?.waveActive) {
+      sfx.startBgm("battle");
+    } else {
       sfx.startBgm("menu");
     }
-  });
+    showToast("♪ 背景音樂已開啟");
+  }
   window.removeEventListener("pointerdown", unlockOnce);
   window.removeEventListener("keydown", unlockOnce);
 };
-window.addEventListener("pointerdown", unlockOnce);
-window.addEventListener("keydown", unlockOnce);
+window.addEventListener("pointerdown", unlockOnce, { capture: true });
+window.addEventListener("keydown", unlockOnce, { capture: true });
 
+// Preload LPC chibi portraits early
+void preloadLpcPortraits(SPECIALIST_ORDER);
+
+// If previously muted in localStorage, show it clearly
 updateMuteButton(sfx.muted);
+if (sfx.muted) {
+  setTimeout(() => showToast("目前為靜音，點 🔊 開啟音樂"), 600);
+} else {
+  setTimeout(() => showToast("點一下畫面開啟背景音樂 ♪"), 500);
+}
 refreshWaveIntel();
 renderSpecialistCards(game.getPublicState());
 ui.onState(game.getPublicState());

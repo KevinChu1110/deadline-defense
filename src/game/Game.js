@@ -225,7 +225,11 @@ export class Game {
 
   toggleMute() {
     const muted = this.sfx.toggleMute();
-    if (!muted) this.sfx.play("uiClick");
+    if (!muted) {
+      this.sfx.play("uiClick");
+      // Resume BGM after unmute (gesture-safe — called from click)
+      this.sfx.startBgm(this.waveActive ? "battle" : "menu");
+    }
     this.ui?.onState?.(this.getPublicState());
     return muted;
   }
