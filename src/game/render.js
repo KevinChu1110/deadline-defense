@@ -9,6 +9,26 @@ import {
 import { sampleGifFrame, getCachedMob } from "./assets.js";
 import { drawFx } from "./fx.js";
 
+/** @type {HTMLImageElement | null} */
+let mapBgImg = null;
+let mapBgFailed = false;
+
+function ensureMapBg() {
+  if (mapBgImg || mapBgFailed) return mapBgImg;
+  const img = new Image();
+  img.decoding = "async";
+  img.onload = () => {
+    mapBgImg = img;
+  };
+  img.onerror = () => {
+    mapBgFailed = true;
+  };
+  img.src = "/maps/bg_victoria.jpg";
+  // assign early so subsequent frames can check naturalWidth
+  mapBgImg = img;
+  return img;
+}
+
 export function drawScene(ctx, state) {
   const {
     stage,
@@ -28,26 +48,29 @@ export function drawScene(ctx, state) {
     (stage.map.path ? { workflow: stage.map.path } : {});
 
   ctx.clearRect(0, 0, width, height);
+  ctx.imageSmoothingEnabled = true;
+
+  drawMapBackground(ctx, width, height);
+
   ctx.imageSmoothingEnabled = false;
-
-  // Maple-ish outdoor / temple floor
-  const g = ctx.createLinearGradient(0, 0, width, height);
-  g.addColorStop(0, "#1a3a24");
-  g.addColorStop(0.45, "#163220");
-  g.addColorStop(1, "#0f2418");
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, width, height);
-
-  drawGrid(ctx, width, height);
-  drawDesks(ctx);
   const pathEntries = Object.entries(paths);
-  pathEntries.forEach(([key, points], i) => {
+  pathEntries.forEach(([key, points]) => {
     drawPath(ctx, points, {
-      color: key === "event" ? "rgba(251, 191, 36, 0.14)" : "rgba(56, 189, 248, 0.12)",
-      lane: key === "event" ? "rgba(180, 140, 60, 0.55)" : "rgba(100, 116, 139, 0.55)",
+      color:
+        key === "event"
+          ? "rgba(196, 150, 70, 0.55)"
+          : key === "pathC"
+            ? "rgba(160, 100, 140, 0.5)"
+            : "rgba(160, 130, 90, 0.55)",
+      lane:
+        key === "event"
+          ? "rgba(230, 190, 100, 0.75)"
+          : key === "pathC"
+            ? "rgba(210, 140, 180, 0.7)"
+            : "rgba(210, 180, 120, 0.75)",
       label: key === "event" ? "B路" : key === "pathC" ? "C路" : "A路",
       labelColor:
-        key === "event" ? "#fbbf24" : key === "pathC" ? "#f472b6" : "#38bdf8",
+        key === "event" ? "#fbbf24" : key === "pathC" ? "#f472b6" : "#fde68a",
     });
   });
   drawPads(ctx, pads, padsOccupied, hoverPad);
@@ -60,7 +83,70 @@ export function drawScene(ctx, state) {
   drawProjectiles(ctx, projectiles, state.now);
   drawFx(ctx, fx);
   drawRangePreview(ctx, state);
-  drawScanlines(ctx, width, height);
+}
+
+function drawMapBackground(ctx, width, height) {
+  const bg = ensureMapBg();
+  if (bg && bg.complete && bg.naturalWidth > 0) {
+    ctx.drawImage(bg, 0, 0, width, height);
+    // Soft vignette so units stay readable
+    const v = ctx.createRadialGradient(
+      width * 0.5,
+      height * 0.5,
+      Math.min(width, height) * 0.25,
+      width * 0.5,
+      height * 0.5,
+      Math.max(width, height) * 0.72
+    );
+    v.addColorStop(0, "rgba(20, 40, 25, 0)");
+    v.addColorStop(1, "rgba(12, 28, 18, 0.35)");
+    ctx.fillStyle = v;
+    ctx.fillRect(0, 0, width, height);
+    return;
+  }
+  // Fallback painted meadow
+  const g = ctx.createLinearGradient(0, 0, 0, height);
+  g.addColorStop(0, "#8ec8f0");
+  g.addColorStop(0.35, "#a8d898");
+  g.addColorStop(0.7, "#6aaa58");
+  g.addColorStop(1, "#4a8a40");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, width, height);
+  drawMeadowDecor(ctx, width, height);
+}
+
+function drawMeadowDecor(ctx, w, h) {
+  ctx.save();
+  // soft hills
+  ctx.fillStyle = "rgba(70, 140, 70, 0.35)";
+  ctx.beginPath();
+  ctx.ellipse(w * 0.2, h * 0.85, 220, 60, 0, 0, Math.PI * 2);
+  ctx.ellipse(w * 0.7, h * 0.9, 280, 70, 0, 0, Math.PI * 2);
+  ctx.fill();
+  const trees = [
+    [60, 80],
+    [90, 420],
+    [880, 90],
+    [850, 400],
+    [480, 40],
+  ];
+  for (const [x, y] of trees) {
+    ctx.fillStyle = "#6b4226";
+    ctx.fillRect(x + 14, y + 28, 10, 22);
+    ctx.fillStyle = "#2f8f3a";
+    ctx.beginPath();
+    ctx.arc(x + 19, y + 18, 22, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#49b84a";
+    ctx.beginPath();
+    ctx.arc(x + 12, y + 14, 14, 0, Math.PI * 2);
+    ctx.arc(x + 26, y + 14, 14, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#c43c2c";
+    ctx.fillRect(x + 10, y + 10, 4, 4);
+    ctx.fillRect(x + 24, y + 16, 4, 4);
+  }
+  ctx.restore();
 }
 
 function drawCoreSlowAura(ctx, core, radius, now) {
@@ -77,85 +163,45 @@ function drawCoreSlowAura(ctx, core, radius, now) {
   ctx.restore();
 }
 
-function drawGrid(ctx, w, h) {
-  ctx.save();
-  ctx.strokeStyle = "rgba(148, 163, 184, 0.06)";
-  ctx.lineWidth = 1;
-  for (let x = 0; x <= w; x += 40) {
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, h);
-    ctx.stroke();
-  }
-  for (let y = 0; y <= h; y += 40) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(w, y);
-    ctx.stroke();
-  }
-  ctx.restore();
-}
-
-function drawDesks(ctx) {
-  // Decorative maple trees / rocks
-  const props = [
-    [70, 70],
-    [70, 430],
-    [470, 50],
-    [500, 470],
-    [870, 70],
-    [870, 430],
-  ];
-  ctx.save();
-  for (const [x, y] of props) {
-    // trunk
-    ctx.fillStyle = "#5c3a1e";
-    ctx.fillRect(x + 18, y + 22, 10, 18);
-    // canopy
-    ctx.fillStyle = "#2f8f3a";
-    ctx.fillRect(x + 4, y + 6, 38, 22);
-    ctx.fillStyle = "#49b84a";
-    ctx.fillRect(x + 10, y, 26, 14);
-    ctx.fillStyle = "#c43c2c";
-    ctx.fillRect(x + 14, y + 8, 4, 4);
-    ctx.fillRect(x + 26, y + 12, 4, 4);
-  }
-  ctx.restore();
-}
-
 function drawPath(ctx, points, style = {}) {
   ctx.save();
-  ctx.strokeStyle = style.color || "rgba(56, 189, 248, 0.12)";
-  ctx.lineWidth = 36;
+  // Dirt road outer rim
+  ctx.strokeStyle = style.color || "rgba(160, 130, 90, 0.55)";
+  ctx.lineWidth = 40;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   ctx.beginPath();
   points.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
   ctx.stroke();
 
-  ctx.strokeStyle = style.lane || "rgba(100, 116, 139, 0.55)";
-  ctx.lineWidth = 22;
+  // Path surface
+  ctx.strokeStyle = style.lane || "rgba(210, 180, 120, 0.75)";
+  ctx.lineWidth = 26;
   ctx.beginPath();
   points.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
   ctx.stroke();
 
-  ctx.strokeStyle = "rgba(226, 232, 240, 0.28)";
+  // Center dashed guide
+  ctx.setLineDash([10, 12]);
+  ctx.strokeStyle = "rgba(255, 248, 220, 0.35)";
   ctx.lineWidth = 2;
-  ctx.setLineDash([6, 8]);
   ctx.beginPath();
   points.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
   ctx.stroke();
   ctx.setLineDash([]);
+
   ctx.restore();
 
   const s = points[0];
-  const label = style.label || "INBOX";
-  const labelColor = style.labelColor || "#fbbf24";
+  const label = style.label || "A路";
+  const labelColor = style.labelColor || "#fde68a";
+  ctx.save();
+  ctx.fillStyle = "rgba(40, 30, 15, 0.55)";
+  ctx.fillRect(Math.round(s.x + 14), Math.round(s.y - 12), 36, 16);
   ctx.fillStyle = labelColor;
-  ctx.fillRect(Math.round(s.x + 18), Math.round(s.y - 5), 10, 10);
-  ctx.fillStyle = labelColor;
-  ctx.font = "700 11px ui-monospace, monospace";
-  ctx.fillText(label, s.x + 32, s.y + 4);
+  ctx.font = "700 11px 'PingFang TC', system-ui, sans-serif";
+  ctx.fillText(label, s.x + 20, s.y);
+  ctx.restore();
 }
 
 function drawPads(ctx, pads, occupied, hoverPad) {

@@ -40,9 +40,26 @@ const SAMPLE_MAP = {
   lose: "/audio/jingles/lose.ogg",
 };
 
+/**
+ * Multi-track playlists (longer pieces rotate so loops feel less short).
+ * menu.mp3 ≈ 3:12 (Little Town orchestral), menu_b ≈ 1:58, field ≈ field theme
+ */
+const BGM_PLAYLISTS = {
+  menu: [
+    { src: "/audio/bgm/menu.mp3", volume: BGM_MENU_GAIN },
+    { src: "/audio/bgm/menu_b.mp3", volume: BGM_MENU_GAIN * 0.95 },
+    { src: "/audio/bgm/field.mp3", volume: BGM_MENU_GAIN * 0.9 },
+  ],
+  battle: [
+    { src: "/audio/bgm/battle.mp3", volume: BGM_BATTLE_GAIN },
+    { src: "/audio/bgm/battle_b.mp3", volume: BGM_BATTLE_GAIN * 0.95 },
+  ],
+};
+
+// Back-compat single-track map (first of playlist)
 const BGM_TRACKS = {
-  menu: { src: "/audio/bgm/menu.mp3", volume: BGM_MENU_GAIN },
-  battle: { src: "/audio/bgm/battle.mp3", volume: BGM_BATTLE_GAIN },
+  menu: BGM_PLAYLISTS.menu[0],
+  battle: BGM_PLAYLISTS.battle[0],
 };
 
 class SfxEngine {
@@ -57,14 +74,16 @@ class SfxEngine {
     this._bgmBuffers = new Map(); // mode -> AudioBuffer
     this._loadPromise = null;
     this._bgmLoadPromises = new Map();
-    this._bgmSource = null; // looping BufferSource
-    this._bgmEl = null; // HTMLAudio fallback
+    this._bgmSource = null; // looping BufferSource (fallback)
+    this._bgmEl = null; // HTMLAudio primary for multi-track
     this._bgmMode = null;
     this._bgmFadeTimer = null;
     this._procBgm = null;
     this.bgmOn = false;
     this._lastPlay = new Map();
     this._pendingBgmMode = null;
+    this._playlistIndex = { menu: 0, battle: 0 };
+    this._bgmEndedHandler = null;
   }
 
   _loadMuted() {
@@ -255,18 +274,25 @@ class SfxEngine {
   }
 
   _kickBgmPlayback(mode) {
-    // 1) Web Audio buffer loop if already decoded
-    if (this._bgmBuffers.has(mode)) {
-      this._startWebAudioBgm(mode);
-      return;
-    }
-    // 2) HTMLAudio play immediately (sync call from gesture) while decoding
+    // Prefer HTMLAudio multi-track playlist (rotates so short loops feel less obvious).
+    // Web Audio single-buffer loop is only a last-resort fallback.
+    this._stopWebAudioBgm(true);
+    this._stopProcBgm(true);
     this._startHtmlBgm(mode);
-    // 3) Decode in background → switch to Web Audio loop when ready
-    void this._ensureBgmBuffer(mode).then((buf) => {
-      if (!buf || this.muted || this._bgmMode !== mode || !this.bgmOn) return;
-      this._startWebAudioBgm(mode);
-    });
+  }
+
+  _nextPlaylistTrack(mode) {
+    const list = BGM_PLAYLISTS[mode] || BGM_PLAYLISTS.menu;
+    let idx = this._playlistIndex[mode] ?? 0;
+    idx = (idx + 1) % list.length;
+    this._playlistIndex[mode] = idx;
+    return list[idx];
+  }
+
+  _currentPlaylistTrack(mode) {
+    const list = BGM_PLAYLISTS[mode] || BGM_PLAYLISTS.menu;
+    const idx = this._playlistIndex[mode] ?? 0;
+    return list[idx % list.length];
   }
 
   _startWebAudioBgm(mode) {
@@ -339,9 +365,21 @@ class SfxEngine {
   }
 
   _startHtmlBgm(mode) {
-    const track = BGM_TRACKS[mode] || BGM_TRACKS.battle;
+    const track = this._currentPlaylistTrack(mode);
     try {
       const el = this._ensureHtmlEl();
+      // Rotate tracks on natural end — do NOT set loop=true (feels too short)
+      el.loop = false;
+      if (this._bgmEndedHandler) {
+        el.removeEventListener("ended", this._bgmEndedHandler);
+      }
+      this._bgmEndedHandler = () => {
+        if (!this.bgmOn || this.muted || this._bgmMode !== mode) return;
+        this._nextPlaylistTrack(mode);
+        this._startHtmlBgm(mode);
+      };
+      el.addEventListener("ended", this._bgmEndedHandler);
+
       const fileKey = track.src.split("/").pop();
       if (!el.src || !el.src.includes(fileKey)) {
         el.src = track.src;
@@ -352,7 +390,6 @@ class SfxEngine {
         }
       }
       el.muted = !!this.muted;
-      // Start audible immediately (no 0→fade that leaves silence if fade fails)
       el.volume = Math.min(1, track.volume);
       const playResult = el.play();
       if (playResult && typeof playResult.then === "function") {
@@ -362,8 +399,11 @@ class SfxEngine {
           })
           .catch((err) => {
             console.warn("[sfx] HTMLAudio BGM blocked", err?.name || err);
-            // Procedural pad so player still hears *something*
-            if (!this._bgmBuffers.has(mode)) this._startProcBgm(mode);
+            // Fallback: soft procedural pad, or try Web Audio of first track
+            void this._ensureBgmBuffer(mode).then((buf) => {
+              if (buf && this.bgmOn && !this.muted) this._startWebAudioBgm(mode);
+              else this._startProcBgm(mode);
+            });
           });
       }
     } catch (err) {

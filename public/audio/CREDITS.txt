@@ -26,3 +26,16 @@ Job / UI icons (CC0)
 
 Character body sprites are original procedural pixel art for this project
 (not official MapleStory assets).
+
+Additional BGM (longer playlist)
+--------------------------------
+- menu.mp3 — Little Town Orchestral (OpenGameArt; check page license)
+  https://opengameart.org/content/adventure-begins (or linked little town pack)
+- menu_b.mp3 — Pleasant Creek (OpenGameArt)
+  https://opengameart.org/content/pleasant-creek
+- field.mp3 — The Field Of Dreams (CC0)
+  https://opengameart.org/content/the-field-of-dreams
+- battle_b.mp3 — Boss Battle #1 preview (OpenGameArt)
+  https://opengameart.org/content/boss-battle-1
+
+Tracks rotate in a playlist so the same short loop is not repeated forever.

@@ -164,8 +164,10 @@ function showResult(kind) {
 
 function updateMuteButton(muted) {
   if (!els.btnMute) return;
-  els.btnMute.textContent = muted ? "🔇 靜音" : "🔊 音效";
+  // Clearer when muted — user often thinks audio is broken
+  els.btnMute.textContent = muted ? "🔇 點我開音樂" : "🔊 音樂";
   els.btnMute.setAttribute("aria-pressed", muted ? "true" : "false");
+  els.btnMute.title = muted ? "目前靜音，點擊開啟背景音樂" : "點擊靜音";
 }
 
 function renderBuffs(state) {
