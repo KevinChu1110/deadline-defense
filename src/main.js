@@ -559,40 +559,66 @@ function buildCharPickButton(id) {
   const avatarWrap = document.createElement("div");
   avatarWrap.className = "char-avatar-wrap";
   let avatarEl;
-  if (hero instanceof HTMLImageElement) {
+  // Prefer <img> for AI portraits (smooth); canvas only for procedural pixels
+  if (hero instanceof HTMLImageElement && hero.src) {
     avatarEl = document.createElement("img");
-    avatarEl.src = hero.src;
+    avatarEl.src = hero.currentSrc || hero.src;
     avatarEl.alt = d.nameZh || id;
     avatarEl.draggable = false;
-  } else {
+    avatarEl.loading = "lazy";
+    avatarEl.decoding = "async";
+  } else if (hero && (hero.width || hero.naturalWidth)) {
     avatarEl = document.createElement("canvas");
-    avatarEl.width = hero.width;
-    avatarEl.height = hero.height;
+    const w = hero.naturalWidth || hero.width || 64;
+    const h = hero.naturalHeight || hero.height || 64;
+    avatarEl.width = w;
+    avatarEl.height = h;
     const ctx = avatarEl.getContext("2d");
-    ctx.imageSmoothingEnabled = false;
+    ctx.imageSmoothingEnabled = true;
     ctx.drawImage(hero, 0, 0);
+  } else {
+    avatarEl = document.createElement("div");
+    avatarEl.textContent = d.emoji || "？";
+    avatarEl.style.cssText =
+      "display:grid;place-items:center;width:100%;height:100%;font-size:1.6rem;background:#e8e0d0";
   }
   avatarEl.className = "char-avatar";
-  const icon = document.createElement("img");
-  icon.className = "job-weapon-icon";
-  icon.src = getJobIcon(id, d.family);
-  icon.alt = "";
-  icon.draggable = false;
-  icon.loading = "lazy";
-  avatarWrap.append(avatarEl, icon);
+  avatarWrap.append(avatarEl);
+  if (deployable) {
+    const icon = document.createElement("img");
+    icon.className = "job-weapon-icon";
+    icon.src = getJobIcon(id, d.family);
+    icon.alt = "";
+    icon.draggable = false;
+    icon.loading = "lazy";
+    icon.onerror = () => {
+      icon.style.display = "none";
+    };
+    avatarWrap.append(icon);
+  }
 
   const body = document.createElement("div");
   body.className = "char-pick-body";
   const tier = d.jobTier ?? 4;
   const tierLabel = tier === 0 ? "初" : `${tier}轉`;
+  // Keep card text short — long lock hints go in title only (prevents layout smash)
+  const shortStatus = deployable
+    ? d.skill
+    : unlocked
+      ? "場上轉職後可選"
+      : tier >= 4 && (d.series === "royal" || d.series === "hero")
+        ? d.series === "royal"
+          ? "通關第7關"
+          : "通關第9關"
+        : `通關第${[0, 0, 1, 2, 4][tier] ?? 4}關`;
   body.innerHTML = `
     <div class="job-name">${d.nameZh}</div>
-    <div class="stars">${deployable ? starsText(lv) : "🔒"}</div>
+    <div class="stars">${deployable ? starsText(lv) : "☆☆☆☆☆"}</div>
     <div class="job-meta">
-      <span class="pill-cost">${leveled.cost} 點</span>
+      <span class="pill-cost">${leveled.cost}點</span>
       <span class="pill-fam">${tierLabel}</span>
     </div>
-    <div class="job-skill-one">${deployable ? d.skill : lockHint}</div>
+    <div class="job-skill-one">${shortStatus}</div>
   `;
 
   if (selected) {

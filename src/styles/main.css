@@ -628,10 +628,10 @@ body.is-dragging-job .specialist-card {
 
 .char-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
   overflow: auto;
-  padding: 4px;
+  padding: 6px;
   align-content: start;
   -webkit-overflow-scrolling: touch;
   max-height: min(52vh, 480px);
@@ -639,85 +639,111 @@ body.is-dragging-job .specialist-card {
 
 .char-pick {
   position: relative;
+  z-index: 0;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 10px 8px 8px;
+  gap: 4px;
+  padding: 12px 8px 8px;
   border-radius: 14px;
   border: 1px solid rgba(122, 98, 72, 0.32);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(236, 226, 204, 0.75));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(236, 226, 204, 0.95));
   color: inherit;
   cursor: pointer;
   font: inherit;
   text-align: center;
-  min-height: 0;
+  min-height: 148px;
+  max-width: 100%;
+  overflow: hidden; /* prevent badge/text bleed into neighbors */
   touch-action: manipulation;
   transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
 }
 
 .char-pick:hover,
 .char-pick.focused {
+  z-index: 2;
   border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .char-pick.selected {
+  z-index: 1;
   border-color: var(--accent);
-  background: linear-gradient(180deg, rgba(200, 220, 190, 0.75), rgba(160, 190, 140, 0.4));
+  background: linear-gradient(180deg, rgba(200, 220, 190, 0.95), rgba(160, 190, 140, 0.85));
   box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .char-avatar-wrap {
   position: relative;
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #e8e0d0;
+  border: 1px solid rgba(122, 98, 72, 0.3);
 }
 
 .char-pick .char-avatar,
 .char-pick canvas.char-avatar,
 .char-pick img.char-avatar {
-  width: 56px;
-  height: 56px;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  border-radius: 10px;
-  background: linear-gradient(180deg, #d6e0d0 0%, #a8b898 100%);
-  border: 1px solid rgba(122, 98, 72, 0.35);
+  width: 100%;
+  height: 100%;
+  /* AI chibi is smooth art — pixelated makes it look "broken" */
+  image-rendering: auto;
+  border-radius: 0;
+  background: #e8e0d0;
+  border: none;
   display: block;
-  object-fit: contain;
+  object-fit: cover;
+  object-position: center top;
 }
 
 .job-weapon-icon {
   position: absolute;
-  right: -6px;
-  bottom: -4px;
-  width: 22px;
-  height: 22px;
+  right: 2px;
+  bottom: 2px;
+  width: 18px;
+  height: 18px;
   image-rendering: pixelated;
-  border-radius: 6px;
-  background: rgba(250, 246, 236, 0.92);
+  border-radius: 4px;
+  background: rgba(250, 246, 236, 0.95);
   border: 1px solid rgba(122, 98, 72, 0.4);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
   pointer-events: none;
+  z-index: 1;
+}
+
+.char-pick.locked .job-weapon-icon {
+  display: none;
 }
 
 .char-pick-body {
   width: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .char-pick .job-name {
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 800;
   color: #4a3820;
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .char-pick .stars {
   letter-spacing: 0.5px;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: #a8892a;
   font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .job-meta {
@@ -725,12 +751,12 @@ body.is-dragging-job .specialist-card {
   flex-wrap: wrap;
   gap: 4px;
   justify-content: center;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .pill-cost,
 .pill-fam {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 800;
   padding: 2px 6px;
   border-radius: 999px;
@@ -743,26 +769,34 @@ body.is-dragging-job .specialist-card {
 }
 
 .job-skill-one {
-  margin-top: 4px;
-  font-size: 0.72rem;
+  margin-top: 2px;
+  font-size: 0.68rem;
   font-weight: 700;
   color: #6e4e32;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .pick-badge {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  font-size: 0.65rem;
+  top: 4px;
+  right: 4px;
+  z-index: 3;
+  font-size: 0.62rem;
   font-weight: 800;
   color: #f7f4ea;
   background: var(--accent);
   border: 1px solid #2d5a34;
   border-radius: 999px;
   padding: 2px 6px;
+  max-width: calc(100% - 10px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+  pointer-events: none;
 }
 
 .detail-title-row {
@@ -992,13 +1026,19 @@ body.is-dragging-job .specialist-card {
 }
 
 .char-pick.locked {
-  opacity: 0.55;
-  filter: grayscale(0.35);
+  opacity: 0.72;
+  filter: grayscale(0.25);
+}
+
+.char-pick.locked .char-avatar {
+  filter: brightness(0.92);
 }
 
 .pick-badge.lock-badge {
   background: #6b7280;
   border-color: #4b5563;
+  left: 4px;
+  right: auto;
 }
 
 .slot-empty {
@@ -1116,7 +1156,7 @@ body.char-select-open {
 
   .char-grid {
     max-height: min(38vh, 360px);
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
   }
 }
 
@@ -1187,7 +1227,18 @@ body.char-select-open {
   .char-grid {
     max-height: none;
     flex: 1;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: 8px;
+  }
+
+  .char-pick {
+    min-height: 136px;
+    padding: 10px 6px 6px;
+  }
+
+  .char-avatar-wrap {
+    width: 56px;
+    height: 56px;
   }
 
   .char-main {
