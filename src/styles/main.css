@@ -542,6 +542,145 @@ body.is-dragging-job .specialist-card {
   color: var(--accent);
 }
 
+/* Nick + Arena + Ranking */
+.nick-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(122, 98, 72, 0.25);
+}
+
+.nick-row label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.nick-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(122, 98, 72, 0.35);
+  background: #fffef8;
+  font: inherit;
+  color: var(--text);
+}
+
+.arena-block {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(122, 98, 72, 0.35);
+}
+
+.arena-title {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.arena-hint {
+  text-align: center;
+  margin: 0 0 10px !important;
+  font-size: 0.82rem;
+}
+
+.arena-list {
+  display: grid;
+  gap: 8px;
+}
+
+.arena-btn.is-today {
+  border-color: var(--accent-2);
+  box-shadow: 0 0 0 2px rgba(168, 74, 60, 0.18);
+}
+
+.arena-emoji {
+  background: linear-gradient(180deg, #c084fc, #7c3aed) !important;
+  font-size: 1.2rem;
+}
+
+.rank-card {
+  width: min(94%, 480px);
+  text-align: left;
+}
+
+.rank-tabs {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.rank-tab.is-active {
+  background: var(--accent);
+  color: #f7f4ea;
+  border-color: #2d5a34;
+}
+
+.rank-list {
+  display: grid;
+  gap: 6px;
+  max-height: min(48vh, 360px);
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+
+.rank-row {
+  display: grid;
+  grid-template-columns: 28px 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(122, 98, 72, 0.2);
+  font-size: 0.88rem;
+}
+
+.rank-pos {
+  font-weight: 800;
+  color: var(--accent);
+  text-align: center;
+}
+
+.rank-nick {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rank-detail {
+  color: var(--muted);
+  font-size: 0.75rem;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rank-score {
+  font-weight: 800;
+  color: var(--warn);
+  font-variant-numeric: tabular-nums;
+}
+
+.center-hint {
+  text-align: center;
+  padding: 16px 8px;
+}
+
+.stage-card {
+  max-height: min(92vh, 720px);
+  overflow-y: auto;
+}
+
 /* ===== Character select shell ===== */
 .char-shell {
   width: min(100%, 1100px);

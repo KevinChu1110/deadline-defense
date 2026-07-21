@@ -32,6 +32,20 @@ import { LOADOUT_PRESETS } from "./data/meta-progress.js";
 import { sfx } from "./audio/sfx.js";
 import { STAGES, loadProgress, isStageUnlocked, getStageByIndex } from "./data/stages.js";
 import { getItem } from "./data/items.js";
+import {
+  getNickname,
+  setNickname,
+  getGlobalLeaderboard,
+  getArenaLeaderboard,
+  getStageLeaderboard,
+  exportRankingJson,
+} from "./data/ranking.js";
+import {
+  ARENA_BOSS_ROTATION,
+  ARENA_BOSS_META,
+  BOSSES,
+  getArenaBossId,
+} from "./data/bosses.js";
 
 const canvas = document.querySelector("#game");
 const els = {
@@ -56,6 +70,7 @@ const els = {
   btnMute: document.querySelector("#btn-mute"),
   btnStages: document.querySelector("#btn-stages"),
   btnChars: document.querySelector("#btn-chars"),
+  btnRank: document.querySelector("#btn-rank"),
   toast: document.querySelector("#toast"),
   overlay: document.querySelector("#overlay"),
   overlayKicker: document.querySelector("#overlay-kicker"),
@@ -67,6 +82,14 @@ const els = {
   btnRepickChars: document.querySelector("#btn-repick-chars"),
   stageOverlay: document.querySelector("#stage-overlay"),
   stageList: document.querySelector("#stage-list"),
+  arenaList: document.querySelector("#arena-list"),
+  nickInput: document.querySelector("#nick-input"),
+  btnSaveNick: document.querySelector("#btn-save-nick"),
+  rankOverlay: document.querySelector("#rank-overlay"),
+  rankList: document.querySelector("#rank-list"),
+  rankTabs: document.querySelector("#rank-tabs"),
+  btnRankClose: document.querySelector("#btn-rank-close"),
+  btnRankExport: document.querySelector("#btn-rank-export"),
   charOverlay: document.querySelector("#char-overlay"),
   charGrid: document.querySelector("#char-grid"),
   loadoutCount: document.querySelector("#loadout-count"),
@@ -118,7 +141,10 @@ function hideAllOverlays() {
   setOverlayOpen(els.charOverlay, false);
   setOverlayOpen(els.rewardOverlay, false);
   setOverlayOpen(els.overlay, false);
+  setOverlayOpen(els.rankOverlay, false);
 }
+
+let rankTab = "all";
 
 /** Clear end-of-run flags so menus work after victory/defeat. */
 function clearRunState() {
@@ -150,18 +176,30 @@ function showResult(kind) {
             .map((s) => s.label)
             .join(" · ")}）`
         : "";
+      const scoreLine = game?.lastScore ? `分數 ${game.lastScore}` : "";
+      const isArena = !!game?.stage?.arena;
       if (els.overlayCopy) {
-        els.overlayCopy.textContent =
-          nextIndex < STAGES.length
-            ? `${stageName} 守護成功！${starLine} ${canNext ? "下一關已解鎖。" : ""}`
-            : `${stageName} 完成！${starLine} 你已通關全部關卡。`;
+        if (isArena) {
+          els.overlayCopy.textContent = `${stageName} 勝利！${scoreLine} 已寫入競賽排行。`;
+        } else {
+          els.overlayCopy.textContent =
+            nextIndex < STAGES.length
+              ? `${stageName} 守護成功！${starLine} ${scoreLine} ${canNext ? "下一關已解鎖。" : ""}`
+              : `${stageName} 完成！${starLine} ${scoreLine} 你已通關全部關卡。`;
+        }
       }
       if (els.btnNextStage) {
-        els.btnNextStage.hidden = nextIndex >= STAGES.length;
-        els.btnNextStage.disabled = !canNext;
-        els.btnNextStage.textContent = canNext
-          ? `下一關：${getStageByIndex(nextIndex).name}`
-          : "下一關（未解鎖）";
+        if (isArena) {
+          els.btnNextStage.hidden = false;
+          els.btnNextStage.disabled = false;
+          els.btnNextStage.textContent = "再挑戰今日 Boss";
+        } else {
+          els.btnNextStage.hidden = nextIndex >= STAGES.length;
+          els.btnNextStage.disabled = !canNext;
+          els.btnNextStage.textContent = canNext
+            ? `下一關：${getStageByIndex(nextIndex).name}`
+            : "下一關（未解鎖）";
+        }
       }
     } else {
       if (els.overlayKicker) els.overlayKicker.textContent = "任務失敗";
@@ -251,6 +289,123 @@ function renderStageList() {
     });
     els.stageList.appendChild(btn);
   });
+  renderArenaList();
+  syncNickInput();
+}
+
+function renderArenaList() {
+  if (!els.arenaList) return;
+  const today = getArenaBossId();
+  els.arenaList.innerHTML = "";
+  ARENA_BOSS_ROTATION.forEach((bossId) => {
+    const boss = BOSSES[bossId];
+    const meta = ARENA_BOSS_META[bossId] || {};
+    const isToday = bossId === today;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `stage-btn arena-btn${isToday ? " is-today" : ""}`;
+    btn.innerHTML = `
+      <span class="idx arena-emoji">${meta.emoji || "⚔️"}</span>
+      <span>
+        <strong>${boss.nameZh}${isToday ? " · 今日推薦" : ""}</strong>
+        <small>${meta.blurb || "競賽 Boss"}</small>
+      </span>
+      <span class="badge">${isToday ? "推薦" : "挑戰"}</span>
+    `;
+    btn.addEventListener("click", () => {
+      void sfx.unlock();
+      sfx.play("uiClick");
+      pendingStageId = `arena-${bossId}`;
+      openCharacterSelect();
+    });
+    els.arenaList.appendChild(btn);
+  });
+}
+
+function syncNickInput() {
+  if (els.nickInput) {
+    els.nickInput.value = getNickname() || "";
+    els.nickInput.placeholder = "冒險者";
+  }
+}
+
+function saveNickFromInput() {
+  const n = setNickname(els.nickInput?.value || "冒險者");
+  if (els.nickInput) els.nickInput.value = n;
+  showToast(`暱稱：${n}`);
+  sfx.play("uiOk");
+}
+
+function openRankOverlay(tab = "all") {
+  rankTab = tab;
+  hideAllOverlays();
+  renderRankList();
+  setOverlayOpen(els.rankOverlay, true);
+  if (els.rankTabs) {
+    els.rankTabs.querySelectorAll(".rank-tab").forEach((b) => {
+      b.classList.toggle("is-active", b.dataset.tab === rankTab);
+    });
+  }
+  void sfx.unlock();
+  sfx.play("uiClick");
+}
+
+function renderRankList() {
+  if (!els.rankList) return;
+  let rows = [];
+  if (rankTab === "arena") {
+    rows = getArenaLeaderboard(15).map((r) => ({
+      nick: r.nick,
+      score: r.score,
+      detail: r.bossName || r.bossId || "競賽",
+      at: r.at,
+    }));
+  } else if (rankTab === "stage") {
+    // flatten best per stage top
+    const seen = [];
+    for (const st of STAGES) {
+      const top = getStageLeaderboard(st.id, 3);
+      for (const r of top) {
+        seen.push({
+          nick: r.nick,
+          score: r.score,
+          detail: `${st.name} ★${r.stars || 0}`,
+          at: r.at,
+        });
+      }
+    }
+    rows = seen.sort((a, b) => b.score - a.score).slice(0, 15);
+  } else {
+    rows = getGlobalLeaderboard(15).map((r) => ({
+      nick: r.nick,
+      score: r.score,
+      detail: r.mode === "arena" ? r.bossName || "競賽" : r.stageId || "關卡",
+      at: r.at,
+    }));
+  }
+  if (!rows.length) {
+    els.rankList.innerHTML = `<p class="muted center-hint">尚無紀錄 — 通關或打競賽後寫入</p>`;
+    return;
+  }
+  els.rankList.innerHTML = rows
+    .map(
+      (r, i) => `
+    <div class="rank-row">
+      <span class="rank-pos">${i + 1}</span>
+      <span class="rank-nick">${escapeHtml(r.nick)}</span>
+      <span class="rank-detail">${escapeHtml(String(r.detail || ""))}</span>
+      <span class="rank-score">${r.score}</span>
+    </div>`
+    )
+    .join("");
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function openStageSelect() {
@@ -1149,6 +1304,14 @@ els.btnNextStage?.addEventListener("click", (ev) => {
   ev.preventDefault();
   ev.stopPropagation();
   withAudio(() => {
+    // 競賽：再打今日推薦 Boss
+    if (game?.stage?.arena) {
+      sfx.play("uiClick");
+      clearRunState();
+      pendingStageId = `arena-${getArenaBossId()}`;
+      openCharacterSelect();
+      return;
+    }
     const next = (game.stage.index ?? 0) + 1;
     if (next >= STAGES.length || !isStageUnlocked(next)) {
       showToast("尚未解鎖");
@@ -1160,6 +1323,55 @@ els.btnNextStage?.addEventListener("click", (ev) => {
     pendingStageId = STAGES[next].id;
     openCharacterSelect();
   });
+});
+els.btnRank?.addEventListener("click", () =>
+  withAudio(() => {
+    openRankOverlay(rankTab || "all");
+  })
+);
+els.btnRankClose?.addEventListener("click", () =>
+  withAudio(() => {
+    sfx.play("uiClick");
+    setOverlayOpen(els.rankOverlay, false);
+    if (screen === "stage" || !game || game.result) openStageSelect();
+  })
+);
+els.btnRankExport?.addEventListener("click", () =>
+  withAudio(() => {
+    sfx.play("uiClick");
+    try {
+      const json = exportRankingJson();
+      const blob = new Blob([json], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `maple-defense-rank-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      showToast("已匯出排行 JSON");
+    } catch {
+      showToast("匯出失敗");
+      sfx.play("error");
+    }
+  })
+);
+els.rankTabs?.addEventListener("click", (ev) => {
+  const t = ev.target.closest(".rank-tab");
+  if (!t) return;
+  withAudio(() => {
+    rankTab = t.dataset.tab || "all";
+    els.rankTabs.querySelectorAll(".rank-tab").forEach((b) => {
+      b.classList.toggle("is-active", b.dataset.tab === rankTab);
+    });
+    renderRankList();
+    sfx.play("uiClick");
+  });
+});
+els.btnSaveNick?.addEventListener("click", () => withAudio(saveNickFromInput));
+els.nickInput?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    withAudio(saveNickFromInput);
+  }
 });
 els.btnToStages?.addEventListener("click", (ev) => {
   ev.preventDefault();

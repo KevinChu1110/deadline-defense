@@ -49,6 +49,7 @@
           </div>
           <button type="button" id="btn-chars" class="btn maple-btn" title="重選職業">職業</button>
           <button type="button" id="btn-stages" class="btn maple-btn" title="選擇關卡">關卡</button>
+          <button type="button" id="btn-rank" class="btn maple-btn" title="排行榜">排行</button>
           <button type="button" id="btn-mute" class="btn maple-btn" aria-pressed="false" title="音效">🔊</button>
         </div>
       </header>
@@ -85,7 +86,36 @@
               <p class="overlay-kicker">🌍 冒險島 · 關卡</p>
               <h2>選擇地區</h2>
               <p class="muted">通關解鎖下一關 · 每關第 5／10 波有 Boss</p>
+              <div class="nick-row">
+                <label for="nick-input">暱稱</label>
+                <input id="nick-input" type="text" maxlength="12" placeholder="冒險者" autocomplete="nickname" />
+                <button type="button" id="btn-save-nick" class="btn">儲存</button>
+              </div>
               <div id="stage-list" class="stage-list"></div>
+              <div class="arena-block">
+                <h3 class="arena-title">⚔️ 競賽場 · 五大 Boss</h3>
+                <p class="muted arena-hint">3 波速決 · 分數寫入本機排行（多暱稱可互相比拚）</p>
+                <div id="arena-list" class="arena-list"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ranking -->
+          <div id="rank-overlay" class="overlay" hidden>
+            <div class="overlay-card rank-card maple-panel">
+              <p class="overlay-kicker">🏆 本機聯賽</p>
+              <h2>排行榜</h2>
+              <p class="muted">同裝置多暱稱競分 · 無伺服器</p>
+              <div class="rank-tabs" id="rank-tabs">
+                <button type="button" class="btn rank-tab is-active" data-tab="all">總榜</button>
+                <button type="button" class="btn rank-tab" data-tab="arena">競賽</button>
+                <button type="button" class="btn rank-tab" data-tab="stage">關卡</button>
+              </div>
+              <div id="rank-list" class="rank-list"></div>
+              <div class="overlay-actions">
+                <button type="button" id="btn-rank-export" class="btn">匯出 JSON</button>
+                <button type="button" id="btn-rank-close" class="btn primary maple-primary">關閉</button>
+              </div>
             </div>
           </div>
 

@@ -60,6 +60,15 @@ import {
   claimStageStars,
   failConsolationLeaves,
 } from "../data/meta-progress.js";
+import { buildHitVfx, buildShootVfx, createBossBanner } from "./combat-vfx.js";
+import {
+  computeClearScore,
+  submitStageScore,
+  submitArenaScore,
+  getNickname,
+} from "../data/ranking.js";
+import { themeForStage } from "../data/map-themes.js";
+import { BOSSES } from "../data/bosses.js";
 
 function defaultBuffs() {
   return {
@@ -241,6 +250,10 @@ export class Game {
       leaks: this.leaks || 0,
       synergyLabels: this._synergyBuffs().synergyLabels || [],
       lastStars: this.lastStars || null,
+      lastScore: this.lastScore || 0,
+      mapTheme: themeForStage(this.stage),
+      isArena: !!this.stage.arena,
+      arenaBossId: this.stage.arenaBossId || null,
       jobChangeOptions: this.selectedSpecialistId
         ? this.getJobChangeOptions(this.selectedSpecialistId)
         : [],
@@ -504,12 +517,13 @@ export class Game {
     unit.lockTargetId = null;
     markJobLearned(toJobId);
     this.usedJobChange = true;
-    this.sfx.play("waveClear");
+    this.sfx.play("jobChange");
     this.fx.push(...createParticles(unit.x, unit.y, def.color, 22, { speed: 120, life: 0.55 }));
     this.fx.push(createRing(unit.x, unit.y, "#fde68a", { maxR: 60, life: 0.5 }));
     this.fx.push(createRing(unit.x, unit.y, def.color, { maxR: 36, life: 0.35 }));
     this.fx.push(createFloatText(unit.x, unit.y - 28, `✦ 轉職 ${def.nameZh}`, "#fde68a"));
     this.fx.push(createFloatText(unit.x, unit.y - 44, def.skill || "", "#fff7ed"));
+    this.fx.push(createBossBanner(`${def.nameZh} 轉職！`, def.color));
     this.status = `${SPECIALISTS[fromId]?.nameZh || fromId} → ${def.nameZh}！（🪙−${cost}）`;
     this.ui?.toast?.(`✦ 轉職成功！${def.nameZh}（🪙−${cost}）· ${def.skill || ""}`);
     this.ui?.onState?.(this.getPublicState());
@@ -594,31 +608,73 @@ export class Game {
 
     if (this.waveIndex >= this.stage.waves.length - 1) {
       this.result = "win";
-      this.status = "神木平安！關卡完成。";
+      this.status = this.stage.arena ? "競賽勝利！分數已記入排行。" : "神木平安！關卡完成。";
       this.sfx.play("win");
-      const prev = loadStageProgress();
-      const firstClear = !prev.cleared?.[this.stage.id];
-      markStageCleared(this.stage.id);
-      const winLeaves = rewardForStageWin(stageIndex, firstClear);
-      addMapleLeaves(winLeaves, "stage");
-      // 三星
-      const evalS = evaluateStars({
-        stageId: this.stage.id,
+      const isArena = !!this.stage.arena;
+      let firstClear = false;
+      let winLeaves = 0;
+      let evalS = null;
+      if (!isArena) {
+        const prev = loadStageProgress();
+        firstClear = !prev.cleared?.[this.stage.id];
+        markStageCleared(this.stage.id);
+        winLeaves = rewardForStageWin(stageIndex, firstClear);
+        addMapleLeaves(winLeaves, "stage");
+        evalS = evaluateStars({
+          stageId: this.stage.id,
+          coreHp: this.coreHp,
+          coreMax: this.coreMax,
+          leaks: this.leaks || 0,
+          usedJobChange: this.usedJobChange,
+        });
+        const starClaim = claimStageStars(this.stage.id, evalS.count);
+        if (starClaim.gained > 0) {
+          addMapleLeaves(starClaim.gained * 15, "stars");
+        }
+        this.lastStars = evalS;
+      } else {
+        // 競賽通關給固定楓葉
+        winLeaves = 25;
+        addMapleLeaves(winLeaves, "arena");
+        this.lastStars = null;
+      }
+      // 排行分數
+      const score = computeClearScore({
         coreHp: this.coreHp,
         coreMax: this.coreMax,
+        mesos: this.mesosEarned || this.mesos || 0,
         leaks: this.leaks || 0,
         usedJobChange: this.usedJobChange,
+        waveTotal: this.stage.waves.length,
+        stageIndex: isArena ? 12 : stageIndex,
+        bossKill: true,
       });
-      const starClaim = claimStageStars(this.stage.id, evalS.count);
-      let starLeaves = 0;
-      if (starClaim.gained > 0) {
-        starLeaves = starClaim.gained * 15;
-        addMapleLeaves(starLeaves, "stars");
+      this.lastScore = score;
+      const nick = getNickname() || "冒險者";
+      if (isArena) {
+        const bossId = this.stage.arenaBossId;
+        const bossName = BOSSES[bossId]?.nameZh || this.stage.name;
+        submitArenaScore({
+          nick,
+          score,
+          bossId,
+          bossName,
+          coreHp: this.coreHp,
+          leaks: this.leaks || 0,
+        });
+        this.ui?.toast?.(`競賽通關 · ${bossName} · 分數 ${score} · 🍁+${winLeaves}`);
+      } else {
+        submitStageScore(this.stage.id, {
+          nick,
+          score,
+          stars: evalS?.count || 0,
+          coreHp: this.coreHp,
+          leaks: this.leaks || 0,
+        });
+        this.ui?.toast?.(
+          `通關 🍁+${winLeaves}${firstClear ? "（首通）" : ""} · ★${evalS?.count || 0} · 分數 ${score}`
+        );
       }
-      this.lastStars = evalS;
-      this.ui?.toast?.(
-        `通關 🍁+${winLeaves}${firstClear ? "（首通）" : ""} · ★${evalS.count}${starLeaves ? ` 星獎🍁+${starLeaves}` : ""}`
-      );
       const core = this.stage.map.core;
       this.fx.push(...createParticles(core.x, core.y, "#4ade80", 28, { speed: 140, life: 0.8 }));
       this.fx.push(createRing(core.x, core.y, "#22d3ee", { maxR: 80, life: 0.6 }));
@@ -699,6 +755,12 @@ export class Game {
           stallZones,
           hazardExtraDist: hz.extraDist,
         });
+        if (e._pendingBanner) {
+          this.fx.push(createBossBanner(e._pendingBanner, e.def.color));
+          this.sfx.play("bossPhase");
+          this.ui?.toast?.(e._pendingBanner);
+          e._pendingBanner = null;
+        }
       }
       if (e.pendingSpawns?.length) {
         this._flushPendingSpawns(e);
@@ -732,17 +794,16 @@ export class Game {
       const shots = fireSpecialist(s, target);
       s.cooldown = s.def.interval / (syn.attackSpeedMult || 1);
       this.projectiles.push(...shots);
-      this.fx.push(createMuzzle(s.x + (s.facing || 1) * 8, s.y - 6, s.def.color));
-      this.fx.push(
-        createRing(s.x + (s.facing || 1) * 12, s.y - 4, s.def.color, {
-          maxR: 22,
-          life: 0.18,
-        })
-      );
-      const fam = s.def.family;
-      const pitch =
-        fam === "archer" ? 1.25 : fam === "mage" || fam === "pirate" ? 0.85 : fam === "thief" ? 1.4 : 1;
-      this.sfx.play("shoot", { pitch });
+      this.fx.push(...buildShootVfx(s));
+      const skill = getJobSkill(s.typeId) || {};
+      this.sfx.playShoot(s.def.family, {
+        pierce: !!skill.pierce,
+        multi: (skill.multiShot || 0) > 1,
+        lockOn: !!skill.lockOn,
+        fire: !!skill.burnStacks,
+        ice: !!skill.slowChain,
+        crit: !!skill.critChance,
+      });
     }
 
     for (const p of this.projectiles) {
@@ -761,14 +822,16 @@ export class Game {
           const killed = applyHit(target, p, this.now, hitBuffs, {
             allies: this.specialists,
           });
-          this.sfx.play("hit", { heavy: wasBoss || p._wasCrit });
-          if (p._wasCrit) {
-            this.fx.push(createFloatText(target.x, target.y - 20, "CRIT!", "#fbbf24"));
-          }
-          if (p._detonate) {
-            this.fx.push(createRing(target.x, target.y, "#f97316", { maxR: 48, life: 0.3 }));
-            this.fx.push(createFloatText(target.x, target.y - 8, "爆!", "#fb923c"));
-          }
+          this.sfx.playHit({
+            heavy: wasBoss || p._wasCrit,
+            crit: p._wasCrit,
+            family: owner?.def?.family,
+            effect: p.effect,
+            fire: p.effect === "burn" || skill.burnStacks,
+            ice: p.effect === "slow" || skill.slowChain,
+            holy: p.effect === "analyzed" || skill.revealOnHit,
+          });
+          this.fx.push(...buildHitVfx(target, p, owner));
           // splash
           if (p.splashR > 0) {
             for (const e of this.enemies) {
@@ -811,7 +874,11 @@ export class Game {
           );
           if (killed) {
             if (owner) owner.kills += 1;
-            this.sfx.play("kill");
+            this.sfx.play("kill", { boss: wasBoss, family: owner?.def?.family });
+            if (wasBoss) {
+              this.fx.push(createBossBanner(`${target.def.nameZh} 擊破！`, target.def.color));
+              this.sfx.play("bossPhase");
+            }
             let mesoGain = mesosForKill(target.def);
             if (p._mesoBonus) {
               const cap = skill.mesoCapPerWave || 40;
@@ -960,6 +1027,7 @@ export class Game {
       now: this.now,
       buffs: this.buffs,
       hazardState: this.hazardState,
+      mapTheme: themeForStage(this.stage),
     });
   }
 

@@ -85,6 +85,15 @@ export function updateFx(list, dt) {
       fx.y += fx.vy * dt;
     } else if (fx.kind === "muzzle") {
       /* flash only */
+    } else if (fx.kind === "hitFlash") {
+      /* shrink handled in draw */
+    } else if (fx.kind === "slash") {
+      /* draw only */
+    } else if (fx.kind === "shockwave") {
+      const t = 1 - fx.life / fx.maxLife;
+      fx.r = fx.maxR * t;
+    } else if (fx.kind === "banner") {
+      /* draw only */
     }
   }
   return list.filter((fx) => fx.life > 0);
@@ -98,22 +107,56 @@ export function drawFx(ctx, list) {
     if (fx.kind === "particle") {
       ctx.fillStyle = fx.color;
       ctx.fillRect(Math.round(fx.x), Math.round(fx.y), Math.round(fx.size), Math.round(fx.size));
-    } else if (fx.kind === "ring") {
+    } else if (fx.kind === "ring" || fx.kind === "shockwave") {
       ctx.strokeStyle = fx.color;
-      ctx.lineWidth = fx.lineWidth;
+      ctx.lineWidth = fx.lineWidth || 2;
       ctx.beginPath();
       ctx.arc(fx.x, fx.y, fx.r, 0, Math.PI * 2);
       ctx.stroke();
     } else if (fx.kind === "text") {
       ctx.fillStyle = fx.color;
-      ctx.font = "700 12px system-ui";
+      ctx.font = fx.big ? "800 16px system-ui" : "700 12px system-ui";
       ctx.textAlign = "center";
+      ctx.strokeStyle = "rgba(0,0,0,0.45)";
+      ctx.lineWidth = 3;
+      ctx.strokeText(fx.text, fx.x, fx.y);
       ctx.fillText(fx.text, fx.x, fx.y);
     } else if (fx.kind === "muzzle") {
       ctx.fillStyle = fx.color;
       ctx.beginPath();
       ctx.arc(fx.x, fx.y, fx.r * a, 0, Math.PI * 2);
       ctx.fill();
+    } else if (fx.kind === "hitFlash") {
+      const r = fx.r * (0.5 + 0.5 * a);
+      const g = ctx.createRadialGradient(fx.x, fx.y, 0, fx.x, fx.y, r);
+      g.addColorStop(0, fx.color);
+      g.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(fx.x, fx.y, r, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (fx.kind === "slash") {
+      ctx.strokeStyle = fx.color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      const f = fx.facing || 1;
+      ctx.arc(fx.x, fx.y, 20, -0.8 * f, 0.8 * f, f < 0);
+      ctx.stroke();
+    } else if (fx.kind === "banner") {
+      ctx.globalAlpha = Math.min(1, a * 1.4);
+      const w = 420;
+      const h = 40;
+      const x = 480 - w / 2;
+      const y = 48;
+      ctx.fillStyle = "rgba(20, 10, 10, 0.82)";
+      ctx.strokeStyle = fx.color || "#fca5a5";
+      ctx.lineWidth = 2;
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeRect(x, y, w, h);
+      ctx.fillStyle = fx.color || "#fecdd3";
+      ctx.font = "800 16px 'PingFang TC', system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText(fx.text, 480, y + 26);
     }
     ctx.restore();
   }

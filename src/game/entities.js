@@ -219,7 +219,7 @@ export function updateEnemy(enemy, dt, now, ctx = {}) {
     enemy.def = { ...enemy.def, armor: enemy.def.phaseArmorValue ?? 0.1 };
   }
 
-  // phase spawns
+  // phase spawns + banner flags
   if (enemy.def.phaseSpawns) {
     for (const ph of enemy.def.phaseSpawns) {
       const key = String(ph.at);
@@ -230,6 +230,15 @@ export function updateEnemy(enemy, dt, now, ctx = {}) {
           pathMode: ph.path || "same",
           distanceRatio: ph.distanceRatio,
         });
+      }
+    }
+  }
+  if (enemy.def.phaseBanner) {
+    for (const ph of enemy.def.phaseBanner) {
+      const key = `banner_${ph.at}`;
+      if (!enemy.phasesFired[key] && enemy.hp / enemy.maxHp <= ph.at) {
+        enemy.phasesFired[key] = true;
+        enemy._pendingBanner = ph.text || "Boss 相位";
       }
     }
   }

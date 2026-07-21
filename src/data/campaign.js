@@ -387,10 +387,10 @@ const S08_WAVES = [
     g(0, "event", [["stone_golem", 2], ["pig", 5]], 0.85),
     g(0, "pathC", [["croco", 4], ["jr_wraith", 4]], 0.75),
   ]),
-  W("【Boss】機械豬王", "半血雙階段加兵。", [
-    g(0, "event", [["boss_mech_pig", 1]], 1),
-    g(2, "workflow", [["fire_boar", 5]], 0.7),
-    g(2, "pathC", [["pig", 6]], 0.7),
+  W("【Boss】皮卡啾", "玩具城惡作劇王！分身＋加速光環。", [
+    g(0, "event", [["boss_pink_bean", 1]], 1),
+    g(2, "workflow", [["slime", 6], ["pig", 4]], 0.65),
+    g(2, "pathC", [["ribbon_pig", 5], ["bubbling", 3]], 0.7),
   ]),
 ];
 
@@ -434,9 +434,10 @@ const S09_WAVES = [
     g(0, "workflow", [["hellhound", 4], ["drake", 3]], 0.8),
     g(0, "event", [["hellhound", 3], ["red_drake", 3]], 0.8),
   ]),
-  W("【Boss】幽靈船長", "隱形換路；半血雙路加兵。", [
-    g(0, "workflow", [["boss_ghost_captain", 1]], 1),
-    g(2, "event", [["jr_wraith", 6], ["drake", 3]], 0.7),
+  W("【Boss】海怒斯", "多頭甦醒！高防龍王，分段加兵。", [
+    g(0, "workflow", [["boss_horntail", 1]], 1),
+    g(2, "event", [["drake", 4], ["hellhound", 3]], 0.75),
+    g(5, "workflow", [["red_drake", 3], ["jr_wraith", 5]], 0.8),
   ]),
 ];
 
@@ -460,8 +461,8 @@ const S10_WAVES = [
     g(0, "workflow", [["octopus", 2], ["drake", 3]], 1.0),
     g(0, "event", [["octopus", 2], ["red_drake", 3]], 1.0),
   ]),
-  W("【中Boss】拉圖斯幻影", "終章中 Boss。", [
-    g(0, "workflow", [["mid_papulatus", 1]], 1),
+  W("【中Boss】拉圖斯", "時鐘相位 · 半血加速與次元裂縫！", [
+    g(0, "workflow", [["boss_papulatus", 1]], 1),
     g(2, "event", [["hellhound", 4], ["fire_boar", 5]], 0.7),
   ]),
   W("最後喘息", "補陣形。", [
@@ -477,20 +478,10 @@ const S10_WAVES = [
     g(0, "event", [["drake", 4], ["iron_hog", 2]], 0.85),
     g(2, "workflow", [["fire_boar", 5], ["hellhound", 2]], 0.7),
   ]),
-  W("炎魔先遣", "全種類狂潮。", [
-    g(0, "workflow", [
-      ["hellhound", 3],
-      ["fire_boar", 4],
-      ["iron_hog", 2],
-      ["dark_stump", 3],
-    ], 0.65),
-    g(0, "event", [
-      ["jr_wraith", 5],
-      ["red_drake", 3],
-      ["zombie_mushroom", 4],
-      ["octopus", 1],
-    ], 0.7),
-    { at: 4, path: "workflow", units: [["bat", 8]], interval: 0.35, distanceRatio: 0.6 },
+  W("【Boss】暗黑龍王", "飛行龍王登場！落地後狂襲。", [
+    g(0, "workflow", [["boss_dark_dragon", 1]], 1),
+    g(3, "event", [["drake", 4], ["red_drake", 2]], 0.85),
+    g(6, "workflow", [["hellhound", 3], ["bat", 6]], 0.7),
   ]),
   W("【最終Boss】殘暴炎魔", "三階段加兵。守住神木！", [
     g(0, "workflow", [["boss_zakum", 1]], 1),
@@ -568,7 +559,7 @@ export const CAMPAIGN_STAGES = [
     index: 7,
     code: "LUDI",
     name: "玩具城工廠",
-    briefing: "三路線同時進攻，部署點要精打細算。",
+    briefing: "三路線同時進攻 · 第 10 波皮卡啾惡作劇！",
     map: MAP_TRIPLE,
     waves: S08_WAVES,
   }),
@@ -577,7 +568,7 @@ export const CAMPAIGN_STAGES = [
     index: 8,
     code: "LEAFRE",
     name: "神木村外圍",
-    briefing: "飛龍與幽靈會中途換路，廣覆蓋佈陣。",
+    briefing: "飛龍換路 · 第 10 波海怒斯多頭甦醒！",
     map: MAP_DUAL,
     waves: S09_WAVES,
   }),
@@ -586,7 +577,7 @@ export const CAMPAIGN_STAGES = [
     index: 9,
     code: "ALTAR",
     name: "神木祭壇",
-    briefing: "最終戰。全機制融合，第 10 波殘暴炎魔！",
+    briefing: "最終戰：W5 拉圖斯 · W9 暗黑龍王 · W10 殘暴炎魔！",
     map: MAP_ARENA,
     waves: S10_WAVES,
   }),

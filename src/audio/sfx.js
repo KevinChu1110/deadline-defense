@@ -566,6 +566,11 @@ class SfxEngine {
       }
     }
 
+    // Map skill/family aliases → base cues + pitch
+    const mapped = this._mapSkillSound(name, opts);
+    name = mapped.name;
+    opts = { ...opts, ...mapped.opts };
+
     if (name === "shoot" && !this._throttle("shoot", 45)) return;
     if (name === "hit" && !this._throttle("hit", 35)) return;
 
@@ -576,8 +581,47 @@ class SfxEngine {
       return;
     }
     void this.preload();
-    const fn = FALLBACK[name];
+    const fn = FALLBACK[name] || FALLBACK[mapped.fallback];
     if (fn) fn(this.ctx, this.sfxBus || this.master, opts);
+  }
+
+  /**
+   * Differentiated SFX by combat family / effect
+   */
+  _mapSkillSound(name, opts) {
+    const fam = opts.family;
+    const effect = opts.effect;
+    if (name === "shoot") {
+      // skill flags first
+      if (opts.fire) return { name: "shoot2", opts: { pitch: 0.7 }, fallback: "shoot" };
+      if (opts.ice) return { name: "shoot", opts: { pitch: 1.5 }, fallback: "shoot" };
+      if (opts.pierce) return { name: "shoot", opts: { pitch: 1.25 }, fallback: "shoot" };
+      if (opts.multi) return { name: "shoot2", opts: { pitch: 1.2 }, fallback: "shoot" };
+      if (opts.lockOn) return { name: "hitChop", opts: { pitch: 1.1 }, fallback: "shoot" };
+      if (opts.crit) return { name: "shoot", opts: { pitch: 1.45 }, fallback: "shoot" };
+      if (fam === "archer") return { name: "shoot", opts: { pitch: 1.35 }, fallback: "shoot" };
+      if (fam === "mage") return { name: "shoot2", opts: { pitch: 0.75 }, fallback: "shoot" };
+      if (fam === "thief") return { name: "shoot", opts: { pitch: 1.55 }, fallback: "shoot" };
+      if (fam === "pirate") return { name: "hitChop", opts: { pitch: 0.9 }, fallback: "shoot" };
+      if (fam === "warrior") return { name: "shoot2", opts: { pitch: 0.95 }, fallback: "shoot" };
+    }
+    if (name === "hit") {
+      if (effect === "burn" || opts.fire) return { name: "hitHeavy", opts: { pitch: 0.85, heavy: true }, fallback: "hit" };
+      if (effect === "slow" || opts.ice) return { name: "hit", opts: { pitch: 1.4 }, fallback: "hit" };
+      if (effect === "analyzed" || opts.holy) return { name: "bell", opts: { pitch: 1.2 }, fallback: "hit" };
+      if (opts.crit) return { name: "hitHeavy", opts: { pitch: 1.15, heavy: true }, fallback: "hit" };
+      if (opts.heavy) return { name: "hitHeavy", opts: { heavy: true }, fallback: "hit" };
+      if (fam === "warrior") return { name: "hitChop", opts: { pitch: 0.95 }, fallback: "hit" };
+      if (fam === "thief") return { name: "hit", opts: { pitch: 1.5 }, fallback: "hit" };
+      if (fam === "archer") return { name: "hit", opts: { pitch: 1.25 }, fallback: "hit" };
+      if (fam === "pirate") return { name: "hitHeavy", opts: { pitch: 0.9, heavy: true }, fallback: "hit" };
+    }
+    if (name === "kill") {
+      if (opts.boss) return { name: "waveClear", opts: {}, fallback: "kill" };
+    }
+    if (name === "jobChange") return { name: "waveClear", opts: {}, fallback: "waveClear" };
+    if (name === "bossPhase") return { name: "bell", opts: { pitch: 0.7 }, fallback: "waveStart" };
+    return { name, opts, fallback: name };
   }
 
   _resolveSampleKey(name, opts) {
@@ -586,6 +630,15 @@ class SfxEngine {
     if (name === "uiClick") return "uiClick";
     if (SAMPLE_MAP[name]) return name;
     return null;
+  }
+
+  /** Convenience: shoot by job family + skill flags */
+  playShoot(family, skillOpts = {}) {
+    this.play("shoot", { family, ...skillOpts });
+  }
+
+  playHit(opts = {}) {
+    this.play("hit", opts);
   }
 
   _playBuffer(buf, name, opts = {}) {

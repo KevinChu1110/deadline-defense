@@ -10,25 +10,28 @@ import {
 import { sampleGifFrame, getCachedMob } from "./assets.js";
 import { drawFx } from "./fx.js";
 import { drawHazards } from "./hazards.js";
+import { MAP_THEMES } from "../data/map-themes.js";
 
-/** @type {HTMLImageElement | null} */
-let mapBgImg = null;
-let mapBgFailed = false;
+/** @type {Map<string, HTMLImageElement>} */
+const bgCache = new Map();
+/** @type {Set<string>} */
+const bgFailed = new Set();
 
-function ensureMapBg() {
-  if (mapBgImg || mapBgFailed) return mapBgImg;
+function ensureMapBg(src) {
+  if (!src) return null;
+  if (bgFailed.has(src)) return null;
+  if (bgCache.has(src)) return bgCache.get(src);
   const img = new Image();
   img.decoding = "async";
-  img.onload = () => {
-    mapBgImg = img;
-  };
-  img.onerror = () => {
-    mapBgFailed = true;
-  };
-  img.src = "/maps/bg_victoria.jpg";
-  // assign early so subsequent frames can check naturalWidth
-  mapBgImg = img;
+  img.onload = () => bgCache.set(src, img);
+  img.onerror = () => bgFailed.add(src);
+  img.src = src;
+  bgCache.set(src, img);
   return img;
+}
+
+function resolveTheme(state) {
+  return state.mapTheme || MAP_THEMES.victoria;
 }
 
 export function drawScene(ctx, state) {
@@ -48,34 +51,36 @@ export function drawScene(ctx, state) {
     pathMap ||
     stage.map.paths ||
     (stage.map.path ? { workflow: stage.map.path } : {});
+  const theme = resolveTheme(state);
 
   ctx.clearRect(0, 0, width, height);
   ctx.imageSmoothingEnabled = true;
 
-  drawMapBackground(ctx, width, height);
+  drawMapBackground(ctx, width, height, theme);
   if (state.hazardState) {
     drawHazards(ctx, state.hazardState, stage.map, state.now || 0);
   }
 
   ctx.imageSmoothingEnabled = false;
   const pathEntries = Object.entries(paths);
+  const pathStyle = pathStyleForTheme(theme);
   pathEntries.forEach(([key, points]) => {
     drawPath(ctx, points, {
       color:
         key === "event"
-          ? "rgba(196, 150, 70, 0.55)"
+          ? pathStyle.event
           : key === "pathC"
-            ? "rgba(160, 100, 140, 0.5)"
-            : "rgba(160, 130, 90, 0.55)",
+            ? pathStyle.pathC
+            : pathStyle.main,
       lane:
         key === "event"
-          ? "rgba(230, 190, 100, 0.75)"
+          ? pathStyle.eventLane
           : key === "pathC"
-            ? "rgba(210, 140, 180, 0.7)"
-            : "rgba(210, 180, 120, 0.75)",
+            ? pathStyle.pathCLane
+            : pathStyle.mainLane,
       label: key === "event" ? "B路" : key === "pathC" ? "C路" : "A路",
       labelColor:
-        key === "event" ? "#fbbf24" : key === "pathC" ? "#f472b6" : "#fde68a",
+        key === "event" ? "#fbbf24" : key === "pathC" ? "#f472b6" : theme.accent || "#fde68a",
     });
   });
   drawPads(ctx, pads, padsOccupied, hoverPad, !!state.placingType);
@@ -91,6 +96,81 @@ export function drawScene(ctx, state) {
   if (state.placingType) {
     drawPlacingBanner(ctx, width, height, state.placingDef);
   }
+  // 地圖名角標
+  if (theme?.nameZh) {
+    ctx.save();
+    ctx.globalAlpha = 0.72;
+    ctx.fillStyle = "rgba(20, 16, 12, 0.55)";
+    ctx.fillRect(10, height - 28, 140, 20);
+    ctx.fillStyle = theme.accent || "#fde68a";
+    ctx.font = "700 11px 'PingFang TC', system-ui";
+    ctx.textAlign = "left";
+    ctx.fillText(theme.nameZh, 18, height - 14);
+    ctx.restore();
+  }
+}
+
+function pathStyleForTheme(theme) {
+  const path = theme?.path || "dirt";
+  if (path === "ice") {
+    return {
+      main: "rgba(140, 180, 210, 0.5)",
+      mainLane: "rgba(200, 230, 250, 0.75)",
+      event: "rgba(100, 160, 200, 0.5)",
+      eventLane: "rgba(160, 210, 240, 0.75)",
+      pathC: "rgba(120, 140, 190, 0.5)",
+      pathCLane: "rgba(180, 190, 230, 0.7)",
+    };
+  }
+  if (path === "lava" || path === "rock") {
+    return {
+      main: "rgba(90, 50, 40, 0.55)",
+      mainLane: "rgba(180, 90, 50, 0.7)",
+      event: "rgba(120, 60, 30, 0.55)",
+      eventLane: "rgba(220, 120, 40, 0.75)",
+      pathC: "rgba(80, 40, 50, 0.5)",
+      pathCLane: "rgba(180, 80, 90, 0.7)",
+    };
+  }
+  if (path === "cloud") {
+    return {
+      main: "rgba(160, 170, 200, 0.45)",
+      mainLane: "rgba(230, 235, 255, 0.8)",
+      event: "rgba(140, 150, 210, 0.5)",
+      eventLane: "rgba(200, 210, 250, 0.75)",
+      pathC: "rgba(150, 140, 200, 0.5)",
+      pathCLane: "rgba(210, 190, 250, 0.7)",
+    };
+  }
+  if (path === "coral") {
+    return {
+      main: "rgba(30, 100, 120, 0.5)",
+      mainLane: "rgba(80, 200, 210, 0.7)",
+      event: "rgba(40, 90, 140, 0.5)",
+      eventLane: "rgba(100, 180, 230, 0.75)",
+      pathC: "rgba(60, 80, 140, 0.5)",
+      pathCLane: "rgba(140, 160, 220, 0.7)",
+    };
+  }
+  if (path === "gear") {
+    return {
+      main: "rgba(180, 100, 140, 0.45)",
+      mainLane: "rgba(250, 160, 190, 0.75)",
+      event: "rgba(200, 120, 80, 0.5)",
+      eventLane: "rgba(250, 180, 120, 0.75)",
+      pathC: "rgba(160, 100, 160, 0.5)",
+      pathCLane: "rgba(220, 150, 220, 0.7)",
+    };
+  }
+  // dirt / moss / root default
+  return {
+    main: "rgba(160, 130, 90, 0.55)",
+    mainLane: "rgba(210, 180, 120, 0.75)",
+    event: "rgba(196, 150, 70, 0.55)",
+    eventLane: "rgba(230, 190, 100, 0.75)",
+    pathC: "rgba(160, 100, 140, 0.5)",
+    pathCLane: "rgba(210, 140, 180, 0.7)",
+  };
 }
 
 function drawPlacingBanner(ctx, width, height, def) {
@@ -114,27 +194,30 @@ function drawPlacingBanner(ctx, width, height, def) {
   ctx.restore();
 }
 
-function drawMapBackground(ctx, width, height) {
-  // Always paint a clean meadow base first (readable deploy surface)
-  paintMeadowBase(ctx, width, height);
+function drawMapBackground(ctx, width, height, theme = MAP_THEMES.victoria) {
+  paintThemeBase(ctx, width, height, theme);
 
-  const bg = ensureMapBg();
-  if (bg && bg.complete && bg.naturalWidth > 0) {
-    // Lightly blend art on top so paths/pads stay clear
-    ctx.save();
-    ctx.globalAlpha = 0.55;
-    ctx.drawImage(bg, 0, 0, width, height);
-    ctx.restore();
+  const src = theme.bgImage || (theme.id === "victoria" ? "/maps/bg_victoria.jpg" : null);
+  const alpha = theme.bgAlpha != null ? theme.bgAlpha : src ? 0.45 : 0;
+  if (src && alpha > 0) {
+    const bg = ensureMapBg(src);
+    if (bg && bg.complete && bg.naturalWidth > 0) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(bg, 0, 0, width, height);
+      ctx.restore();
+    }
   }
 
-  // Soft sky strip + readability wash
+  // Soft sky strip
+  const skyTop = theme.sky?.[0] || "#9ec8e8";
   const sky = ctx.createLinearGradient(0, 0, 0, height * 0.28);
-  sky.addColorStop(0, "rgba(170, 210, 245, 0.55)");
-  sky.addColorStop(1, "rgba(170, 210, 245, 0)");
+  sky.addColorStop(0, hexToRgba(skyTop, 0.5));
+  sky.addColorStop(1, hexToRgba(skyTop, 0));
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, width, height * 0.28);
 
-  drawMeadowDecor(ctx, width, height);
+  drawThemeDecor(ctx, width, height, theme);
 
   const v = ctx.createRadialGradient(
     width * 0.5,
@@ -145,63 +228,154 @@ function drawMapBackground(ctx, width, height) {
     Math.max(width, height) * 0.75
   );
   v.addColorStop(0, "rgba(255, 255, 255, 0)");
-  v.addColorStop(1, "rgba(20, 40, 20, 0.18)");
+  v.addColorStop(1, "rgba(20, 20, 30, 0.22)");
   ctx.fillStyle = v;
   ctx.fillRect(0, 0, width, height);
 }
 
-function paintMeadowBase(ctx, width, height) {
+function hexToRgba(hex, a) {
+  if (!hex || hex[0] !== "#") return `rgba(150,180,200,${a})`;
+  const h = hex.length === 4
+    ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`
+    : hex;
+  const r = parseInt(h.slice(1, 3), 16);
+  const g = parseInt(h.slice(3, 5), 16);
+  const b = parseInt(h.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function paintThemeBase(ctx, width, height, theme) {
+  const sky = theme.sky || ["#9ec8e8", "#b8d9a0"];
+  const ground = theme.ground || ["#7ec46a", "#5a9a4e"];
   const g = ctx.createLinearGradient(0, 0, 0, height);
-  g.addColorStop(0, "#9ec8e8");
-  g.addColorStop(0.22, "#b8d9a0");
-  g.addColorStop(0.55, "#7ec46a");
-  g.addColorStop(1, "#5a9a4e");
+  g.addColorStop(0, sky[0]);
+  g.addColorStop(0.22, sky[1] || sky[0]);
+  g.addColorStop(0.55, ground[0]);
+  g.addColorStop(1, ground[1] || ground[0]);
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, width, height);
 
-  // Grass texture speckles
+  // texture speckles tinted by ground
   ctx.save();
   ctx.globalAlpha = 0.12;
   for (let i = 0; i < 80; i++) {
     const x = (i * 97) % width;
     const y = 80 + ((i * 53) % (height - 100));
-    ctx.fillStyle = i % 2 ? "#3d7a38" : "#d4f0a8";
+    ctx.fillStyle = i % 2 ? ground[1] || "#3d7a38" : sky[1] || "#d4f0a8";
     ctx.fillRect(x, y, 3, 2);
   }
   ctx.restore();
 }
 
-function drawMeadowDecor(ctx, w, h) {
+function drawThemeDecor(ctx, w, h, theme) {
+  const decor = theme.decor || "trees";
+  const accent = theme.accent || "#a3e635";
   ctx.save();
-  // soft hills
-  ctx.fillStyle = "rgba(70, 140, 70, 0.35)";
+
+  // soft hills / base mounds
+  ctx.fillStyle = hexToRgba(theme.ground?.[1] || "#468c46", 0.35);
   ctx.beginPath();
   ctx.ellipse(w * 0.2, h * 0.85, 220, 60, 0, 0, Math.PI * 2);
   ctx.ellipse(w * 0.7, h * 0.9, 280, 70, 0, 0, Math.PI * 2);
   ctx.fill();
-  const trees = [
-    [60, 80],
-    [90, 420],
-    [880, 90],
-    [850, 400],
-    [480, 40],
-  ];
-  for (const [x, y] of trees) {
-    ctx.fillStyle = "#6b4226";
-    ctx.fillRect(x + 14, y + 28, 10, 22);
-    ctx.fillStyle = "#2f8f3a";
-    ctx.beginPath();
-    ctx.arc(x + 19, y + 18, 22, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#49b84a";
-    ctx.beginPath();
-    ctx.arc(x + 12, y + 14, 14, 0, Math.PI * 2);
-    ctx.arc(x + 26, y + 14, 14, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#c43c2c";
-    ctx.fillRect(x + 10, y + 10, 4, 4);
-    ctx.fillRect(x + 24, y + 16, 4, 4);
+
+  if (decor === "trees" || decor === "mushrooms" || decor === "dragons") {
+    const trees = [
+      [60, 80],
+      [90, 420],
+      [880, 90],
+      [850, 400],
+      [480, 40],
+    ];
+    for (const [x, y] of trees) {
+      ctx.fillStyle = "#6b4226";
+      ctx.fillRect(x + 14, y + 28, 10, 22);
+      ctx.fillStyle = decor === "dragons" ? "#365314" : "#2f8f3a";
+      ctx.beginPath();
+      ctx.arc(x + 19, y + 18, 22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = decor === "mushrooms" ? "#a78bfa" : "#49b84a";
+      ctx.beginPath();
+      ctx.arc(x + 12, y + 14, 14, 0, Math.PI * 2);
+      ctx.arc(x + 26, y + 14, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = accent;
+      ctx.fillRect(x + 10, y + 10, 4, 4);
+      ctx.fillRect(x + 24, y + 16, 4, 4);
+    }
   }
+
+  if (decor === "rocks" || decor === "lava") {
+    const rocks = [
+      [70, 100],
+      [100, 400],
+      [860, 110],
+      [820, 390],
+      [450, 50],
+    ];
+    for (const [x, y] of rocks) {
+      ctx.fillStyle = decor === "lava" ? "#7f1d1d" : "#78716c";
+      ctx.beginPath();
+      ctx.moveTo(x, y + 20);
+      ctx.lineTo(x + 18, y);
+      ctx.lineTo(x + 36, y + 22);
+      ctx.closePath();
+      ctx.fill();
+      if (decor === "lava") {
+        ctx.fillStyle = accent;
+        ctx.fillRect(x + 12, y + 10, 6, 4);
+      }
+    }
+  }
+
+  if (decor === "clouds" || decor === "ice") {
+    const clouds = [
+      [80, 60],
+      [200, 40],
+      [700, 50],
+      [850, 70],
+      [480, 30],
+    ];
+    for (const [x, y] of clouds) {
+      ctx.fillStyle = decor === "ice" ? "rgba(224, 242, 254, 0.7)" : "rgba(255,255,255,0.55)";
+      ctx.beginPath();
+      ctx.ellipse(x, y, 36, 14, 0, 0, Math.PI * 2);
+      ctx.ellipse(x + 20, y - 6, 22, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  if (decor === "bubbles") {
+    for (let i = 0; i < 18; i++) {
+      const x = 40 + ((i * 53) % (w - 80));
+      const y = 60 + ((i * 71) % (h - 100));
+      ctx.strokeStyle = hexToRgba(accent, 0.45);
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(x, y, 4 + (i % 4), 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  if (decor === "gears") {
+    const gears = [
+      [70, 90],
+      [880, 100],
+      [90, 420],
+      [850, 400],
+    ];
+    for (const [x, y] of gears) {
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(x, y, 16, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x, y, 6, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
   ctx.restore();
 }
 

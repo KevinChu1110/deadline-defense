@@ -1,10 +1,15 @@
 import { CAMPAIGN_STAGES } from "./campaign.js";
+import { buildArenaStage, ARENA_BOSS_ROTATION } from "./bosses.js";
 
 export const STAGES = CAMPAIGN_STAGES;
 
 const PROGRESS_KEY = "deadline-defense-progress-v1";
 
 export function getStageById(id) {
+  if (typeof id === "string" && id.startsWith("arena-")) {
+    const bossId = id.slice("arena-".length);
+    return buildArenaStage(ARENA_BOSS_ROTATION.includes(bossId) ? bossId : undefined);
+  }
   return STAGES.find((s) => s.id === id) || STAGES[0];
 }
 
