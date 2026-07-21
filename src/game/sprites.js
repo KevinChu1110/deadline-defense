@@ -4,7 +4,7 @@
  * Body templates shared by family; colors come from CLASS_DEFS.
  */
 
-import { SPRITE_TEMPLATE } from "../data/specialists.js";
+import { SPRITE_TEMPLATE, PORTRAIT_FALLBACK } from "../data/specialists.js";
 
 const cache = new Map();
 
@@ -693,13 +693,24 @@ const lpcPortraitLoading = new Map();
  * Kick off loading of LPC idle portrait PNGs for UI cards.
  * Falls back to procedural pixel sprites until loaded.
  */
+function portraitSrcId(typeId) {
+  return PORTRAIT_FALLBACK[typeId] || typeId;
+}
+
 export function preloadLpcPortraits(ids = []) {
   for (const id of ids) {
+    const srcId = portraitSrcId(id);
     if (lpcPortraitCache.has(id) || lpcPortraitLoading.has(id)) continue;
+    // Reuse cached image of fallback source
+    if (srcId !== id && lpcPortraitCache.has(srcId)) {
+      lpcPortraitCache.set(id, lpcPortraitCache.get(srcId));
+      continue;
+    }
     const img = new Image();
     img.decoding = "async";
     const p = new Promise((resolve) => {
       img.onload = () => {
+        lpcPortraitCache.set(srcId, img);
         lpcPortraitCache.set(id, img);
         lpcPortraitLoading.delete(id);
         resolve(img);
@@ -708,7 +719,7 @@ export function preloadLpcPortraits(ids = []) {
         lpcPortraitLoading.delete(id);
         resolve(null);
       };
-      img.src = `/portraits/${id}.png`;
+      img.src = `/portraits/${srcId}.png`;
     });
     lpcPortraitLoading.set(id, p);
   }
@@ -716,11 +727,11 @@ export function preloadLpcPortraits(ids = []) {
 }
 
 export function getLpcPortrait(typeId) {
-  return lpcPortraitCache.get(typeId) || null;
+  return lpcPortraitCache.get(typeId) || lpcPortraitCache.get(portraitSrcId(typeId)) || null;
 }
 
 export function getSpecialistPortrait(typeId, def) {
-  const lpc = lpcPortraitCache.get(typeId);
+  const lpc = getLpcPortrait(typeId);
   if (lpc) return lpc;
   // fire-and-forget load so next re-render picks it up
   preloadLpcPortraits([typeId]);

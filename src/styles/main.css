@@ -922,6 +922,79 @@ body.is-dragging-job .specialist-card {
   opacity: 0.85;
 }
 
+/* Job change (field) */
+.job-change-box {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(122, 98, 72, 0.25);
+}
+
+.job-change-title {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #5a4028;
+  margin-bottom: 6px;
+}
+
+.job-change-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.job-change-btn {
+  appearance: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 2px solid color-mix(in srgb, var(--jc, #3d7a48) 55%, #8b5a2b);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(240, 230, 200, 0.55));
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+}
+
+.job-change-btn:hover:not(:disabled) {
+  filter: brightness(1.05);
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.job-change-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.job-change-btn .jc-name {
+  color: #3a2e22;
+}
+
+.job-change-btn .jc-meta {
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.job-change-max {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+}
+
+.char-pick.locked {
+  opacity: 0.55;
+  filter: grayscale(0.35);
+}
+
+.pick-badge.lock-badge {
+  background: #6b7280;
+  border-color: #4b5563;
+}
+
 .slot-empty {
   font-size: 1.4rem;
   font-weight: 800;

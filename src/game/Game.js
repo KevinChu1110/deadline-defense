@@ -13,7 +13,15 @@ import {
   rewardForWaveClear,
   rewardForStageWin,
   loadCardProgress,
+  spendMapleLeaves,
 } from "../data/card-progress.js";
+import {
+  canJobChange,
+  getNextJobIds,
+  markJobLearned,
+  getJobChangeCost,
+  canDeployJob,
+} from "../data/job-tree.js";
 import { buildPathMetrics } from "./path.js";
 import {
   createEnemy,
@@ -93,11 +101,16 @@ export class Game {
   setLoadout(ids) {
     const clean = [];
     for (const id of ids || []) {
-      if (SPECIALISTS[id] && !clean.includes(id) && clean.length < LOADOUT_MAX) {
+      if (
+        SPECIALISTS[id] &&
+        !clean.includes(id) &&
+        clean.length < LOADOUT_MAX &&
+        canDeployJob(id)
+      ) {
         clean.push(id);
       }
     }
-    if (!clean.length) clean.push(...DEFAULT_LOADOUT);
+    if (!clean.length) clean.push("beginner");
     this.loadout = clean;
     if (this.placingType && !this.loadout.includes(this.placingType)) {
       this.placingType = null;
@@ -189,6 +202,9 @@ export class Game {
       loadout: [...this.loadout],
       loadoutMax: LOADOUT_MAX,
       leaves: loadCardProgress().leaves,
+      jobChangeOptions: this.selectedSpecialistId
+        ? this.getJobChangeOptions(this.selectedSpecialistId)
+        : [],
     };
   }
 
@@ -340,6 +356,11 @@ export class Game {
       this.ui?.toast?.("此職業不在出戰名單");
       return false;
     }
+    if (!canDeployJob(this.placingType)) {
+      this.sfx.play("error");
+      this.ui?.toast?.("此職業尚未解鎖或學會");
+      return false;
+    }
     if (this.padsOccupied.has(padIndex)) {
       this.sfx.play("error");
       this.ui?.toast?.("此格已有角色");
@@ -403,6 +424,70 @@ export class Game {
     this.status = `已回收 ${s.def.code}（+${s.def.sellRefund} pts）`;
     this.sfx.play("sell");
     this.ui?.onState?.(this.getPublicState());
+  }
+
+  /** 場上轉職 */
+  tryJobChange(unitId, toJobId) {
+    if (this.result || this.pausedForReward) return false;
+    const unit = this.specialists.find((s) => s.id === unitId);
+    if (!unit) {
+      this.sfx.play("error");
+      return false;
+    }
+    const fromId = unit.typeId;
+    const check = canJobChange(fromId, toJobId);
+    if (!check.ok) {
+      this.sfx.play("error");
+      this.ui?.toast?.(check.reason || "無法轉職");
+      return false;
+    }
+    const cost = check.cost ?? getJobChangeCost(fromId, toJobId);
+    const spent = spendMapleLeaves(cost, "job-change");
+    if (!spent.ok) {
+      this.sfx.play("error");
+      this.ui?.toast?.(spent.reason || "楓葉不足");
+      return false;
+    }
+    const level = getCardLevel(toJobId);
+    const def = buildLeveledDef(toJobId, level);
+    if (!def) {
+      this.sfx.play("error");
+      return false;
+    }
+    unit.typeId = toJobId;
+    unit.def = def;
+    unit.cardLevel = level;
+    unit.cooldown = 0;
+    unit.attackT = 0;
+    markJobLearned(toJobId);
+    this.sfx.play("waveClear");
+    this.fx.push(...createParticles(unit.x, unit.y, def.color, 18, { speed: 100, life: 0.5 }));
+    this.fx.push(createRing(unit.x, unit.y, def.color, { maxR: 50, life: 0.4 }));
+    this.status = `${SPECIALISTS[fromId]?.nameZh || fromId} → ${def.nameZh}！（🍁−${cost}）`;
+    this.ui?.toast?.(`轉職成功！${def.nameZh}（🍁−${cost}）`);
+    this.ui?.onState?.(this.getPublicState());
+    return true;
+  }
+
+  getJobChangeOptions(unitId) {
+    const unit = this.specialists.find((s) => s.id === unitId);
+    if (!unit) return [];
+    const leaves = loadCardProgress().leaves;
+    return getNextJobIds(unit.typeId).map((toId) => {
+      const check = canJobChange(unit.typeId, toId);
+      const cost = getJobChangeCost(unit.typeId, toId);
+      const def = SPECIALISTS[toId];
+      return {
+        id: toId,
+        nameZh: def?.nameZh || toId,
+        skill: def?.skill || "",
+        tier: def?.jobTier ?? 4,
+        cost,
+        ok: check.ok && leaves >= cost,
+        reason: !check.ok ? check.reason : leaves < cost ? "楓葉不足" : "",
+        color: def?.color || "#888",
+      };
+    });
   }
 
   pickReward(itemId) {

@@ -21,6 +21,13 @@ import {
   preloadLpcPortraits,
 } from "./game/sprites.js";
 import { getJobIcon } from "./data/job-icons.js";
+import {
+  canDeployJob,
+  isJobUnlocked,
+  getUnlockHint,
+  isSeriesUnlocked,
+  markJobLearned,
+} from "./data/job-tree.js";
 import { sfx } from "./audio/sfx.js";
 import { STAGES, loadProgress, isStageUnlocked, getStageByIndex } from "./data/stages.js";
 import { getItem } from "./data/items.js";
@@ -252,9 +259,13 @@ function openCharacterSelect() {
   if (!game) return;
   screen = "char";
   hideAllOverlays();
-  draftLoadout = [...(game.loadout?.length ? game.loadout : DEFAULT_LOADOUT)];
+  // Only keep deployable jobs in draft
+  const prev = game.loadout?.length ? game.loadout : DEFAULT_LOADOUT;
+  draftLoadout = prev.filter((id) => canDeployJob(id));
+  if (!draftLoadout.length) draftLoadout = ["beginner"];
+  markJobLearned("beginner");
   if (els.loadoutMaxLabel) els.loadoutMaxLabel.textContent = String(LOADOUT_MAX);
-  focusCardId = draftLoadout[0] || SPECIALIST_ORDER[0];
+  focusCardId = draftLoadout[0] || "beginner";
   filterSeries = "all";
   filterFamily = "all";
   renderFilterTabs();
@@ -264,7 +275,6 @@ function openCharacterSelect() {
   void sfx.unlock();
   void sfx.preload();
   if (!sfx.muted) sfx.startBgm("menu");
-  // LPC portraits: reload grid once images arrive
   void preloadLpcPortraits(SPECIALIST_ORDER).then(() => {
     if (screen === "char") renderCharacterGrid();
   });
@@ -378,14 +388,17 @@ function renderUpgradePanel(typeId) {
   const upLabel =
     lv >= CARD_MAX_LEVEL ? "已滿級 ★5" : `升級 ★${lv + 1} · 🍁${cost}`;
 
+  const deployable = canDeployJob(typeId);
+  const lockHint = getUnlockHint(typeId);
+  const tier = d.jobTier ?? 4;
   els.upgradeDetail.innerHTML = `
     <div class="detail-hero">
       <div class="detail-title-row">
         <img class="detail-job-icon" src="${getJobIcon(typeId, d.family)}" alt="" draggable="false" />
         <div class="detail-title">${d.nameZh}</div>
       </div>
-      <div class="stars">${starsText(lv)}</div>
-      <div class="detail-role">${d.role}</div>
+      <div class="stars">${deployable ? starsText(lv) : "🔒 " + lockHint}</div>
+      <div class="detail-role">${tier === 0 ? "初心者" : `${tier} 轉`} · ${d.role}</div>
       <div class="detail-stats">
         <span>部署 <b>${leveled.cost}</b></span>
         <span>傷害 <b>${leveled.damage}</b></span>
@@ -394,8 +407,9 @@ function renderUpgradePanel(typeId) {
       </div>
       <p class="detail-blurb">${d.blurb || ""}</p>
       <div class="detail-actions">
-        <button type="button" class="btn ${inLoadout ? "danger" : "primary maple-primary"}" id="btn-detail-toggle">
-          ${inLoadout ? "移出隊伍" : "加入隊伍"}
+        <button type="button" class="btn ${inLoadout ? "danger" : "primary maple-primary"}" id="btn-detail-toggle"
+          ${!deployable && !inLoadout ? "disabled" : ""}>
+          ${inLoadout ? "移出隊伍" : deployable ? "加入隊伍" : "未解鎖"}
         </button>
         <button type="button" class="btn" id="btn-detail-upgrade" ${canUpgrade || lv >= CARD_MAX_LEVEL ? "" : "disabled"}>
           ${upLabel}
@@ -429,6 +443,11 @@ function renderUpgradePanel(typeId) {
 }
 
 function toggleDraftJob(id) {
+  if (!canDeployJob(id) && !draftLoadout.includes(id)) {
+    sfx.play("error");
+    showToast(getUnlockHint(id));
+    return;
+  }
   const idx = draftLoadout.indexOf(id);
   if (idx >= 0) {
     draftLoadout.splice(idx, 1);
@@ -520,13 +539,20 @@ function buildCharPickButton(id) {
   const focused = focusCardId === id;
   const lv = getCardLevel(id);
   const leveled = buildLeveledDef(id, lv);
+  const deployable = canDeployJob(id);
+  const unlocked = isJobUnlocked(id);
+  const lockHint = getUnlockHint(id);
 
   const btn = document.createElement("button");
   btn.type = "button";
   btn.className =
-    "char-pick" + (selected ? " selected" : "") + (focused ? " focused" : "");
+    "char-pick" +
+    (selected ? " selected" : "") +
+    (focused ? " focused" : "") +
+    (!deployable ? " locked" : "");
   btn.setAttribute("aria-pressed", selected ? "true" : "false");
   btn.setAttribute("role", "listitem");
+  if (!deployable) btn.title = lockHint;
 
   const hero = getSpecialistPortrait(id, d);
   const avatarWrap = document.createElement("div");
@@ -556,14 +582,16 @@ function buildCharPickButton(id) {
 
   const body = document.createElement("div");
   body.className = "char-pick-body";
+  const tier = d.jobTier ?? 4;
+  const tierLabel = tier === 0 ? "初" : `${tier}轉`;
   body.innerHTML = `
     <div class="job-name">${d.nameZh}</div>
-    <div class="stars">${starsText(lv)}</div>
+    <div class="stars">${deployable ? starsText(lv) : "🔒"}</div>
     <div class="job-meta">
       <span class="pill-cost">${leveled.cost} 點</span>
-      <span class="pill-fam">${FAMILY_LABELS[d.family]?.label || ""}</span>
+      <span class="pill-fam">${tierLabel}</span>
     </div>
-    <div class="job-skill-one">${d.skill}</div>
+    <div class="job-skill-one">${deployable ? d.skill : lockHint}</div>
   `;
 
   if (selected) {
@@ -571,12 +599,16 @@ function buildCharPickButton(id) {
     badge.className = "pick-badge";
     badge.textContent = "出戰";
     btn.appendChild(badge);
+  } else if (!deployable) {
+    const badge = document.createElement("span");
+    badge.className = "pick-badge lock-badge";
+    badge.textContent = unlocked ? "未學會" : "鎖定";
+    btn.appendChild(badge);
   }
 
   btn.append(avatarWrap, body);
   btn.addEventListener("click", () => {
     void sfx.unlock();
-    // First tap focuses detail; if already focused, toggle loadout
     if (focusCardId === id) {
       toggleDraftJob(id);
     } else {
@@ -605,7 +637,7 @@ function confirmLoadoutAndStart() {
   renderSpecialistCards(game.getPublicState());
   ui.onState(game.getPublicState());
   const names = draftLoadout.map((id) => SPECIALISTS[id].nameZh).join("、");
-  showToast(`出戰：${names} — 把職業卡拖到地圖綠格部署`);
+  showToast(`出戰：${names} — 拖到地圖部署；點角色可轉職`);
   sfx.play("waveStart");
 }
 
@@ -716,17 +748,53 @@ const ui = {
 
     const selected = game.specialists.find((s) => s.id === state.selectedSpecialistId);
     if (selected) {
-      els.selectedInfo.innerHTML = `<strong style="color:${selected.def.color}">${selected.def.nameZh}</strong> · ${selected.def.skill}<br/><span class="muted">${selected.def.blurb}<br/>擊殺 ${selected.kills} · 賣出 +${selected.def.sellRefund}</span>`;
+      renderSelectedUnitPanel(selected, state);
     } else if (state.placingType) {
       const d = SPECIALISTS[state.placingType];
       els.selectedInfo.innerHTML = `準備部署：<strong style="color:${d.color}">${d.nameZh}</strong><br/><span class="muted">拖到綠格鬆手 · 【${d.skill}】${d.blurb}</span>`;
     } else {
-      els.selectedInfo.textContent = "按住右側職業卡，拖到地圖綠格部署";
+      els.selectedInfo.innerHTML =
+        `拖職業卡到地圖部署<br/><span class="muted">點場上角色可<strong>轉職</strong>（花楓葉）</span>`;
     }
 
     renderSpecialistCards(state);
   },
 };
+
+function renderSelectedUnitPanel(selected, state) {
+  if (!els.selectedInfo) return;
+  const tier = selected.def.jobTier ?? 4;
+  const opts = state.jobChangeOptions || [];
+  let html = `<strong style="color:${selected.def.color}">${selected.def.nameZh}</strong>`;
+  html += ` · ${tier === 0 ? "初心者" : `${tier} 轉`} · ${selected.def.skill}<br/>`;
+  html += `<span class="muted">${selected.def.blurb}<br/>擊殺 ${selected.kills} · 賣出 +${selected.def.sellRefund}</span>`;
+
+  if (opts.length) {
+    html += `<div class="job-change-box"><div class="job-change-title">場上轉職 🍁${state.leaves ?? 0}</div>`;
+    html += `<div class="job-change-list">`;
+    for (const o of opts) {
+      const disabled = !o.ok ? "disabled" : "";
+      const tip = o.reason || `🍁${o.cost}`;
+      html += `<button type="button" class="job-change-btn" data-to="${o.id}" ${disabled}
+        style="--jc:${o.color}" title="${tip}">
+        <span class="jc-name">${o.nameZh}</span>
+        <span class="jc-meta">${o.ok ? `🍁${o.cost}` : o.reason || "鎖定"}</span>
+      </button>`;
+    }
+    html += `</div></div>`;
+  } else {
+    html += `<p class="muted job-change-max">已達轉職終點（或暫無分支）</p>`;
+  }
+  els.selectedInfo.innerHTML = html;
+  els.selectedInfo.querySelectorAll(".job-change-btn:not([disabled])").forEach((btn) => {
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      void sfx.unlock();
+      const toId = btn.getAttribute("data-to");
+      game.tryJobChange(selected.id, toId);
+    });
+  });
+}
 
 game = new Game(canvas, ui, STAGES[0]?.id || "s01-victoria");
 

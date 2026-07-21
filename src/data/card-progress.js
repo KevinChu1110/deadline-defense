@@ -272,6 +272,18 @@ export function addMapleLeaves(amount, reason = "") {
   return { ...progress, gained: amount, reason };
 }
 
+/** @returns {{ ok: boolean, reason?: string, leaves?: number }} */
+export function spendMapleLeaves(amount, reason = "") {
+  const cost = Math.max(0, Math.floor(amount));
+  const progress = loadCardProgress();
+  if (progress.leaves < cost) {
+    return { ok: false, reason: "楓葉不足", leaves: progress.leaves };
+  }
+  progress.leaves -= cost;
+  saveCardProgress(progress);
+  return { ok: true, leaves: progress.leaves, spent: cost, reason };
+}
+
 export function getLeaves() {
   return loadCardProgress().leaves;
 }
