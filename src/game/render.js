@@ -2,6 +2,7 @@
 
 import {
   getSpecialistSprite,
+  getSpecialistPortrait,
   getCoreSprite,
   drawSprite,
   drawProjectileSprite,
@@ -73,7 +74,7 @@ export function drawScene(ctx, state) {
         key === "event" ? "#fbbf24" : key === "pathC" ? "#f472b6" : "#fde68a",
     });
   });
-  drawPads(ctx, pads, padsOccupied, hoverPad);
+  drawPads(ctx, pads, padsOccupied, hoverPad, !!state.placingType);
   if (buffs.coreSlowRadius > 0) {
     drawCoreSlowAura(ctx, core, buffs.coreSlowRadius, state.now);
   }
@@ -83,36 +84,87 @@ export function drawScene(ctx, state) {
   drawProjectiles(ctx, projectiles, state.now);
   drawFx(ctx, fx);
   drawRangePreview(ctx, state);
+  if (state.placingType) {
+    drawPlacingBanner(ctx, width, height, state.placingDef);
+  }
+}
+
+function drawPlacingBanner(ctx, width, height, def) {
+  const name = def?.nameZh || "職業";
+  const msg = `部署「${name}」— 點綠色「+」格（或再點右側職業卡自動部署）`;
+  ctx.save();
+  ctx.font = "700 14px 'PingFang TC', system-ui, sans-serif";
+  const tw = ctx.measureText(msg).width + 28;
+  const x = (width - tw) / 2;
+  const y = 14;
+  ctx.fillStyle = "rgba(30, 50, 30, 0.78)";
+  ctx.strokeStyle = "rgba(120, 220, 140, 0.9)";
+  ctx.lineWidth = 2;
+  roundRectPath(ctx, x, y, tw, 30, 10);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#ecfdf5";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(msg, width / 2, y + 15);
+  ctx.restore();
 }
 
 function drawMapBackground(ctx, width, height) {
+  // Always paint a clean meadow base first (readable deploy surface)
+  paintMeadowBase(ctx, width, height);
+
   const bg = ensureMapBg();
   if (bg && bg.complete && bg.naturalWidth > 0) {
+    // Lightly blend art on top so paths/pads stay clear
+    ctx.save();
+    ctx.globalAlpha = 0.55;
     ctx.drawImage(bg, 0, 0, width, height);
-    // Soft vignette so units stay readable
-    const v = ctx.createRadialGradient(
-      width * 0.5,
-      height * 0.5,
-      Math.min(width, height) * 0.25,
-      width * 0.5,
-      height * 0.5,
-      Math.max(width, height) * 0.72
-    );
-    v.addColorStop(0, "rgba(20, 40, 25, 0)");
-    v.addColorStop(1, "rgba(12, 28, 18, 0.35)");
-    ctx.fillStyle = v;
-    ctx.fillRect(0, 0, width, height);
-    return;
+    ctx.restore();
   }
-  // Fallback painted meadow
+
+  // Soft sky strip + readability wash
+  const sky = ctx.createLinearGradient(0, 0, 0, height * 0.28);
+  sky.addColorStop(0, "rgba(170, 210, 245, 0.55)");
+  sky.addColorStop(1, "rgba(170, 210, 245, 0)");
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, width, height * 0.28);
+
+  drawMeadowDecor(ctx, width, height);
+
+  const v = ctx.createRadialGradient(
+    width * 0.5,
+    height * 0.55,
+    Math.min(width, height) * 0.2,
+    width * 0.5,
+    height * 0.5,
+    Math.max(width, height) * 0.75
+  );
+  v.addColorStop(0, "rgba(255, 255, 255, 0)");
+  v.addColorStop(1, "rgba(20, 40, 20, 0.18)");
+  ctx.fillStyle = v;
+  ctx.fillRect(0, 0, width, height);
+}
+
+function paintMeadowBase(ctx, width, height) {
   const g = ctx.createLinearGradient(0, 0, 0, height);
-  g.addColorStop(0, "#8ec8f0");
-  g.addColorStop(0.35, "#a8d898");
-  g.addColorStop(0.7, "#6aaa58");
-  g.addColorStop(1, "#4a8a40");
+  g.addColorStop(0, "#9ec8e8");
+  g.addColorStop(0.22, "#b8d9a0");
+  g.addColorStop(0.55, "#7ec46a");
+  g.addColorStop(1, "#5a9a4e");
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, width, height);
-  drawMeadowDecor(ctx, width, height);
+
+  // Grass texture speckles
+  ctx.save();
+  ctx.globalAlpha = 0.12;
+  for (let i = 0; i < 80; i++) {
+    const x = (i * 97) % width;
+    const y = 80 + ((i * 53) % (height - 100));
+    ctx.fillStyle = i % 2 ? "#3d7a38" : "#d4f0a8";
+    ctx.fillRect(x, y, 3, 2);
+  }
+  ctx.restore();
 }
 
 function drawMeadowDecor(ctx, w, h) {
@@ -165,25 +217,33 @@ function drawCoreSlowAura(ctx, core, radius, now) {
 
 function drawPath(ctx, points, style = {}) {
   ctx.save();
-  // Dirt road outer rim
-  ctx.strokeStyle = style.color || "rgba(160, 130, 90, 0.55)";
-  ctx.lineWidth = 40;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
+
+  // Dark earth outline
+  ctx.strokeStyle = "rgba(90, 60, 30, 0.55)";
+  ctx.lineWidth = 44;
   ctx.beginPath();
   points.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
   ctx.stroke();
 
-  // Path surface
-  ctx.strokeStyle = style.lane || "rgba(210, 180, 120, 0.75)";
-  ctx.lineWidth = 26;
+  // Dirt road
+  ctx.strokeStyle = style.color || "rgba(196, 150, 70, 0.9)";
+  ctx.lineWidth = 34;
   ctx.beginPath();
   points.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
   ctx.stroke();
 
-  // Center dashed guide
-  ctx.setLineDash([10, 12]);
-  ctx.strokeStyle = "rgba(255, 248, 220, 0.35)";
+  // Light path surface
+  ctx.strokeStyle = style.lane || "rgba(232, 200, 130, 0.95)";
+  ctx.lineWidth = 22;
+  ctx.beginPath();
+  points.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
+  ctx.stroke();
+
+  // Center dashes
+  ctx.setLineDash([12, 10]);
+  ctx.strokeStyle = "rgba(255, 248, 220, 0.55)";
   ctx.lineWidth = 2;
   ctx.beginPath();
   points.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
@@ -204,39 +264,62 @@ function drawPath(ctx, points, style = {}) {
   ctx.restore();
 }
 
-function drawPads(ctx, pads, occupied, hoverPad) {
+function drawPads(ctx, pads, occupied, hoverPad, placing = false) {
   pads.forEach((pad, i) => {
     const isOcc = occupied.has(i);
     const isHover = hoverPad === i;
-    const r = 20;
+    const r = placing && !isOcc ? 26 : 22;
     ctx.save();
-    // pixel diamond pad
     ctx.translate(Math.round(pad.x), Math.round(pad.y));
+
+    // Soft ground shadow / platform disc so pads stay visible on any map art
+    ctx.beginPath();
+    ctx.ellipse(0, 6, r + 6, r * 0.45, 0, 0, Math.PI * 2);
+    ctx.fillStyle = isOcc ? "rgba(40, 30, 20, 0.25)" : "rgba(30, 60, 30, 0.35)";
+    ctx.fill();
+
+    // Stone tile base
     ctx.beginPath();
     ctx.moveTo(0, -r);
     ctx.lineTo(r, 0);
     ctx.lineTo(0, r);
     ctx.lineTo(-r, 0);
     ctx.closePath();
+
     if (isOcc) {
-      ctx.fillStyle = "rgba(15, 23, 42, 0.15)";
-      ctx.strokeStyle = "rgba(148, 163, 184, 0.25)";
-    } else if (isHover) {
-      ctx.fillStyle = "rgba(74, 222, 128, 0.28)";
-      ctx.strokeStyle = "#4ade80";
+      ctx.fillStyle = "rgba(80, 70, 55, 0.45)";
+      ctx.strokeStyle = "rgba(180, 160, 120, 0.5)";
+    } else if (isHover || placing) {
+      ctx.fillStyle = isHover ? "rgba(80, 220, 120, 0.75)" : "rgba(70, 200, 110, 0.55)";
+      ctx.strokeStyle = "#ecfdf5";
+      // Outer pulse ring while placing
+      if (placing) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(0, 0, r + 10, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(74, 222, 128, 0.55)";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+        ctx.stroke();
+        ctx.restore();
+      }
     } else {
-      ctx.fillStyle = "rgba(74, 222, 128, 0.1)";
-      ctx.strokeStyle = "rgba(74, 222, 128, 0.45)";
+      ctx.fillStyle = "rgba(90, 190, 110, 0.42)";
+      ctx.strokeStyle = "rgba(220, 255, 220, 0.85)";
     }
-    ctx.lineWidth = isHover ? 2.5 : 1.5;
+    ctx.lineWidth = isHover ? 3 : 2;
     ctx.fill();
     ctx.stroke();
+
     if (!isOcc) {
-      ctx.fillStyle = "#a7f3d0";
-      ctx.font = "700 14px ui-monospace, monospace";
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "800 16px system-ui, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
+      ctx.shadowColor = "rgba(0,0,0,0.45)";
+      ctx.shadowBlur = 3;
       ctx.fillText("+", 0, 1);
+      ctx.shadowBlur = 0;
     }
     ctx.restore();
   });
@@ -290,18 +373,17 @@ function drawSpecialists(ctx, specialists, selectedId, now) {
   for (const s of specialists) {
     const selected = s.id === selectedId;
     const bob = s.attackT > 0 ? 0 : Math.sin(now * 4 + s.id) * 1.5;
-    const lunge = s.attackT > 0 ? (s.facing || 1) * 4 : 0;
-    const sprite = getSpecialistSprite(s.typeId, s.def, {
-      attackT: s.attackT || 0,
-      now,
-    });
+    const lunge = s.attackT > 0 ? (s.facing || 1) * 3 : 0;
+    // Prefer AI chibi portrait on the field; fall back to pixel sprite
+    const portrait = getSpecialistPortrait(s.typeId, s.def);
+    const usePortrait = portrait && (portrait.naturalWidth > 0 || portrait.width > 0);
 
     ctx.save();
     if (selected) {
       ctx.beginPath();
       ctx.arc(s.x, s.y, s.def.range, 0, Math.PI * 2);
-      ctx.fillStyle = hexAlpha(s.def.color, 0.07);
-      ctx.strokeStyle = hexAlpha(s.def.color, 0.35);
+      ctx.fillStyle = hexAlpha(s.def.color, 0.08);
+      ctx.strokeStyle = hexAlpha(s.def.color, 0.4);
       ctx.lineWidth = 1.5;
       ctx.setLineDash([4, 6]);
       ctx.fill();
@@ -311,43 +393,72 @@ function drawSpecialists(ctx, specialists, selectedId, now) {
 
     ctx.fillStyle = "rgba(0,0,0,0.35)";
     ctx.beginPath();
-    ctx.ellipse(s.x, s.y + 16, 14, 4, 0, 0, Math.PI * 2);
+    ctx.ellipse(s.x, s.y + 18, 16, 5, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    drawSprite(ctx, sprite, s.x + lunge, s.y - 6, {
-      bob,
-      flip: (s.facing || 1) < 0,
-    });
+    const dx = s.x + lunge;
+    const dy = s.y - 8 + bob;
+    if (usePortrait) {
+      const size = 48;
+      ctx.imageSmoothingEnabled = true;
+      // Soft circular-ish clip via rounded rect card
+      ctx.save();
+      const left = Math.round(dx - size / 2);
+      const top = Math.round(dy - size / 2 - 4);
+      roundRectPath(ctx, left, top, size, size, 10);
+      ctx.clip();
+      ctx.drawImage(portrait, left, top, size, size);
+      ctx.restore();
+      // Card border
+      ctx.strokeStyle = selected ? "#fff8e0" : "rgba(255, 255, 255, 0.7)";
+      ctx.lineWidth = selected ? 2.5 : 1.5;
+      roundRectPath(ctx, left, top, size, size, 10);
+      ctx.stroke();
+    } else {
+      const sprite = getSpecialistSprite(s.typeId, s.def, {
+        attackT: s.attackT || 0,
+        now,
+      });
+      drawSprite(ctx, sprite, dx, dy, {
+        bob: 0,
+        flip: (s.facing || 1) < 0,
+      });
+    }
 
-    // skill flash ring while attacking
     if (s.attackT > 0) {
       const dur = s.def.anim?.attackDuration || 0.3;
       const a = s.attackT / dur;
       ctx.beginPath();
       ctx.strokeStyle = hexAlpha(s.def.color, a * 0.8);
       ctx.lineWidth = 2;
-      ctx.arc(s.x, s.y, 20 + (1 - a) * 16, 0, Math.PI * 2);
+      ctx.arc(s.x, s.y, 22 + (1 - a) * 16, 0, Math.PI * 2);
       ctx.stroke();
     }
 
     const label = s.def.nameZh || s.def.code;
     ctx.font = "700 10px 'PingFang TC', 'Noto Sans TC', system-ui";
     const tw = Math.max(28, ctx.measureText(label).width + 8);
-    ctx.fillStyle = "rgba(60, 40, 20, 0.82)";
-    ctx.fillRect(Math.round(s.x - tw / 2), Math.round(s.y + 20), tw, 13);
+    ctx.fillStyle = "rgba(40, 30, 18, 0.82)";
+    ctx.fillRect(Math.round(s.x - tw / 2), Math.round(s.y + 22), tw, 13);
     ctx.strokeStyle = "rgba(255, 220, 120, 0.55)";
-    ctx.strokeRect(Math.round(s.x - tw / 2), Math.round(s.y + 20), tw, 13);
+    ctx.strokeRect(Math.round(s.x - tw / 2), Math.round(s.y + 22), tw, 13);
     ctx.fillStyle = "#ffe9a8";
     ctx.textAlign = "center";
-    ctx.fillText(label, s.x, s.y + 30);
+    ctx.fillText(label, s.x, s.y + 32);
 
-    if (selected) {
-      ctx.strokeStyle = "#fff";
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(Math.round(s.x - 18), Math.round(s.y - 26), 36, 48);
-    }
     ctx.restore();
   }
+}
+
+function roundRectPath(ctx, x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rr);
+  ctx.arcTo(x + w, y + h, x, y + h, rr);
+  ctx.arcTo(x, y + h, x, y, rr);
+  ctx.arcTo(x, y, x + w, y, rr);
+  ctx.closePath();
 }
 
 function drawEnemies(ctx, enemies, now) {

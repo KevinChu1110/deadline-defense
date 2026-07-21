@@ -785,7 +785,14 @@ function renderSpecialistCards(state) {
         showToast("場上人數已滿");
         return;
       }
-      game.setPlacing(state?.placingType === id ? null : id);
+      // Toggle placing; if already selected this job, deploy on first free pad
+      // (helps mobile users who struggle to hit small map pads)
+      if (state?.placingType === id) {
+        game.tryDeployAuto();
+        return;
+      }
+      game.setPlacing(id);
+      showToast(`${d.nameZh} 就緒 — 點地圖綠格「+」，或再點一次此卡自動部署`);
     });
     els.specialistList.appendChild(btn);
   }

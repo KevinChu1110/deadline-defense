@@ -212,7 +212,11 @@ export class Game {
       const d = SPECIALISTS[typeId];
       const lv = getCardLevel(typeId);
       const cost = this.getDeployCost(typeId);
-      this.status = `部署 ${d.nameZh} ★${lv} — 點綠格（費用 ${cost}）`;
+      this.status = `部署 ${d.nameZh} ★${lv} — 點地圖綠格「+」（${cost} 點）`;
+      // Keep canvas cursor as a hint
+      if (this.canvas) this.canvas.style.cursor = "cell";
+    } else if (this.canvas) {
+      this.canvas.style.cursor = "crosshair";
     }
     this.ui?.onState?.(this.getPublicState());
   }
@@ -359,6 +363,9 @@ export class Game {
     this.padsOccupied.set(padIndex, unit.id);
     this.points -= def.cost;
     this.selectedSpecialistId = unit.id;
+    // Stay in placing mode so user can deploy multiple of same? Better: clear after one
+    this.placingType = null;
+    if (this.canvas) this.canvas.style.cursor = "crosshair";
     this.status = `已部署 ${def.nameZh} ★${level}`;
     this.sfx.play("deploy");
     this.fx.push(...createParticles(pad.x, pad.y, def.color, 12, { speed: 90, life: 0.4 }));
@@ -678,28 +685,59 @@ export class Game {
     });
   }
 
+  /** Nearest free pad within maxDist, or any pad for hover. */
+  findPadAt(x, y, { freeOnly = false, maxDist = 48 } = {}) {
+    const pads = this.stage?.map?.pads || [];
+    let best = null;
+    let bestD = maxDist;
+    for (let i = 0; i < pads.length; i++) {
+      if (freeOnly && this.padsOccupied.has(i)) continue;
+      const p = pads[i];
+      const d = Math.hypot(p.x - x, p.y - y);
+      if (d <= bestD) {
+        bestD = d;
+        best = i;
+      }
+    }
+    return best;
+  }
+
+  /** Deploy selected job on first free pad (mobile-friendly shortcut). */
+  tryDeployAuto() {
+    if (!this.placingType) {
+      this.ui?.toast?.("先點右側職業，再點地圖綠格");
+      return false;
+    }
+    const pads = this.stage?.map?.pads || [];
+    for (let i = 0; i < pads.length; i++) {
+      if (!this.padsOccupied.has(i)) {
+        return this.tryDeployAtPad(i);
+      }
+    }
+    this.sfx.play("error");
+    this.ui?.toast?.("沒有空的部署格了");
+    return false;
+  }
+
   _bindInput() {
     const toWorld = (evt) => {
       const rect = this.canvas.getBoundingClientRect();
-      const sx = this.canvas.width / rect.width;
-      const sy = this.canvas.height / rect.height;
+      // Guard against 0-size rect during layout
+      const rw = Math.max(1, rect.width);
+      const rh = Math.max(1, rect.height);
+      const sx = this.canvas.width / rw;
+      const sy = this.canvas.height / rh;
       return {
         x: (evt.clientX - rect.left) * sx,
         y: (evt.clientY - rect.top) * sy,
       };
     };
 
-    const padAt = (x, y) => {
-      for (let i = 0; i < this.stage.map.pads.length; i++) {
-        const p = this.stage.map.pads[i];
-        if (Math.hypot(p.x - x, p.y - y) <= 24) return i;
-      }
-      return null;
-    };
-
     this.canvas.addEventListener("pointermove", (evt) => {
       const { x, y } = toWorld(evt);
-      this.hoverPad = padAt(x, y);
+      // Larger hover radius while placing
+      const maxDist = this.placingType ? 56 : 40;
+      this.hoverPad = this.findPadAt(x, y, { freeOnly: false, maxDist });
     });
 
     this.canvas.addEventListener("pointerleave", () => {
@@ -707,16 +745,27 @@ export class Game {
     });
 
     this.canvas.addEventListener("pointerdown", (evt) => {
-      this.sfx.unlock();
-      if (this.pausedForReward) return;
+      evt.preventDefault();
+      void this.sfx.unlock();
+      if (this.pausedForReward || this.result) return;
       const { x, y } = toWorld(evt);
+
       if (this.placingType) {
-        const pad = padAt(x, y);
+        // Prefer free pads; generous snap radius for touch
+        let pad = this.findPadAt(x, y, { freeOnly: true, maxDist: 64 });
+        if (pad == null) {
+          pad = this.findPadAt(x, y, { freeOnly: false, maxDist: 48 });
+        }
         if (pad != null) {
           this.tryDeployAtPad(pad);
           return;
         }
+        this.sfx.play("error");
+        this.ui?.toast?.("請點亮綠色的「+」部署格");
+        this.ui?.onState?.(this.getPublicState());
+        return;
       }
+
       if (!this.selectSpecialistAt(x, y)) {
         this.selectedSpecialistId = null;
         this.ui?.onState?.(this.getPublicState());
