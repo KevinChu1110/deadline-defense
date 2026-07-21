@@ -63,12 +63,18 @@ const els = {
   leavesBalance: document.querySelector("#leaves-balance"),
   upgradePanel: document.querySelector("#upgrade-panel"),
   upgradeDetail: document.querySelector("#upgrade-detail"),
+  seriesTabs: document.querySelector("#series-tabs"),
+  familyTabs: document.querySelector("#family-tabs"),
+  charDetail: document.querySelector("#char-detail"),
   rewardOverlay: document.querySelector("#reward-overlay"),
   rewardList: document.querySelector("#reward-list"),
 };
 
 /** Currently focused card for upgrade detail */
 let focusCardId = null;
+/** Filters for character picker */
+let filterSeries = "all"; // all | adventurer | royal | hero
+let filterFamily = "all"; // all | warrior | mage | archer | thief | pirate
 
 let toastTimer = 0;
 /** @type {'stage' | 'char' | 'play' | 'reward' | 'result'} */
@@ -224,6 +230,8 @@ function renderStageList() {
 
 function openStageSelect() {
   screen = "stage";
+  closeCharacterChrome();
+  document.body.classList.remove("in-play");
   hideAllOverlays();
   renderStageList();
   setOverlayOpen(els.stageOverlay, true);
@@ -237,13 +245,21 @@ function openCharacterSelect() {
   draftLoadout = [...(game.loadout?.length ? game.loadout : DEFAULT_LOADOUT)];
   if (els.loadoutMaxLabel) els.loadoutMaxLabel.textContent = String(LOADOUT_MAX);
   focusCardId = draftLoadout[0] || SPECIALIST_ORDER[0];
+  filterSeries = "all";
+  filterFamily = "all";
+  renderFilterTabs();
   renderCharacterGrid();
   setOverlayOpen(els.charOverlay, true);
+  document.body.classList.add("char-select-open");
   ui.onState(game.getPublicState());
 }
 
+function closeCharacterChrome() {
+  document.body.classList.remove("char-select-open");
+}
+
 function starsText(level) {
-  return "★".repeat(level) + "☆".repeat(CARD_MAX_LEVEL - level);
+  return "★".repeat(level) + "☆".repeat(Math.max(0, CARD_MAX_LEVEL - level));
 }
 
 function refreshLeavesUI() {
@@ -252,10 +268,70 @@ function refreshLeavesUI() {
   }
 }
 
+function renderFilterTabs() {
+  if (els.seriesTabs) {
+    const seriesOpts = [
+      { id: "all", label: "全部", emoji: "📋" },
+      { id: "adventurer", label: "冒險家", emoji: "🧭" },
+      { id: "royal", label: "皇家", emoji: "👑" },
+      { id: "hero", label: "英雄團", emoji: "🦸" },
+    ];
+    els.seriesTabs.innerHTML = "";
+    for (const opt of seriesOpts) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip" + (filterSeries === opt.id ? " active" : "");
+      b.textContent = `${opt.emoji} ${opt.label}`;
+      b.addEventListener("click", () => {
+        filterSeries = opt.id;
+        renderFilterTabs();
+        renderCharacterGrid();
+        sfx.play("uiClick");
+      });
+      els.seriesTabs.appendChild(b);
+    }
+  }
+  if (els.familyTabs) {
+    const famOpts = [
+      { id: "all", label: "全部", emoji: "✨" },
+      { id: "warrior", label: "劍士", emoji: "⚔️" },
+      { id: "mage", label: "法師", emoji: "🔮" },
+      { id: "archer", label: "弓手", emoji: "🏹" },
+      { id: "thief", label: "盜賊", emoji: "🥷" },
+      { id: "pirate", label: "海盜", emoji: "⚓" },
+    ];
+    els.familyTabs.innerHTML = "";
+    for (const opt of famOpts) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip" + (filterFamily === opt.id ? " active" : "");
+      b.textContent = `${opt.emoji} ${opt.label}`;
+      b.addEventListener("click", () => {
+        filterFamily = opt.id;
+        renderFilterTabs();
+        renderCharacterGrid();
+        sfx.play("uiClick");
+      });
+      els.familyTabs.appendChild(b);
+    }
+  }
+}
+
+function filteredJobIds() {
+  return SPECIALIST_ORDER.filter((id) => {
+    const d = SPECIALISTS[id];
+    if (!d) return false;
+    if (filterSeries !== "all" && (d.series || "adventurer") !== filterSeries) return false;
+    if (filterFamily !== "all" && (d.family || "warrior") !== filterFamily) return false;
+    return true;
+  });
+}
+
 function renderUpgradePanel(typeId) {
   if (!els.upgradePanel || !els.upgradeDetail) return;
   if (!typeId || !SPECIALISTS[typeId]) {
-    els.upgradePanel.hidden = true;
+    els.upgradePanel.classList.add("empty-detail");
+    els.upgradeDetail.innerHTML = `<p class="muted center-hint">點選職業卡查看詳情與升級</p>`;
     return;
   }
   focusCardId = typeId;
@@ -265,34 +341,71 @@ function renderUpgradePanel(typeId) {
   const cost = getUpgradeCost(typeId, lv);
   const leaves = loadCardProgress().leaves;
   const leveled = buildLeveledDef(typeId, lv);
+  const inLoadout = draftLoadout.includes(typeId);
 
-  els.upgradePanel.hidden = false;
+  els.upgradePanel.classList.remove("empty-detail");
   const rows = tree
     .map(
       (s) => `
       <div class="skill-row ${s.unlocked ? "" : "locked"}">
         <span class="lv">★${s.level}</span>
         <span>
-          <strong>${s.unlocked ? "✅" : "🔒"} ${s.name}</strong>
+          <strong>${s.unlocked ? "✓" : "🔒"} ${s.name}</strong>
           <small>${s.desc}</small>
         </span>
       </div>`
     )
     .join("");
 
-  const nextLine =
-    lv >= CARD_MAX_LEVEL
-      ? `<p class="muted">已滿級 ★${CARD_MAX_LEVEL}</p>`
-      : `<p>下一級 ★${lv + 1} 費用：<strong>🍁 ${cost}</strong>（持有 ${leaves}）${
-          leaves < cost ? " · 楓葉不足" : ""
-        }</p>`;
+  const canUpgrade = lv < CARD_MAX_LEVEL && leaves >= cost;
+  const upLabel =
+    lv >= CARD_MAX_LEVEL ? "已滿級 ★5" : `升級 ★${lv + 1} · 🍁${cost}`;
 
   els.upgradeDetail.innerHTML = `
-    <h3>${d.emoji || ""} ${d.nameZh} ${starsText(lv)}</h3>
-    <p class="muted">部署費 ${leveled.cost}（基礎 ${d.cost}）· 傷 ${leveled.damage} · 射程 ${leveled.range} · 間隔 ${leveled.interval}s</p>
-    ${nextLine}
-    ${rows}
+    <div class="detail-hero">
+      <div class="detail-title">${d.emoji || ""} ${d.nameZh}</div>
+      <div class="stars">${starsText(lv)}</div>
+      <div class="detail-role">${d.role}</div>
+      <div class="detail-stats">
+        <span>部署 <b>${leveled.cost}</b></span>
+        <span>傷害 <b>${leveled.damage}</b></span>
+        <span>射程 <b>${leveled.range}</b></span>
+        <span>間隔 <b>${leveled.interval}s</b></span>
+      </div>
+      <p class="detail-blurb">${d.blurb || ""}</p>
+      <div class="detail-actions">
+        <button type="button" class="btn ${inLoadout ? "danger" : "primary maple-primary"}" id="btn-detail-toggle">
+          ${inLoadout ? "移出隊伍" : "加入隊伍"}
+        </button>
+        <button type="button" class="btn" id="btn-detail-upgrade" ${canUpgrade || lv >= CARD_MAX_LEVEL ? "" : "disabled"}>
+          ${upLabel}
+        </button>
+      </div>
+    </div>
+    <div class="skill-list">${rows}</div>
   `;
+
+  els.upgradeDetail.querySelector("#btn-detail-toggle")?.addEventListener("click", (ev) => {
+    ev.preventDefault();
+    void sfx.unlock();
+    toggleDraftJob(typeId);
+  });
+  els.upgradeDetail.querySelector("#btn-detail-upgrade")?.addEventListener("click", (ev) => {
+    ev.preventDefault();
+    void sfx.unlock();
+    if (lv >= CARD_MAX_LEVEL) return;
+    const result = tryUpgradeCard(typeId);
+    if (!result.ok) {
+      sfx.play("error");
+      showToast(result.reason || "無法升級");
+      renderUpgradePanel(typeId);
+      refreshLeavesUI();
+      return;
+    }
+    sfx.play("waveClear");
+    showToast(`${d.nameZh} → ★${result.level}！解鎖「${result.skill?.name || "新技能"}」`);
+    renderCharacterGrid();
+  });
 }
 
 function toggleDraftJob(id) {
@@ -309,147 +422,131 @@ function toggleDraftJob(id) {
     draftLoadout.push(id);
     sfx.play("deploy");
   }
+  focusCardId = id;
   renderCharacterGrid();
 }
 
-function renderCharacterGrid() {
-  els.charGrid.innerHTML = "";
-  els.loadoutCount.textContent = String(draftLoadout.length);
+function renderLoadoutSlots() {
+  if (!els.loadoutPreview) return;
+  els.loadoutPreview.innerHTML = "";
+  for (let i = 0; i < LOADOUT_MAX; i++) {
+    const id = draftLoadout[i];
+    const slot = document.createElement("button");
+    slot.type = "button";
+    slot.className = "loadout-slot" + (id ? " filled" : "");
+    if (!id) {
+      slot.innerHTML = `<span class="slot-empty">+</span><small>${i + 1}</small>`;
+      slot.disabled = true;
+    } else {
+      const d = SPECIALISTS[id];
+      const lv = getCardLevel(id);
+      const hero = getSpecialistPortrait(id, d);
+      const c = document.createElement("canvas");
+      c.width = hero.width;
+      c.height = hero.height;
+      const ctx = c.getContext("2d");
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(hero, 0, 0);
+      slot.appendChild(c);
+      const cap = document.createElement("span");
+      cap.className = "slot-cap";
+      cap.textContent = `${d.nameZh} ★${lv}`;
+      slot.appendChild(cap);
+      slot.title = "點擊移出";
+      slot.addEventListener("click", () => {
+        void sfx.unlock();
+        toggleDraftJob(id);
+      });
+    }
+    els.loadoutPreview.appendChild(slot);
+  }
+}
 
-  // group by series → family
-  const groups = {};
-  for (const id of SPECIALIST_ORDER) {
-    const d = SPECIALISTS[id];
-    if (!d) continue;
-    const sk = d.series || "adventurer";
-    const fk = d.family || "warrior";
-    if (!groups[sk]) groups[sk] = {};
-    if (!groups[sk][fk]) groups[sk][fk] = [];
-    groups[sk][fk].push(id);
+function renderCharacterGrid() {
+  if (!els.charGrid) return;
+  els.charGrid.innerHTML = "";
+  if (els.loadoutCount) els.loadoutCount.textContent = String(draftLoadout.length);
+
+  const ids = filteredJobIds();
+  if (!ids.length) {
+    const empty = document.createElement("p");
+    empty.className = "muted center-hint";
+    empty.textContent = "此篩選沒有職業，試試「全部」";
+    els.charGrid.appendChild(empty);
+  } else {
+    for (const id of ids) {
+      els.charGrid.appendChild(buildCharPickButton(id));
+    }
   }
 
-  for (const seriesKey of ["adventurer", "royal", "hero"]) {
-    const families = groups[seriesKey];
-    if (!families) continue;
-    const seriesMeta = SERIES_LABELS[seriesKey] || { label: seriesKey, emoji: "" };
-    const seriesHead = document.createElement("div");
-    seriesHead.className = "char-series-head";
-    seriesHead.textContent = `${seriesMeta.emoji} ${seriesMeta.label}`;
-    els.charGrid.appendChild(seriesHead);
-
-    for (const famKey of ["warrior", "mage", "archer", "thief", "pirate"]) {
-      const ids = families[famKey];
-      if (!ids?.length) continue;
-      const famMeta = FAMILY_LABELS[famKey] || { label: famKey, emoji: "" };
-      const famHead = document.createElement("div");
-      famHead.className = "char-family-head";
-      famHead.textContent = `${famMeta.emoji} ${famMeta.label}`;
-      els.charGrid.appendChild(famHead);
-
-      const row = document.createElement("div");
-      row.className = "char-row";
-      for (const id of ids) {
-        row.appendChild(buildCharPickButton(id));
-      }
-      els.charGrid.appendChild(row);
+  // Keep focus valid
+  if (focusCardId && !SPECIALISTS[focusCardId]) focusCardId = ids[0] || null;
+  if (focusCardId && filterSeries !== "all") {
+    const d = SPECIALISTS[focusCardId];
+    if (d && (d.series || "adventurer") !== filterSeries && !ids.includes(focusCardId)) {
+      focusCardId = ids[0] || focusCardId;
     }
   }
 
   refreshLeavesUI();
-  els.loadoutPreview.innerHTML = draftLoadout.length
-    ? draftLoadout
-        .map((id) => {
-          const d = SPECIALISTS[id];
-          const lv = getCardLevel(id);
-          return `<span class="loadout-chip"><span class="dot" style="background:${d.color}"></span>${d.emoji || ""} ${d.nameZh} ★${lv}</span>`;
-        })
-        .join("")
-    : `<span class="muted">尚未選擇 — 請點上方職業卡（最多 ${LOADOUT_MAX} 名）</span>`;
-
-  els.btnCharConfirm.disabled = draftLoadout.length === 0;
-  renderUpgradePanel(focusCardId);
+  renderLoadoutSlots();
+  if (els.btnCharConfirm) els.btnCharConfirm.disabled = draftLoadout.length === 0;
+  renderUpgradePanel(focusCardId || ids[0] || null);
 }
 
 function buildCharPickButton(id) {
   const d = SPECIALISTS[id];
   const selected = draftLoadout.includes(id);
+  const focused = focusCardId === id;
   const lv = getCardLevel(id);
   const leveled = buildLeveledDef(id, lv);
-  const nextCost = getUpgradeCost(id, lv);
-  const leaves = loadCardProgress().leaves;
 
   const btn = document.createElement("button");
   btn.type = "button";
-  btn.className = "char-pick" + (selected ? " selected" : "");
+  btn.className =
+    "char-pick" + (selected ? " selected" : "") + (focused ? " focused" : "");
   btn.setAttribute("aria-pressed", selected ? "true" : "false");
+  btn.setAttribute("role", "listitem");
 
-  const hero = getSpecialistHero(id, d);
+  const hero = getSpecialistPortrait(id, d);
   const c = document.createElement("canvas");
   c.width = hero.width;
   c.height = hero.height;
+  c.className = "char-avatar";
   const ctx = c.getContext("2d");
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(hero, 0, 0);
 
-  btn.appendChild(c);
-  const name = document.createElement("div");
-  name.className = "job-name";
-  name.textContent = `${d.emoji || ""} ${d.nameZh}`;
-  const stars = document.createElement("div");
-  stars.className = "stars";
-  stars.textContent = starsText(lv);
-  const role = document.createElement("div");
-  role.className = "job-role";
-  role.textContent = `${d.role} · ${d.weapon || ""}`;
-  const skill = document.createElement("div");
-  skill.className = "job-skill";
-  const unlockedNames = (leveled.skillNames || [d.skill]).slice(-2);
-  skill.textContent = `技能：${unlockedNames.join(" / ")}`;
-  const traits = document.createElement("div");
-  traits.className = "job-traits";
-  traits.innerHTML = (d.traits || [])
-    .map((t) => `<span class="trait-tag">${t}</span>`)
-    .join("");
-  const cost = document.createElement("div");
-  cost.className = "job-cost";
-  cost.textContent = `部署 ${leveled.cost} · 傷 ${leveled.damage} · 射程 ${leveled.range}`;
+  const body = document.createElement("div");
+  body.className = "char-pick-body";
+  body.innerHTML = `
+    <div class="job-name">${d.emoji || ""} ${d.nameZh}</div>
+    <div class="stars">${starsText(lv)}</div>
+    <div class="job-meta">
+      <span class="pill-cost">${leveled.cost} 點</span>
+      <span class="pill-fam">${FAMILY_LABELS[d.family]?.label || ""}</span>
+    </div>
+    <div class="job-skill-one">${d.skill}</div>
+  `;
 
-  const upBtn = document.createElement("button");
-  upBtn.type = "button";
-  upBtn.className = "upgrade-btn" + (lv >= CARD_MAX_LEVEL ? " maxed" : "");
-  if (lv >= CARD_MAX_LEVEL) {
-    upBtn.textContent = "MAX ★5";
-    upBtn.disabled = true;
-  } else {
-    upBtn.textContent = `升級 🍁${nextCost}`;
-    upBtn.disabled = leaves < nextCost;
+  if (selected) {
+    const badge = document.createElement("span");
+    badge.className = "pick-badge";
+    badge.textContent = "出戰";
+    btn.appendChild(badge);
   }
-  upBtn.addEventListener("click", (ev) => {
-    ev.stopPropagation();
-    void sfx.unlock();
-    focusCardId = id;
-    const result = tryUpgradeCard(id);
-    if (!result.ok) {
-      sfx.play("error");
-      showToast(result.reason || "無法升級");
-      renderUpgradePanel(id);
-      refreshLeavesUI();
-      return;
-    }
-    sfx.play("waveClear");
-    showToast(
-      `${d.nameZh} → ★${result.level}！解鎖「${result.skill?.name || "新技能"}」`
-    );
-    renderCharacterGrid();
-  });
 
-  btn.append(name, stars, role, skill, traits, cost, upBtn);
-
+  btn.append(c, body);
   btn.addEventListener("click", () => {
     void sfx.unlock();
-    focusCardId = id;
-    renderUpgradePanel(id);
-    toggleDraftJob(id);
+    // First tap focuses detail; if already focused, toggle loadout
+    if (focusCardId === id) {
+      toggleDraftJob(id);
+    } else {
+      focusCardId = id;
+      sfx.play("uiClick");
+      renderCharacterGrid();
+    }
   });
   return btn;
 }
@@ -461,15 +558,17 @@ function confirmLoadoutAndStart() {
     return;
   }
   clearRunState();
+  closeCharacterChrome();
   game.loadStage(pendingStageId);
   game.setLoadout(draftLoadout);
   hideAllOverlays();
   screen = "play";
+  document.body.classList.add("in-play");
   refreshWaveIntel();
   renderSpecialistCards(game.getPublicState());
   ui.onState(game.getPublicState());
   const names = draftLoadout.map((id) => SPECIALISTS[id].nameZh).join("、");
-  showToast(`出戰：${names}`);
+  showToast(`出戰：${names} — 點右側職業再點地圖綠格`);
   sfx.play("waveStart");
 }
 
