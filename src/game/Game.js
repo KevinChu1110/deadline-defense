@@ -212,7 +212,7 @@ export class Game {
       const d = SPECIALISTS[typeId];
       const lv = getCardLevel(typeId);
       const cost = this.getDeployCost(typeId);
-      this.status = `部署 ${d.nameZh} ★${lv} — 點地圖綠格「+」（${cost} 點）`;
+      this.status = `部署 ${d.nameZh} ★${lv} — 拖到綠格「+」鬆手（${cost} 點）`;
       // Keep canvas cursor as a hint
       if (this.canvas) this.canvas.style.cursor = "cell";
     } else if (this.canvas) {
@@ -685,6 +685,22 @@ export class Game {
     });
   }
 
+  /** Client (viewport) coords → canvas world coords. */
+  clientToWorld(clientX, clientY) {
+    const rect = this.canvas.getBoundingClientRect();
+    const rw = Math.max(1, rect.width);
+    const rh = Math.max(1, rect.height);
+    return {
+      x: (clientX - rect.left) * (this.canvas.width / rw),
+      y: (clientY - rect.top) * (this.canvas.height / rh),
+      inside:
+        clientX >= rect.left &&
+        clientX <= rect.right &&
+        clientY >= rect.top &&
+        clientY <= rect.bottom,
+    };
+  }
+
   /** Nearest free pad within maxDist, or any pad for hover. */
   findPadAt(x, y, { freeOnly = false, maxDist = 48 } = {}) {
     const pads = this.stage?.map?.pads || [];
@@ -702,10 +718,56 @@ export class Game {
     return best;
   }
 
+  /** Update hover pad from client pointer (used while dragging from UI cards). */
+  updateHoverFromClient(clientX, clientY, { maxDist = 72 } = {}) {
+    const { x, y, inside } = this.clientToWorld(clientX, clientY);
+    if (!inside) {
+      this.hoverPad = null;
+      return null;
+    }
+    this.hoverPad = this.findPadAt(x, y, { freeOnly: false, maxDist });
+    return this.hoverPad;
+  }
+
+  /**
+   * Drop a job at client coordinates (drag-and-drop deploy).
+   * @returns {boolean}
+   */
+  tryDeployAtClient(typeId, clientX, clientY) {
+    if (this.result || this.pausedForReward) return false;
+    if (!typeId || !this.loadout.includes(typeId)) {
+      this.sfx.play("error");
+      this.ui?.toast?.("此職業不在出戰名單");
+      return false;
+    }
+    const prev = this.placingType;
+    this.placingType = typeId;
+    const { x, y, inside } = this.clientToWorld(clientX, clientY);
+    if (!inside) {
+      this.placingType = prev;
+      this.sfx.play("error");
+      this.ui?.toast?.("請拖到地圖上的綠色「+」格");
+      return false;
+    }
+    let pad = this.findPadAt(x, y, { freeOnly: true, maxDist: 80 });
+    if (pad == null) pad = this.findPadAt(x, y, { freeOnly: false, maxDist: 64 });
+    if (pad == null) {
+      this.placingType = prev;
+      this.sfx.play("error");
+      this.ui?.toast?.("請拖到綠色部署格附近鬆手");
+      this.hoverPad = null;
+      this.ui?.onState?.(this.getPublicState());
+      return false;
+    }
+    const ok = this.tryDeployAtPad(pad);
+    if (!ok) this.placingType = prev;
+    return ok;
+  }
+
   /** Deploy selected job on first free pad (mobile-friendly shortcut). */
   tryDeployAuto() {
     if (!this.placingType) {
-      this.ui?.toast?.("先點右側職業，再點地圖綠格");
+      this.ui?.toast?.("先拖職業卡到地圖，或點選後再部署");
       return false;
     }
     const pads = this.stage?.map?.pads || [];
@@ -720,48 +782,32 @@ export class Game {
   }
 
   _bindInput() {
-    const toWorld = (evt) => {
-      const rect = this.canvas.getBoundingClientRect();
-      // Guard against 0-size rect during layout
-      const rw = Math.max(1, rect.width);
-      const rh = Math.max(1, rect.height);
-      const sx = this.canvas.width / rw;
-      const sy = this.canvas.height / rh;
-      return {
-        x: (evt.clientX - rect.left) * sx,
-        y: (evt.clientY - rect.top) * sy,
-      };
-    };
-
     this.canvas.addEventListener("pointermove", (evt) => {
-      const { x, y } = toWorld(evt);
-      // Larger hover radius while placing
+      if (this._externalDrag) return; // card-drag owns hover
+      const { x, y } = this.clientToWorld(evt.clientX, evt.clientY);
       const maxDist = this.placingType ? 56 : 40;
       this.hoverPad = this.findPadAt(x, y, { freeOnly: false, maxDist });
     });
 
     this.canvas.addEventListener("pointerleave", () => {
+      if (this._externalDrag) return;
       this.hoverPad = null;
     });
 
     this.canvas.addEventListener("pointerdown", (evt) => {
-      evt.preventDefault();
       void this.sfx.unlock();
       if (this.pausedForReward || this.result) return;
-      const { x, y } = toWorld(evt);
+      const { x, y } = this.clientToWorld(evt.clientX, evt.clientY);
 
       if (this.placingType) {
-        // Prefer free pads; generous snap radius for touch
         let pad = this.findPadAt(x, y, { freeOnly: true, maxDist: 64 });
-        if (pad == null) {
-          pad = this.findPadAt(x, y, { freeOnly: false, maxDist: 48 });
-        }
+        if (pad == null) pad = this.findPadAt(x, y, { freeOnly: false, maxDist: 48 });
         if (pad != null) {
           this.tryDeployAtPad(pad);
           return;
         }
         this.sfx.play("error");
-        this.ui?.toast?.("請點亮綠色的「+」部署格");
+        this.ui?.toast?.("請點綠色「+」格，或從右側拖曳職業卡到地圖");
         this.ui?.onState?.(this.getPublicState());
         return;
       }

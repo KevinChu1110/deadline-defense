@@ -196,8 +196,60 @@ body {
   background: rgba(255, 255, 255, 0.4);
   color: inherit;
   text-align: left;
-  cursor: pointer;
+  cursor: grab;
+  touch-action: none; /* allow custom drag without page scroll */
+  user-select: none;
+  -webkit-user-select: none;
   transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.specialist-card:active:not(.disabled) {
+  cursor: grabbing;
+}
+
+/* Floating ghost while dragging a job onto the map */
+.drag-ghost {
+  position: fixed;
+  z-index: 200;
+  pointer-events: none;
+  transform: translate(-50%, -60%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.35));
+}
+
+.drag-ghost canvas {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  border: 2px solid #fff8e0;
+  background: rgba(255, 255, 255, 0.9);
+  image-rendering: auto;
+}
+
+.drag-ghost span {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #fff8e0;
+  background: rgba(40, 60, 30, 0.85);
+  border: 1px solid rgba(120, 200, 120, 0.7);
+  border-radius: 999px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
+body.is-dragging-job {
+  cursor: grabbing !important;
+}
+
+body.is-dragging-job #game {
+  cursor: cell !important;
+}
+
+body.is-dragging-job .specialist-card {
+  cursor: grabbing;
 }
 
 .specialist-card:hover:not(.disabled) {

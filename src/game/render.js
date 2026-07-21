@@ -91,7 +91,7 @@ export function drawScene(ctx, state) {
 
 function drawPlacingBanner(ctx, width, height, def) {
   const name = def?.nameZh || "職業";
-  const msg = `部署「${name}」— 點綠色「+」格（或再點右側職業卡自動部署）`;
+  const msg = `部署「${name}」— 拖到綠色「+」格鬆手（或點格部署）`;
   ctx.save();
   ctx.font = "700 14px 'PingFang TC', system-ui, sans-serif";
   const tw = ctx.measureText(msg).width + 28;

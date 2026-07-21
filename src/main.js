@@ -605,7 +605,7 @@ function confirmLoadoutAndStart() {
   renderSpecialistCards(game.getPublicState());
   ui.onState(game.getPublicState());
   const names = draftLoadout.map((id) => SPECIALISTS[id].nameZh).join("、");
-  showToast(`出戰：${names} — 點右側職業再點地圖綠格`);
+  showToast(`出戰：${names} — 把職業卡拖到地圖綠格部署`);
   sfx.play("waveStart");
 }
 
@@ -711,7 +711,7 @@ const ui = {
     // loadout hint
     const names = (state.loadout || []).map((id) => SPECIALISTS[id]?.nameZh).filter(Boolean);
     els.loadoutHint.textContent = names.length
-      ? `出戰名單：${names.join("、")}（點卡片再點地圖部署）`
+      ? `出戰名單：${names.join("、")}（拖到地圖綠格部署）`
       : "請先完成角色選擇";
 
     const selected = game.specialists.find((s) => s.id === state.selectedSpecialistId);
@@ -719,9 +719,9 @@ const ui = {
       els.selectedInfo.innerHTML = `<strong style="color:${selected.def.color}">${selected.def.nameZh}</strong> · ${selected.def.skill}<br/><span class="muted">${selected.def.blurb}<br/>擊殺 ${selected.kills} · 賣出 +${selected.def.sellRefund}</span>`;
     } else if (state.placingType) {
       const d = SPECIALISTS[state.placingType];
-      els.selectedInfo.innerHTML = `準備部署：<strong style="color:${d.color}">${d.nameZh}</strong><br/><span class="muted">【${d.skill}】${d.blurb}<br/>「${d.quote}」</span>`;
+      els.selectedInfo.innerHTML = `準備部署：<strong style="color:${d.color}">${d.nameZh}</strong><br/><span class="muted">拖到綠格鬆手 · 【${d.skill}】${d.blurb}</span>`;
     } else {
-      els.selectedInfo.textContent = "點右側職業卡開始部署";
+      els.selectedInfo.textContent = "按住右側職業卡，拖到地圖綠格部署";
     }
 
     renderSpecialistCards(state);
@@ -730,8 +730,171 @@ const ui = {
 
 game = new Game(canvas, ui, STAGES[0]?.id || "s01-victoria");
 
+/** Active drag from specialist card → map */
+let cardDrag = null; // { typeId, ghost, pointerId, moved, startX, startY }
+
+function endCardDrag(clientX, clientY, { cancel = false } = {}) {
+  if (!cardDrag) return;
+  const { typeId, ghost } = cardDrag;
+  if (game) game._externalDrag = false;
+
+  document.removeEventListener("pointermove", onCardDragMove);
+  document.removeEventListener("pointerup", onCardDragUp);
+  document.removeEventListener("pointercancel", onCardDragCancel);
+
+  ghost?.remove();
+  document.body.classList.remove("is-dragging-job");
+
+  const moved = cardDrag.moved;
+  cardDrag = null;
+
+  if (cancel || !game || !moved) {
+    // Rebuild cards if we skipped mid-drag
+    if (game) renderSpecialistCards(game.getPublicState());
+    return;
+  }
+
+  void sfx.unlock();
+  game.setPlacing(typeId);
+  const ok = game.tryDeployAtClient(typeId, clientX, clientY);
+  if (!ok) {
+    game.hoverPad = null;
+    ui.onState(game.getPublicState());
+  }
+  renderSpecialistCards(game.getPublicState());
+}
+
+function onCardDragMove(e) {
+  if (!cardDrag || e.pointerId !== cardDrag.pointerId) return;
+  const dx = e.clientX - cardDrag.startX;
+  const dy = e.clientY - cardDrag.startY;
+  if (!cardDrag.moved && Math.hypot(dx, dy) > 8) {
+    cardDrag.moved = true;
+    document.body.classList.add("is-dragging-job");
+    if (game) {
+      game._externalDrag = true;
+      game.setPlacing(cardDrag.typeId);
+    }
+  }
+  if (!cardDrag.moved) return;
+  e.preventDefault();
+  const g = cardDrag.ghost;
+  g.style.left = `${e.clientX}px`;
+  g.style.top = `${e.clientY}px`;
+  if (game) {
+    game.updateHoverFromClient(e.clientX, e.clientY, { maxDist: 80 });
+  }
+}
+
+function onCardDragUp(e) {
+  if (!cardDrag || e.pointerId !== cardDrag.pointerId) return;
+  const moved = cardDrag.moved;
+  const typeId = cardDrag.typeId;
+  if (!moved) {
+    // Treat as simple click: select for place / auto-deploy toggle
+    endCardDrag(e.clientX, e.clientY, { cancel: true });
+    handleSpecialistCardTap(typeId);
+    return;
+  }
+  endCardDrag(e.clientX, e.clientY);
+}
+
+function onCardDragCancel(e) {
+  if (!cardDrag || e.pointerId !== cardDrag.pointerId) return;
+  endCardDrag(e.clientX, e.clientY, { cancel: true });
+  if (game) {
+    game.setPlacing(null);
+    game.hoverPad = null;
+    ui.onState(game.getPublicState());
+  }
+}
+
+function handleSpecialistCardTap(id) {
+  if (!game || screen !== "play") return;
+  const state = game.getPublicState();
+  if (state.result || state.pausedForReward) return;
+  const lv = getCardLevel(id);
+  const leveled = buildLeveledDef(id, lv);
+  const d = SPECIALISTS[id];
+  if (state.points < leveled.cost) {
+    sfx.play("error");
+    showToast("部署點數不足");
+    return;
+  }
+  if (state.teamCount >= (state.teamLimit ?? 6)) {
+    sfx.play("error");
+    showToast("場上人數已滿");
+    return;
+  }
+  if (state.placingType === id) {
+    game.tryDeployAuto();
+    return;
+  }
+  game.setPlacing(id);
+  showToast(`${d.nameZh}：拖到地圖綠格，或再點一次自動部署`);
+}
+
+function beginSpecialistDrag(e, id, d) {
+  if (e.button != null && e.button !== 0) return;
+  if (!game || screen !== "play") return;
+  const state = game.getPublicState();
+  if (state.result || state.pausedForReward) return;
+  const lv = getCardLevel(id);
+  const leveled = buildLeveledDef(id, lv);
+  if (state.points < leveled.cost) {
+    sfx.play("error");
+    showToast("部署點數不足");
+    return;
+  }
+  if (state.teamCount >= (state.teamLimit ?? 6)) {
+    sfx.play("error");
+    showToast("場上人數已滿");
+    return;
+  }
+
+  void sfx.unlock();
+  e.preventDefault();
+
+  const ghost = document.createElement("div");
+  ghost.className = "drag-ghost";
+  ghost.setAttribute("aria-hidden", "true");
+  const portrait = getSpecialistPortrait(id, d);
+  const gCanvas = document.createElement("canvas");
+  gCanvas.width = portrait.width || 64;
+  gCanvas.height = portrait.height || 64;
+  const gctx = gCanvas.getContext("2d");
+  gctx.imageSmoothingEnabled = true;
+  try {
+    gctx.drawImage(portrait, 0, 0, gCanvas.width, gCanvas.height);
+  } catch {
+    /* ignore */
+  }
+  const label = document.createElement("span");
+  label.textContent = d.nameZh;
+  ghost.append(gCanvas, label);
+  ghost.style.left = `${e.clientX}px`;
+  ghost.style.top = `${e.clientY}px`;
+  document.body.appendChild(ghost);
+
+  cardDrag = {
+    typeId: id,
+    ghost,
+    pointerId: e.pointerId,
+    moved: false,
+    startX: e.clientX,
+    startY: e.clientY,
+  };
+
+  document.addEventListener("pointermove", onCardDragMove, { passive: false });
+  document.addEventListener("pointerup", onCardDragUp);
+  document.addEventListener("pointercancel", onCardDragCancel);
+}
+
 function renderSpecialistCards(state) {
   if (!els.specialistList || !game) return;
+  // Don't rebuild cards mid-drag (would kill the pointer target)
+  if (cardDrag) return;
+
   els.specialistList.innerHTML = "";
   const loadout = state?.loadout?.length ? state.loadout : game.loadout;
   const blocked = screen !== "play" || state?.result || state?.pausedForReward;
@@ -753,6 +916,7 @@ function renderSpecialistCards(state) {
     const cantAfford = (state?.points ?? game.points) < leveled.cost;
     const teamFull = (state?.teamCount ?? 0) >= (state?.teamLimit ?? 6);
     if (cantAfford || teamFull || blocked) btn.classList.add("disabled");
+    btn.title = "按住拖到地圖綠格部署";
 
     const portrait = getSpecialistPortrait(id, d);
     const img = document.createElement("canvas");
@@ -760,40 +924,27 @@ function renderSpecialistCards(state) {
     img.height = portrait.height;
     img.className = "portrait";
     const ictx = img.getContext("2d");
-    ictx.imageSmoothingEnabled = false;
+    ictx.imageSmoothingEnabled = true;
     ictx.drawImage(portrait, 0, 0);
 
     const text = document.createElement("span");
     const lastSkill = (leveled.skillNames || [d.skill]).slice(-1)[0];
-    text.innerHTML = `<strong>${d.nameZh} ★${lv}</strong><small>${lastSkill} · 傷${leveled.damage}</small>`;
+    text.innerHTML = `<strong>${d.nameZh} ★${lv}</strong><small>${lastSkill} · 傷${leveled.damage} · 拖曳部署</small>`;
 
     const cost = document.createElement("span");
     cost.className = "cost";
     cost.textContent = String(leveled.cost);
 
     btn.append(img, text, cost);
-    btn.addEventListener("click", () => {
-      void sfx.unlock();
-      if (blocked) return;
-      if ((state?.points ?? game.points) < leveled.cost) {
-        sfx.play("error");
-        showToast("部署點數不足");
-        return;
-      }
-      if ((state?.teamCount ?? 0) >= (state?.teamLimit ?? 6)) {
-        sfx.play("error");
-        showToast("場上人數已滿");
-        return;
-      }
-      // Toggle placing; if already selected this job, deploy on first free pad
-      // (helps mobile users who struggle to hit small map pads)
-      if (state?.placingType === id) {
-        game.tryDeployAuto();
-        return;
-      }
-      game.setPlacing(id);
-      showToast(`${d.nameZh} 就緒 — 點地圖綠格「+」，或再點一次此卡自動部署`);
-    });
+
+    if (!cantAfford && !teamFull && !blocked) {
+      btn.addEventListener("pointerdown", (e) => beginSpecialistDrag(e, id, d));
+    } else {
+      btn.addEventListener("click", () => {
+        if (cantAfford) showToast("部署點數不足");
+        else if (teamFull) showToast("場上人數已滿");
+      });
+    }
     els.specialistList.appendChild(btn);
   }
 }
