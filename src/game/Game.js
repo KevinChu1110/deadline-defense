@@ -33,6 +33,7 @@ import {
   updateProjectile,
   isTargetable,
   applyHit,
+  scoreTarget,
 } from "./entities.js";
 import { drawScene } from "./render.js";
 import {
@@ -45,6 +46,20 @@ import {
 import { sfx } from "../audio/sfx.js";
 import { preloadMobs } from "./assets.js";
 import { ENEMIES } from "../data/enemies.js";
+import { getJobSkill } from "../data/combat-skills.js";
+import {
+  createHazardState,
+  tickHazards,
+  tickPortalCd,
+  sampleHazardOnEnemy,
+  tryPortalJump,
+} from "./hazards.js";
+import { computeSynergies } from "../data/synergy.js";
+import {
+  evaluateStars,
+  claimStageStars,
+  failConsolationLeaves,
+} from "../data/meta-progress.js";
 
 function defaultBuffs() {
   return {
@@ -96,6 +111,7 @@ export class Game {
     const built = buildPathMap(this.stage);
     this.pathMap = built.paths;
     this.pathMetricsMap = built.metrics;
+    this.hazardState = createHazardState(this.stage.map);
     this.reset();
   }
 
@@ -127,6 +143,10 @@ export class Game {
     /** 局內楓幣：擊殺／清波獲得，用於場上轉職（每關重置） */
     this.mesos = 0;
     this.mesosEarned = 0;
+    this.waveMesoFromCrit = 0;
+    this.leaks = 0;
+    this.usedJobChange = false;
+    this.hazardState = createHazardState(this.stage.map);
     this.waveIndex = -1;
     this.waveActive = false;
     this.spawnQueue = [];
@@ -218,6 +238,9 @@ export class Game {
       leaves: loadCardProgress().leaves,
       mesos: this.mesos || 0,
       mesosEarned: this.mesosEarned || 0,
+      leaks: this.leaks || 0,
+      synergyLabels: this._synergyBuffs().synergyLabels || [],
+      lastStars: this.lastStars || null,
       jobChangeOptions: this.selectedSpecialistId
         ? this.getJobChangeOptions(this.selectedSpecialistId)
         : [],
@@ -478,13 +501,17 @@ export class Game {
     unit.cardLevel = level;
     unit.cooldown = 0;
     unit.attackT = 0;
+    unit.lockTargetId = null;
     markJobLearned(toJobId);
+    this.usedJobChange = true;
     this.sfx.play("waveClear");
-    this.fx.push(...createParticles(unit.x, unit.y, def.color, 18, { speed: 100, life: 0.5 }));
-    this.fx.push(createRing(unit.x, unit.y, def.color, { maxR: 50, life: 0.4 }));
-    this.fx.push(createFloatText(unit.x, unit.y - 28, `轉職 ${def.nameZh}`, "#fde68a"));
+    this.fx.push(...createParticles(unit.x, unit.y, def.color, 22, { speed: 120, life: 0.55 }));
+    this.fx.push(createRing(unit.x, unit.y, "#fde68a", { maxR: 60, life: 0.5 }));
+    this.fx.push(createRing(unit.x, unit.y, def.color, { maxR: 36, life: 0.35 }));
+    this.fx.push(createFloatText(unit.x, unit.y - 28, `✦ 轉職 ${def.nameZh}`, "#fde68a"));
+    this.fx.push(createFloatText(unit.x, unit.y - 44, def.skill || "", "#fff7ed"));
     this.status = `${SPECIALISTS[fromId]?.nameZh || fromId} → ${def.nameZh}！（🪙−${cost}）`;
-    this.ui?.toast?.(`轉職成功！${def.nameZh}（🪙−${cost} 楓幣）`);
+    this.ui?.toast?.(`✦ 轉職成功！${def.nameZh}（🪙−${cost}）· ${def.skill || ""}`);
     this.ui?.onState?.(this.getPublicState());
     return true;
   }
@@ -562,6 +589,9 @@ export class Game {
       this.ui?.toast?.(`波次完成 · 🪙+${mesoWave} 楓幣 · 🍁+${leafGain}`);
     }
 
+    // reset crit meso cap each wave
+    this.waveMesoFromCrit = 0;
+
     if (this.waveIndex >= this.stage.waves.length - 1) {
       this.result = "win";
       this.status = "神木平安！關卡完成。";
@@ -571,7 +601,24 @@ export class Game {
       markStageCleared(this.stage.id);
       const winLeaves = rewardForStageWin(stageIndex, firstClear);
       addMapleLeaves(winLeaves, "stage");
-      this.ui?.toast?.(`通關獎勵 🍁+${winLeaves}${firstClear ? "（首通）" : ""}`);
+      // 三星
+      const evalS = evaluateStars({
+        stageId: this.stage.id,
+        coreHp: this.coreHp,
+        coreMax: this.coreMax,
+        leaks: this.leaks || 0,
+        usedJobChange: this.usedJobChange,
+      });
+      const starClaim = claimStageStars(this.stage.id, evalS.count);
+      let starLeaves = 0;
+      if (starClaim.gained > 0) {
+        starLeaves = starClaim.gained * 15;
+        addMapleLeaves(starLeaves, "stars");
+      }
+      this.lastStars = evalS;
+      this.ui?.toast?.(
+        `通關 🍁+${winLeaves}${firstClear ? "（首通）" : ""} · ★${evalS.count}${starLeaves ? ` 星獎🍁+${starLeaves}` : ""}`
+      );
       const core = this.stage.map.core;
       this.fx.push(...createParticles(core.x, core.y, "#4ade80", 28, { speed: 140, life: 0.8 }));
       this.fx.push(createRing(core.x, core.y, "#22d3ee", { maxR: 80, life: 0.6 }));
@@ -605,8 +652,13 @@ export class Game {
     }
 
     this.now += dt;
+    tickHazards(this.hazardState, dt);
+    tickPortalCd(this.hazardState, dt);
 
     const corePos = this.stage.map.core;
+    const syn = this._synergyBuffs();
+    const stallZones = this._stallZones();
+    const auraAtk = this._allyAuraAtk();
     const auras = this.enemies
       .filter((e) => e.alive && e.def.hasteAura)
       .map((e) => ({
@@ -616,15 +668,6 @@ export class Game {
         r: e.def.hasteRadius || 90,
         power: e.def.hasteAura || 0,
       }));
-    const enemyBuffCtx = {
-      buffs: {
-        coreSlowRadius: this.buffs.coreSlowRadius,
-        coreSlowPower: this.buffs.coreSlowPower,
-        corePos,
-      },
-      pathMetricsMap: this.pathMetricsMap,
-      auras,
-    };
 
     if (this.waveActive) {
       this.elapsed += dt;
@@ -641,13 +684,28 @@ export class Game {
     for (const e of list) {
       if (!e.alive && !e.pendingSpawns?.length) continue;
       if (e.alive) {
-        updateEnemy(e, dt, this.now, enemyBuffCtx);
+        const hz = sampleHazardOnEnemy(this.hazardState, e, dt, this.stage.map);
+        e.status.hazardSpeedMul = hz.speedMul;
+        e.status.noSlow = hz.noSlow;
+        tryPortalJump(this.hazardState, e);
+        updateEnemy(e, dt, this.now, {
+          buffs: {
+            coreSlowRadius: this.buffs.coreSlowRadius,
+            coreSlowPower: this.buffs.coreSlowPower,
+            corePos,
+          },
+          pathMetricsMap: this.pathMetricsMap,
+          auras,
+          stallZones,
+          hazardExtraDist: hz.extraDist,
+        });
       }
       if (e.pendingSpawns?.length) {
         this._flushPendingSpawns(e);
       }
       if (e.leaked) {
         let dmg = e.def.leakDamage || 1;
+        this.leaks = (this.leaks || 0) + 1;
         if (this.buffs.coreShield > 0) {
           this.buffs.coreShield -= 1;
           dmg = 0;
@@ -668,30 +726,22 @@ export class Game {
     const enemiesById = new Map(this.enemies.map((e) => [e.id, e]));
     for (const s of this.specialists) {
       updateSpecialist(s, dt);
-      // scale cooldown recovery already applied in fire; re-apply attack speed on interval
       if (s.cooldown > 0) continue;
       const target = this._pickTarget(s);
       if (!target) continue;
       const shots = fireSpecialist(s, target);
-      // attack-speed buff shortens next cooldown
-      s.cooldown = s.def.interval / (this.buffs.attackSpeedMult || 1);
+      s.cooldown = s.def.interval / (syn.attackSpeedMult || 1);
       this.projectiles.push(...shots);
       this.fx.push(createMuzzle(s.x + (s.facing || 1) * 8, s.y - 6, s.def.color));
-      // small slash VFX at attacker
       this.fx.push(
         createRing(s.x + (s.facing || 1) * 12, s.y - 4, s.def.color, {
           maxR: 22,
           life: 0.18,
         })
       );
+      const fam = s.def.family;
       const pitch =
-        s.typeId === "archer"
-          ? 1.25
-          : s.typeId === "mage" || s.typeId === "pirate"
-            ? 0.85
-            : s.typeId === "thief"
-              ? 1.4
-              : 1;
+        fam === "archer" ? 1.25 : fam === "mage" || fam === "pirate" ? 0.85 : fam === "thief" ? 1.4 : 1;
       this.sfx.play("shoot", { pitch });
     }
 
@@ -702,13 +752,57 @@ export class Game {
         if (target) {
           const wasBoss = !!target.def.boss;
           const owner = this.specialists.find((s) => s.id === p.ownerId);
+          const skill = p.skill || getJobSkill(owner?.typeId);
           const hitBuffs = {
-            ...this.buffs,
+            damageMult: (syn.damageMult || 1) * (1 + auraAtk),
             armorBreak:
-              (this.buffs.armorBreak || 0) + (owner?.def?.armorBreakBonus || 0),
+              (syn.armorBreak || 0) + (owner?.def?.armorBreakBonus || 0),
           };
-          const killed = applyHit(target, p, this.now, hitBuffs);
-          this.sfx.play("hit", { heavy: wasBoss });
+          const killed = applyHit(target, p, this.now, hitBuffs, {
+            allies: this.specialists,
+          });
+          this.sfx.play("hit", { heavy: wasBoss || p._wasCrit });
+          if (p._wasCrit) {
+            this.fx.push(createFloatText(target.x, target.y - 20, "CRIT!", "#fbbf24"));
+          }
+          if (p._detonate) {
+            this.fx.push(createRing(target.x, target.y, "#f97316", { maxR: 48, life: 0.3 }));
+            this.fx.push(createFloatText(target.x, target.y - 8, "爆!", "#fb923c"));
+          }
+          // splash
+          if (p.splashR > 0) {
+            for (const e of this.enemies) {
+              if (!e.alive || e.id === target.id) continue;
+              if (Math.hypot(e.x - target.x, e.y - target.y) <= p.splashR) {
+                e.hp -= (p.damage || 10) * (p.splashMult || 0.4) * (syn.damageMult || 1);
+                e.hitFlash = 0.1;
+                if (e.hp <= 0) {
+                  e.alive = false;
+                  this.addMesos(mesosForKill(e.def), { x: e.x, y: e.y });
+                }
+              }
+            }
+          }
+          // slow chain same path
+          if (skill.slowChain && target.pathKey) {
+            const same = this.enemies
+              .filter(
+                (e) =>
+                  e.alive &&
+                  e.pathKey === target.pathKey &&
+                  e.id !== target.id &&
+                  e.distance < target.distance
+              )
+              .sort((a, b) => b.distance - a.distance)
+              .slice(0, skill.slowChain);
+            for (const e of same) {
+              e.status.slowUntil = this.now + 1.2;
+              e.status.slowPower = Math.min(
+                e.status.slowPower || 1,
+                skill.slowChainPower || 0.72
+              );
+            }
+          }
           this.fx.push(
             ...createParticles(target.x, target.y, p.color, wasBoss ? 10 : 5, {
               speed: wasBoss ? 80 : 50,
@@ -718,23 +812,34 @@ export class Game {
           if (killed) {
             if (owner) owner.kills += 1;
             this.sfx.play("kill");
-            const mesoGain = mesosForKill(target.def);
-            this.addMesos(mesoGain, {
-              x: target.x,
-              y: target.y,
-              // 小怪也顯示，但 Boss 一定顯示
-              silent: false,
-            });
+            let mesoGain = mesosForKill(target.def);
+            if (p._mesoBonus) {
+              const cap = skill.mesoCapPerWave || 40;
+              const bonus = Math.floor(mesoGain * p._mesoBonus);
+              const used = this.waveMesoFromCrit || 0;
+              if (used < cap) {
+                mesoGain += Math.min(bonus, cap - used);
+                this.waveMesoFromCrit = used + bonus;
+              }
+            }
+            this.addMesos(mesoGain, { x: target.x, y: target.y, silent: false });
+            // kill lifesteal visual
+            if (p._lifesteal && owner) {
+              this.fx.push(createFloatText(owner.x, owner.y - 24, "吸血", "#86efac"));
+            }
             this.fx.push(...createParticles(target.x, target.y, target.def.color, 16, { speed: 110 }));
             this.fx.push(createRing(target.x, target.y, target.def.color, { maxR: 30 }));
             if (wasBoss) {
               this.fx.push(createFloatText(target.x, target.y - 16, "CLEARED", "#f9a8d4"));
             }
-            // split / death summons
             if (target.pendingSpawns?.length) this._flushPendingSpawns(target);
           }
         }
         p.hit = false;
+        if (p._pierceContinue) {
+          p._pierceContinue = false;
+          // keep alive for pierce
+        }
       }
     }
 
@@ -758,8 +863,17 @@ export class Game {
       this.result = "lose";
       this.waveActive = false;
       this.sfx.stopBgm();
-      this.status = "Delivery Core offline. Deadline missed.";
+      this.status = "神木倒下了…";
       this.sfx.play("lose");
+      const consolation = failConsolationLeaves(
+        this.waveIndex,
+        this.stage.waves.length,
+        this.stage.index ?? 0
+      );
+      if (consolation > 0) {
+        addMapleLeaves(consolation, "fail");
+        this.ui?.toast?.(`失敗安慰 🍁+${consolation}（再接再厲）`);
+      }
       this.fx.push(...createParticles(corePos.x, corePos.y, "#fb7185", 30, { speed: 150, life: 0.9 }));
       this.ui?.onResult?.("lose");
     }
@@ -773,17 +887,58 @@ export class Game {
   }
 
   _pickTarget(specialist) {
+    const skill = getJobSkill(specialist.typeId);
+    // lock-on stickiness
+    if (skill.lockOn && specialist.lockTargetId) {
+      const locked = this.enemies.find((e) => e.id === specialist.lockTargetId);
+      if (locked && isTargetable(locked, specialist, this.now)) return locked;
+      specialist.lockTargetId = null;
+    }
     let best = null;
     let bestScore = -Infinity;
     for (const e of this.enemies) {
       if (!isTargetable(e, specialist, this.now)) continue;
-      const score = e.distance * 2 - e.hp * 0.05 + (e.def.boss ? 80 : 0);
+      const score = scoreTarget(e, specialist, this.now);
       if (score > bestScore) {
         bestScore = score;
         best = e;
       }
     }
+    if (best && skill.lockOn) specialist.lockTargetId = best.id;
     return best;
+  }
+
+  _synergyBuffs() {
+    const syn = computeSynergies(this.specialists);
+    return {
+      attackSpeedMult: (this.buffs.attackSpeedMult || 1) * (syn.attackSpeedMult || 1),
+      damageMult: (this.buffs.damageMult || 1) * (syn.damageMult || 1),
+      armorBreak: (this.buffs.armorBreak || 0) + (syn.armorBreak || 0),
+      coreShield: this.buffs.coreShield || 0,
+      coreSlowRadius: this.buffs.coreSlowRadius || 0,
+      coreSlowPower: this.buffs.coreSlowPower || 0.55,
+      synergyLabels: syn.labels || [],
+    };
+  }
+
+  _stallZones() {
+    const zones = [];
+    for (const s of this.specialists) {
+      const sk = getJobSkill(s.typeId);
+      if (sk.stallRadius) {
+        zones.push({ x: s.x, y: s.y, r: sk.stallRadius, mul: sk.stallMul || 0.85 });
+      }
+    }
+    return zones;
+  }
+
+  _allyAuraAtk() {
+    let bonus = 0;
+    for (const s of this.specialists) {
+      const sk = getJobSkill(s.typeId);
+      if (sk.auraAtk) bonus = Math.max(bonus, sk.auraAtk);
+    }
+    return bonus;
   }
 
   render() {
@@ -804,6 +959,7 @@ export class Game {
       placingDef: this.placingType ? SPECIALISTS[this.placingType] : null,
       now: this.now,
       buffs: this.buffs,
+      hazardState: this.hazardState,
     });
   }
 

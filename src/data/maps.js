@@ -32,6 +32,10 @@ export const MAP_SINGLE = {
     { x: 760, y: 250 },
   ],
   core: CORE,
+  hazards: [
+    { type: "windBelt", x: 200, y: 200, w: 160, h: 80, period: 12 },
+    { type: "windBelt", x: 520, y: 320, w: 140, h: 70, period: 12 },
+  ],
 };
 
 export const MAP_DUAL = {
@@ -80,6 +84,9 @@ export const MAP_DUAL = {
     { x: 760, y: 360 },
   ],
   core: CORE,
+  hazards: [
+    { type: "portalPair", id: "p1", a: { x: 300, y: 140 }, b: { x: 700, y: 200 }, r: 30, cooldown: 8, jumpRatio: 0.12 },
+  ],
 };
 
 export const MAP_DUAL_SHORTCUT = {
@@ -119,12 +126,19 @@ export const MAP_DUAL_SHORTCUT = {
     { x: 780, y: 360 },
     { x: 840, y: 280 },
   ],
+  hazards: [
+    { type: "iceSlip", x: 180, y: 200, w: 200, h: 100, speedMul: 1.35, blockSlow: true },
+  ],
   core: CORE,
 };
 
 export const MAP_TRIPLE = {
   width: 960,
   height: 540,
+  hazards: [
+    { type: "cloudCollapse", paths: ["workflow", "event", "pathC"], period: 22, duration: 8 },
+    { type: "conveyor", x: 300, y: 230, w: 280, h: 80, push: 24, period: 14 },
+  ],
   paths: {
     workflow: [
       { x: -20, y: 100 },

@@ -66,10 +66,10 @@ export function isTierUnlocked(tier, progress = loadProgress()) {
  * 一轉約需打過 1～2 波小怪
  */
 export const JOB_CHANGE_COST = {
-  1: 100, // 一轉
-  2: 240, // 二轉
-  3: 420, // 三轉
-  4: 700, // 四轉
+  1: 85, // 一轉：約 1～2 波
+  2: 220, // 二轉
+  3: 400, // 三轉
+  4: 650, // 四轉：中後期
 };
 
 export function getJobChangeCost(fromId, toId) {
@@ -84,18 +84,18 @@ export function getJobChangeCost(fromId, toId) {
 
 /** 擊殺掉落楓幣 */
 export function mesosForKill(enemyDef) {
-  if (!enemyDef) return 4;
+  if (!enemyDef) return 5;
   const hp = enemyDef.hp || 30;
-  let m = Math.max(4, Math.round(hp * 0.18));
-  if (enemyDef.boss) m += 90;
-  if (enemyDef.stealth) m += 6;
-  if (enemyDef.armor) m += Math.round((enemyDef.armor || 0) * 40);
+  let m = Math.max(5, Math.round(hp * 0.22));
+  if (enemyDef.boss) m += 100;
+  if (enemyDef.stealth) m += 8;
+  if (enemyDef.armor) m += Math.round((enemyDef.armor || 0) * 50);
   return m;
 }
 
 /** 清波楓幣（與帳號楓葉分開） */
 export function mesosForWaveClear(waveIndex, stageIndex = 0) {
-  return 35 + waveIndex * 12 + stageIndex * 4;
+  return 45 + waveIndex * 14 + stageIndex * 5;
 }
 
 /**

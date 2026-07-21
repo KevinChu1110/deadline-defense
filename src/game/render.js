@@ -9,6 +9,7 @@ import {
 } from "./sprites.js";
 import { sampleGifFrame, getCachedMob } from "./assets.js";
 import { drawFx } from "./fx.js";
+import { drawHazards } from "./hazards.js";
 
 /** @type {HTMLImageElement | null} */
 let mapBgImg = null;
@@ -52,6 +53,9 @@ export function drawScene(ctx, state) {
   ctx.imageSmoothingEnabled = true;
 
   drawMapBackground(ctx, width, height);
+  if (state.hazardState) {
+    drawHazards(ctx, state.hazardState, stage.map, state.now || 0);
+  }
 
   ctx.imageSmoothingEnabled = false;
   const pathEntries = Object.entries(paths);

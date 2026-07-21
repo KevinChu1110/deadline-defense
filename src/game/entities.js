@@ -1,5 +1,6 @@
 import { ENEMIES } from "../data/enemies.js";
 import { SPECIALISTS } from "../data/specialists.js";
+import { getJobSkill, deriveEnemyTags } from "../data/combat-skills.js";
 import { samplePath, dist2 } from "./path.js";
 
 let nextId = 1;
@@ -32,10 +33,12 @@ export function createEnemy(typeId, pathKey, pathMetrics, opts = {}) {
   }
   const pos = samplePath(pathMetrics, distance);
 
+  const tags = deriveEnemyTags(def);
   return {
     id: uid(),
     typeId,
     def,
+    tags,
     pathKey,
     pathMetrics,
     hp: def.hp,
@@ -57,6 +60,8 @@ export function createEnemy(typeId, pathKey, pathMetrics, opts = {}) {
     armorPhased: false,
     phasesFired: {},
     pendingSpawns: [],
+    hitCountFrom: {}, // ownerId -> hits (rage/lock)
+    burnStacks: 0,
     status: {
       slowUntil: 0,
       slowPower: 1,
@@ -65,6 +70,10 @@ export function createEnemy(typeId, pathKey, pathMetrics, opts = {}) {
       analyzedUntil: 0,
       analyzedMult: 1,
       hastePower: 1,
+      armorBreakUntil: 0,
+      armorBreakAmt: 0,
+      noSlow: false,
+      hazardSpeedMul: 1,
     },
   };
 }
@@ -114,18 +123,33 @@ export function createProjectile(from, to, def, effectPayload = {}) {
   };
 }
 
-export function fireSpecialist(specialist, target) {
+export function fireSpecialist(specialist, target, extras = {}) {
   const def = specialist.def;
+  const skill = getJobSkill(specialist.typeId);
   specialist.attackT = def.anim?.attackDuration || 0.3;
   specialist.facing = target.x >= specialist.x ? 1 : -1;
   specialist.cooldown = def.interval;
+  specialist.hitSerial = (specialist.hitSerial || 0) + 1;
 
   const shots = [];
-  const multi = def.anim?.multiShot || 1;
-  const spread = def.anim?.multiShotSpread || 0;
+  const multi =
+    skill.multiShot || def.anim?.multiShot || 1;
+  const spread = skill.multiShotSpread || def.anim?.multiShotSpread || 0;
   for (let i = 0; i < multi; i++) {
     const offset = multi === 1 ? 0 : (i - (multi - 1) / 2) * spread;
-    shots.push(createProjectile(specialist, target, def, { angleOffset: offset }));
+    shots.push(
+      createProjectile(specialist, target, def, {
+        angleOffset: offset,
+        skill,
+        pierceLeft: skill.pierce || 0,
+        pierceFalloff: skill.pierceFalloff || 0.7,
+        hitIds: new Set(),
+        splashR: skill.splashR || 0,
+        splashMult: skill.splashMult || 0,
+        chainLeft: skill.chain || 0,
+        chainFalloff: skill.chainFalloff || 0.55,
+      })
+    );
   }
   return shots;
 }
@@ -278,11 +302,26 @@ export function updateEnemy(enemy, dt, now, ctx = {}) {
   if (enemy.speedBurstUsed && enemy.def.speedBurstMult) {
     speed *= enemy.def.speedBurstMult;
   }
-  if (enemy.status.slowUntil > now) {
+  // stall zones from paladin-type
+  if (ctx.stallZones?.length) {
+    for (const z of ctx.stallZones) {
+      if (Math.hypot(enemy.x - z.x, enemy.y - z.y) <= z.r) {
+        speed *= z.mul || 0.85;
+      }
+    }
+  }
+  // hazard speed
+  if (enemy.status.hazardSpeedMul) speed *= enemy.status.hazardSpeedMul;
+  if (ctx.hazardExtraDist) {
+    enemy.distance += ctx.hazardExtraDist;
+  }
+  if (enemy.status.slowUntil > now && !enemy.status.noSlow) {
     let slowMul = enemy.status.slowPower;
-    if (enemy.def.slowResist) {
-      // resist: pull slow toward 1
-      slowMul = 1 - (1 - slowMul) * (1 - enemy.def.slowResist);
+    // soft-cap slow at 0.45 min speed factor
+    slowMul = Math.max(0.45, slowMul);
+    if (enemy.def.slowResist || enemy.tags?.includes("swift")) {
+      const resist = enemy.def.slowResist || 0.35;
+      slowMul = 1 - (1 - slowMul) * (1 - resist);
     }
     speed *= slowMul;
   }
@@ -309,38 +348,150 @@ export function updateSpecialist(specialist, dt) {
 
 export function isTargetable(enemy, specialist, now) {
   if (!enemy.alive) return false;
-  if (enemy.hidden && !enemy.revealed && specialist.def.effect !== "analyzed") {
+  const skill = getJobSkill(specialist.typeId);
+  const canReveal =
+    specialist.def.effect === "analyzed" || skill.revealOnHit;
+  if (enemy.hidden && !enemy.revealed && !canReveal) {
     if (enemy.status.analyzedUntil <= now) return false;
   }
   const r = specialist.def.range;
   return dist2(specialist.x, specialist.y, enemy.x, enemy.y) <= r * r;
 }
 
-export function applyHit(enemy, projectile, now, buffs = {}) {
+/** Soft damage mult from tags (never 0) */
+export function softDamageMult(enemy, skill, now, buffs = {}) {
+  let m = 1;
+  const armored =
+    enemy.def.armor > 0 || enemy.tags?.includes("armored");
+  const broken =
+    (buffs.armorBreak || 0) +
+      (enemy.status.armorBreakUntil > now ? enemy.status.armorBreakAmt || 0 : 0) >
+    0.05;
+  if (armored && !broken) m *= 0.65;
+  if (enemy.tags?.includes("dense") && !skill?.burnStacks) m *= 0.85;
+  if (enemy.hidden && !enemy.revealed && enemy.status.analyzedUntil <= now) m *= 0.5;
+  if (enemy.status.analyzedUntil > now) {
+    m *= Math.min(1.55, enemy.status.analyzedMult || 1.2);
+  }
+  if (enemy.tags?.includes("flyer") && skill?.flyerBonus) m *= skill.flyerBonus;
+  return m;
+}
+
+export function applyHit(enemy, projectile, now, buffs = {}, ctx = {}) {
   if (!enemy.alive) return false;
 
-  let dmg = projectile.damage * (buffs.damageMult || 1);
-  if (enemy.status.analyzedUntil > now) {
-    dmg *= enemy.status.analyzedMult;
+  const skill = projectile.skill || {};
+  const ownerId = projectile.ownerId;
+
+  // rage / lock-on stacks
+  if (ownerId != null) {
+    enemy.hitCountFrom[ownerId] = (enemy.hitCountFrom[ownerId] || 0) + 1;
   }
+  let stackMult = 1;
+  if (skill.rageHits && ownerId != null) {
+    const hits = enemy.hitCountFrom[ownerId] || 0;
+    if (hits >= skill.rageHits) stackMult *= skill.rageMult || 1.3;
+  }
+  if (skill.lockOn && ownerId != null) {
+    const hits = Math.min(skill.lockOnMax || 5, enemy.hitCountFrom[ownerId] || 0);
+    stackMult *= 1 + (skill.lockOnMult || 0.15) * (hits - 1);
+  }
+  // frontline amp
+  if (skill.frontlineAmp && enemy.pathMetrics?.total) {
+    const ratio = enemy.distance / enemy.pathMetrics.total;
+    if (ratio >= 1 - (skill.frontlineRatio || 0.35)) {
+      stackMult *= 1 + skill.frontlineAmp;
+    } else {
+      stackMult *= 0.9;
+    }
+  }
+
+  let dmg =
+    projectile.damage * (buffs.damageMult || 1) * stackMult * softDamageMult(enemy, skill, now, buffs);
+
+  // armor with break
   if (enemy.def.armor) {
-    const armor = Math.max(0, enemy.def.armor - (buffs.armorBreak || 0));
+    let breakAmt = buffs.armorBreak || 0;
+    if (enemy.status.armorBreakUntil > now) breakAmt += enemy.status.armorBreakAmt || 0;
+    if (skill.armorBreakOnHit) breakAmt += skill.armorBreakOnHit;
+    const armor = Math.max(0, enemy.def.armor - breakAmt);
     dmg *= 1 - armor;
   }
+
+  // crit
+  let wasCrit = false;
+  if (skill.critChance && Math.random() < skill.critChance) {
+    dmg *= skill.critMult || 1.75;
+    wasCrit = true;
+  }
+
   enemy.hp -= dmg;
   enemy.hitFlash = 0.12;
+  projectile._lastDmg = dmg;
+  projectile._wasCrit = wasCrit;
 
-  if (projectile.effect === "slow") {
-    enemy.status.slowUntil = now + projectile.effectDuration;
-    enemy.status.slowPower = projectile.effectPower;
-  } else if (projectile.effect === "burn") {
-    enemy.status.burnUntil = now + projectile.effectDuration;
-    enemy.status.burnDps = projectile.effectPower * (buffs.damageMult || 1);
-  } else if (projectile.effect === "analyzed") {
-    enemy.status.analyzedUntil = now + projectile.effectDuration;
-    enemy.status.analyzedMult = projectile.effectPower;
+  // base effects
+  if (projectile.effect === "slow" || skill.slowChain) {
+    const power = Math.min(
+      enemy.status.slowPower,
+      projectile.effectPower || skill.slowChainPower || 0.7
+    );
+    enemy.status.slowUntil = Math.max(
+      enemy.status.slowUntil,
+      now + (projectile.effectDuration || 1.2)
+    );
+    enemy.status.slowPower = Math.min(enemy.status.slowPower || 1, power);
+  }
+  if (projectile.effect === "burn" || skill.burnStacks) {
+    enemy.status.burnUntil = now + (projectile.effectDuration || 2.5);
+    enemy.status.burnDps = Math.max(
+      enemy.status.burnDps || 0,
+      (projectile.effectPower || 4) * (buffs.damageMult || 1)
+    );
+    enemy.burnStacks = (enemy.burnStacks || 0) + 1;
+    if (skill.burnDetonate && enemy.burnStacks >= (skill.burnStacks || 3)) {
+      enemy.burnStacks = 0;
+      enemy.hp -= (projectile.damage || 10) * 0.8;
+      projectile._detonate = true;
+      if (skill.armorBreakOnHit) {
+        enemy.status.armorBreakUntil = now + 3;
+        enemy.status.armorBreakAmt = Math.max(
+          enemy.status.armorBreakAmt || 0,
+          skill.armorBreakOnHit
+        );
+      }
+    }
+  }
+  if (projectile.effect === "analyzed" || skill.revealOnHit) {
+    enemy.status.analyzedUntil = now + (projectile.effectDuration || 3.5);
+    enemy.status.analyzedMult = Math.max(
+      enemy.status.analyzedMult || 1,
+      projectile.effectPower || 1.25
+    );
     enemy.revealed = true;
     enemy.hidden = false;
+  }
+  if (skill.armorBreakOnHit && !skill.burnDetonate) {
+    enemy.status.armorBreakUntil = now + 2.5;
+    enemy.status.armorBreakAmt = Math.max(
+      enemy.status.armorBreakAmt || 0,
+      skill.armorBreakOnHit
+    );
+  }
+
+  // knockback along path
+  if (skill.knockbackPath && (!enemy.def.boss || skill.knockbackBossSlow)) {
+    if (enemy.def.boss) {
+      enemy.status.slowUntil = now + 0.8;
+      enemy.status.slowPower = Math.min(enemy.status.slowPower || 1, 0.8);
+    } else {
+      enemy.distance = Math.max(0, enemy.distance - (skill.knockbackPath || 12));
+    }
+  }
+
+  // meso crit bonus flag for Game
+  if (wasCrit && skill.critMesoBonus) {
+    projectile._mesoBonus = skill.critMesoBonus;
   }
 
   if (enemy.hp <= 0) {
@@ -358,15 +509,57 @@ export function applyHit(enemy, projectile, now, buffs = {}) {
       });
     }
     enemy.alive = false;
+    if (skill.killLifesteal && ctx.allies?.length) {
+      projectile._lifesteal = skill.killLifesteal;
+    }
     return true;
   }
   return false;
+}
+
+/** Target score for pick */
+export function scoreTarget(enemy, specialist, now) {
+  const skill = getJobSkill(specialist.typeId);
+  let score = enemy.distance * 2 - enemy.hp * 0.05 + (enemy.def.boss ? 80 : 0);
+  if (enemy.status.analyzedUntil > now) score += 40;
+  if (enemy.tags?.includes("armored") && skill.armorBreakOnHit) score += 25;
+  if (enemy.hidden || enemy.tags?.includes("stealth")) {
+    if (skill.revealOnHit || specialist.def.effect === "analyzed") score += 50;
+    else score -= 100;
+  }
+  if (skill.frontlineAmp && enemy.pathMetrics?.total) {
+    const ratio = enemy.distance / enemy.pathMetrics.total;
+    if (ratio >= 1 - (skill.frontlineRatio || 0.35)) score += 60;
+  }
+  if (skill.lockOn && specialist.lockTargetId === enemy.id) score += 100;
+  return score;
 }
 
 export function updateProjectile(p, dt, enemiesById) {
   if (!p.alive) return;
   const target = enemiesById.get(p.targetId);
   if (!target || !target.alive) {
+    // pierce: try retarget along velocity
+    if ((p.pierceLeft || 0) > 0) {
+      let best = null;
+      let bestD = 80;
+      for (const e of enemiesById.values()) {
+        if (!e.alive || p.hitIds?.has(e.id)) continue;
+        const d = Math.hypot(e.x - p.x, e.y - p.y);
+        if (d < bestD) {
+          bestD = d;
+          best = e;
+        }
+      }
+      if (best) {
+        p.targetId = best.id;
+        const ang = Math.atan2(best.y - p.y, best.x - p.x);
+        const sp = Math.hypot(p.vx, p.vy) || 300;
+        p.vx = Math.cos(ang) * sp;
+        p.vy = Math.sin(ang) * sp;
+        return;
+      }
+    }
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     p.life = (p.life ?? 0.35) - dt;
@@ -378,11 +571,21 @@ export function updateProjectile(p, dt, enemiesById) {
   const dy = target.y - p.y;
   const dist = Math.hypot(dx, dy);
   const step = Math.hypot(p.vx, p.vy) * dt;
-  if (dist <= step + target.def.radius) {
+  if (dist <= step + (target.def.radius || 14)) {
     p.x = target.x;
     p.y = target.y;
-    p.alive = false;
     p.hit = true;
+    if (!p.hitIds) p.hitIds = new Set();
+    p.hitIds.add(target.id);
+    if ((p.pierceLeft || 0) > 0) {
+      p.pierceLeft -= 1;
+      p.damage *= p.pierceFalloff || 0.7;
+      p.hit = true; // process hit once in Game, then continue if pierce
+      p._pierceContinue = p.pierceLeft > 0;
+      if (!p._pierceContinue) p.alive = false;
+    } else {
+      p.alive = false;
+    }
     return;
   }
   const spd = Math.hypot(p.vx, p.vy);

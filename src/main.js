@@ -28,6 +28,7 @@ import {
   isSeriesUnlocked,
   markJobLearned,
 } from "./data/job-tree.js";
+import { LOADOUT_PRESETS } from "./data/meta-progress.js";
 import { sfx } from "./audio/sfx.js";
 import { STAGES, loadProgress, isStageUnlocked, getStageByIndex } from "./data/stages.js";
 import { getItem } from "./data/items.js";
@@ -142,11 +143,18 @@ function showResult(kind) {
       const nextIndex = (stage?.index ?? 0) + 1;
       const refreshed = loadProgress();
       const canNext = nextIndex < STAGES.length && isStageUnlocked(nextIndex, refreshed);
+      const starInfo = game?.lastStars;
+      const starLine = starInfo
+        ? `評價 ${"★".repeat(starInfo.count)}${"☆".repeat(3 - starInfo.count)}（${starInfo.stars
+            .filter((s) => s.ok)
+            .map((s) => s.label)
+            .join(" · ")}）`
+        : "";
       if (els.overlayCopy) {
         els.overlayCopy.textContent =
           nextIndex < STAGES.length
-            ? `${stageName} 守護成功！神木平安無事。${canNext ? " 下一關已解鎖。" : ""}`
-            : `${stageName} 完成！你已通關全部關卡。`;
+            ? `${stageName} 守護成功！${starLine} ${canNext ? "下一關已解鎖。" : ""}`
+            : `${stageName} 完成！${starLine} 你已通關全部關卡。`;
       }
       if (els.btnNextStage) {
         els.btnNextStage.hidden = nextIndex >= STAGES.length;
@@ -186,13 +194,15 @@ function renderBuffs(state) {
   if (b.armorBreak > 0) chips.push(`📎 破甲 ${(b.armorBreak * 100).toFixed(0)}%`);
   if (b.coreShield > 0) chips.push(`🛡️ 護盾 ${b.coreShield}`);
   if (b.coreSlowRadius > 0) chips.push(`📝 神木緩速`);
+  for (const lab of state.synergyLabels || []) chips.push(`🔗 ${lab}`);
+  if ((state.mesos || 0) > 0) chips.push(`🪙 楓幣 ${state.mesos}`);
   for (const id of state.pickedItems || []) {
     const item = getItem(id);
     if (item) chips.push(`${item.icon} ${item.nameZh}`);
   }
   if (!chips.length) {
     els.buffList.className = "buff-list muted";
-    els.buffList.textContent = "尚未獲得道具";
+    els.buffList.textContent = "打怪賺楓幣 · 場上轉職 · 職業共鳴";
     return;
   }
   els.buffList.className = "buff-list";
@@ -309,7 +319,12 @@ function renderFilterTabs() {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "chip" + (filterSeries === opt.id ? " active" : "");
-      b.textContent = `${opt.emoji} ${opt.label}`;
+      const locked =
+        (opt.id === "royal" && !isSeriesUnlocked("royal")) ||
+        (opt.id === "hero" && !isSeriesUnlocked("hero"));
+      b.textContent = locked
+        ? `${opt.emoji} ${opt.label}🔒`
+        : `${opt.emoji} ${opt.label}`;
       b.addEventListener("click", () => {
         filterSeries = opt.id;
         renderFilterTabs();
@@ -317,6 +332,38 @@ function renderFilterTabs() {
         sfx.play("uiClick");
       });
       els.seriesTabs.appendChild(b);
+    }
+    // presets row
+    let presetRow = document.getElementById("preset-tabs");
+    if (!presetRow && els.seriesTabs.parentElement) {
+      presetRow = document.createElement("div");
+      presetRow.id = "preset-tabs";
+      presetRow.className = "filter-row";
+      els.seriesTabs.parentElement.appendChild(presetRow);
+    }
+    if (presetRow) {
+      presetRow.innerHTML = "";
+      for (const p of LOADOUT_PRESETS) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "chip chip-preset";
+        b.textContent = `💡 ${p.nameZh}`;
+        b.title = p.desc;
+        b.addEventListener("click", () => {
+          void sfx.unlock();
+          const ok = p.jobs.filter((id) => canDeployJob(id));
+          if (!ok.length) {
+            sfx.play("error");
+            showToast("此推薦需先場上轉職學會職業：" + p.desc);
+            return;
+          }
+          draftLoadout = ok.slice(0, LOADOUT_MAX);
+          sfx.play("deploy");
+          showToast(`已套用「${p.nameZh}」：${ok.map((id) => SPECIALISTS[id]?.nameZh).join("、")}`);
+          renderCharacterGrid();
+        });
+        presetRow.appendChild(b);
+      }
     }
   }
   if (els.familyTabs) {
