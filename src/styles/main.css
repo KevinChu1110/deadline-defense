@@ -1,21 +1,24 @@
 :root {
   color-scheme: light;
-  /* MapleStory-inspired warm UI */
-  --bg-top: #7ec8e8;
-  --bg-bot: #3d8f4a;
-  --panel: #f4e4bc;
-  --panel-dark: #e8d09a;
-  --panel-border: #8b5a2b;
-  --panel-border-hi: #d4a84b;
-  --text: #3b2412;
-  --muted: #7a5a38;
-  --accent: #2d8f3c;
-  --accent-2: #c43c2c;
-  --danger: #c43c2c;
-  --warn: #d4920a;
-  --ok: #2d8f3c;
-  --shadow: 0 8px 0 rgba(60, 40, 20, 0.25), 0 18px 40px rgba(0, 0, 0, 0.2);
-  --title-shadow: 1px 1px 0 #fff3c4;
+  /* Soft forest parchment — calmer, less neon */
+  --bg-top: #c5d4bc;
+  --bg-mid: #d8c9a8;
+  --bg-bot: #6b8f62;
+  --panel: #f3ebd8;
+  --panel-dark: #e6dcc4;
+  --panel-hi: #faf6ec;
+  --panel-border: #7a6248;
+  --panel-border-hi: #b89a6a;
+  --text: #3a2e22;
+  --muted: #6e5c48;
+  --accent: #3d7a48;
+  --accent-2: #a84a3c;
+  --danger: #a84a3c;
+  --warn: #b8860b;
+  --ok: #3d7a48;
+  --shadow: 0 6px 0 rgba(50, 40, 28, 0.18), 0 14px 32px rgba(0, 0, 0, 0.14);
+  --title-shadow: none;
+  --focus-ring: rgba(61, 122, 72, 0.28);
   font-family: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", "Segoe UI", system-ui, sans-serif;
 }
 
@@ -28,7 +31,8 @@ body {
   margin: 0;
   min-height: 100%;
   background:
-    linear-gradient(180deg, var(--bg-top) 0%, #a8d8a0 42%, var(--bg-bot) 100%);
+    radial-gradient(ellipse 120% 80% at 50% -10%, #e8efdf 0%, transparent 55%),
+    linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 48%, var(--bg-bot) 100%);
   color: var(--text);
 }
 
@@ -46,11 +50,11 @@ body {
 
 .maple-frame,
 .maple-panel {
-  border: 3px solid var(--panel-border);
+  border: 2px solid var(--panel-border);
   border-radius: 14px;
   background:
-    linear-gradient(180deg, #fff8e0 0%, var(--panel) 40%, var(--panel-dark) 100%);
-  box-shadow: var(--shadow), inset 0 0 0 2px rgba(255, 240, 180, 0.65);
+    linear-gradient(180deg, var(--panel-hi) 0%, var(--panel) 55%, var(--panel-dark) 100%);
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
 .top-bar,
@@ -81,8 +85,7 @@ body {
 .brand strong {
   display: block;
   font-size: 1.15rem;
-  text-shadow: var(--title-shadow);
-  color: #5a3010;
+  color: #4a3820;
 }
 
 .maple-leaf {
@@ -108,7 +111,7 @@ body {
 .stat strong {
   display: block;
   font-size: 1.1rem;
-  color: #8b1e1e;
+  color: #5c3d28;
 }
 
 .stage {
@@ -132,10 +135,9 @@ body {
 .panel-block h2 {
   margin: 0 0 10px;
   font-size: 0.9rem;
-  letter-spacing: 0.08em;
-  color: #8b1e1e;
-  text-shadow: var(--title-shadow);
-  border-bottom: 2px solid rgba(139, 90, 43, 0.25);
+  letter-spacing: 0.06em;
+  color: #5a4028;
+  border-bottom: 1px solid rgba(122, 98, 72, 0.28);
   padding-bottom: 6px;
 }
 
@@ -199,15 +201,15 @@ body {
 }
 
 .specialist-card:hover:not(.disabled) {
-  transform: translateY(-2px);
-  border-color: #c43c2c;
-  box-shadow: 0 4px 0 rgba(139, 90, 43, 0.25);
+  transform: translateY(-1px);
+  border-color: var(--accent);
+  box-shadow: 0 3px 0 rgba(122, 98, 72, 0.2);
 }
 
 .specialist-card.active {
-  border-color: #2d8f3c;
-  background: rgba(120, 200, 120, 0.25);
-  box-shadow: 0 0 0 2px rgba(45, 143, 60, 0.25);
+  border-color: var(--accent);
+  background: rgba(120, 160, 110, 0.18);
+  box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .specialist-card.disabled {
@@ -221,14 +223,14 @@ body {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   border-radius: 10px;
-  background: linear-gradient(180deg, #9ad0f0, #6aaa4a);
-  border: 2px solid #8b5a2b;
+  background: linear-gradient(180deg, #d6e0d0, #9aaa88);
+  border: 2px solid rgba(122, 98, 72, 0.4);
   object-fit: contain;
 }
 
 .specialist-card strong {
   display: block;
-  color: #5a3010;
+  color: #4a3820;
 }
 
 .specialist-card small {
@@ -237,7 +239,7 @@ body {
 
 .cost {
   font-weight: 800;
-  color: #b8860b;
+  color: #9a7420;
   font-size: 1.05rem;
 }
 
@@ -248,25 +250,25 @@ body {
 
 .btn {
   appearance: none;
-  border: 2px solid #8b5a2b;
-  background: linear-gradient(180deg, #fff3c4, #e8c878);
+  border: 2px solid var(--panel-border);
+  background: linear-gradient(180deg, #f7f0de, #e8dcc0);
   color: var(--text);
   border-radius: 12px;
   padding: 11px 14px;
   font: inherit;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 3px 0 #8b5a2b;
+  box-shadow: 0 2px 0 rgba(90, 70, 48, 0.35);
 }
 
 .btn:hover:not(:disabled) {
-  filter: brightness(1.05);
+  filter: brightness(1.03);
   transform: translateY(-1px);
 }
 
 .btn:active:not(:disabled) {
-  transform: translateY(2px);
-  box-shadow: 0 1px 0 #8b5a2b;
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 rgba(90, 70, 48, 0.35);
 }
 
 .btn:disabled {
@@ -276,18 +278,18 @@ body {
 
 .btn.primary,
 .maple-primary {
-  background: linear-gradient(180deg, #7dcf6a, #2d8f3c);
-  color: #fff8e0;
-  border-color: #1f5f28;
-  box-shadow: 0 3px 0 #1f5f28;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+  background: linear-gradient(180deg, #6aaa62, #3d7a48);
+  color: #f7f4ea;
+  border-color: #2d5a34;
+  box-shadow: 0 2px 0 #2d5a34;
+  text-shadow: none;
 }
 
 .btn.danger {
-  background: linear-gradient(180deg, #f0a0a0, #c43c2c);
-  color: #fff8e0;
-  border-color: #7a1818;
-  box-shadow: 0 3px 0 #7a1818;
+  background: linear-gradient(180deg, #d09088, #a84a3c);
+  color: #f7f4ea;
+  border-color: #6e3028;
+  box-shadow: 0 2px 0 #6e3028;
 }
 
 .maple-btn {
@@ -368,16 +370,15 @@ body {
 
 .overlay-kicker {
   margin: 0 0 8px;
-  letter-spacing: 0.12em;
-  color: #8b1e1e;
+  letter-spacing: 0.1em;
+  color: #6e4e32;
   font-size: 0.8rem;
   font-weight: 800;
 }
 
 .overlay-card h2 {
   margin: 0 0 8px;
-  color: #5a3010;
-  text-shadow: var(--title-shadow);
+  color: #4a3820;
 }
 
 .overlay-card p {
@@ -426,8 +427,8 @@ body {
   width: 100%;
   padding: 14px;
   border-radius: 12px;
-  border: 2px solid rgba(139, 90, 43, 0.4);
-  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(122, 98, 72, 0.35);
+  background: rgba(255, 255, 255, 0.5);
   color: inherit;
   text-align: left;
   cursor: pointer;
@@ -437,8 +438,9 @@ body {
 
 .stage-btn:hover:not(:disabled),
 .reward-btn:hover {
-  border-color: #c43c2c;
-  transform: translateY(-2px);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .stage-btn:disabled {
@@ -454,16 +456,16 @@ body {
   display: grid;
   place-items: center;
   font-weight: 800;
-  background: linear-gradient(180deg, #7dcf6a, #2d8f3c);
-  color: #fff8e0;
-  border: 2px solid #1f5f28;
+  background: linear-gradient(180deg, #6aaa62, #3d7a48);
+  color: #f7f4ea;
+  border: 1px solid #2d5a34;
 }
 
 .reward-btn .icon {
   font-size: 1.35rem;
-  background: linear-gradient(180deg, #fff3c4, #e8c878);
+  background: linear-gradient(180deg, #f7f0de, #e8dcc0);
   color: var(--text);
-  border-color: #8b5a2b;
+  border-color: var(--panel-border);
 }
 
 .stage-btn small,
@@ -485,7 +487,7 @@ body {
 }
 
 .stage-btn .badge.cleared {
-  color: #c43c2c;
+  color: var(--accent);
 }
 
 /* ===== Character select shell ===== */
@@ -509,9 +511,9 @@ body {
 
 .char-top h2 {
   margin: 0;
-  color: #5a3010;
-  text-shadow: var(--title-shadow);
-  font-size: 1.25rem;
+  color: #4a3820;
+  font-size: 1.2rem;
+  font-weight: 800;
 }
 
 .char-top-meta {
@@ -525,9 +527,9 @@ body {
   padding: 6px 12px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.55);
-  border: 2px solid rgba(139, 90, 43, 0.3);
+  border: 1px solid rgba(122, 98, 72, 0.3);
   font-weight: 800;
-  color: #8b1e1e;
+  color: #5a4028;
 }
 
 .char-filters {
@@ -544,9 +546,9 @@ body {
 
 .chip {
   appearance: none;
-  border: 2px solid rgba(139, 90, 43, 0.35);
-  background: rgba(255, 255, 255, 0.45);
-  color: #5a3010;
+  border: 1px solid rgba(122, 98, 72, 0.35);
+  background: rgba(255, 255, 255, 0.5);
+  color: #4a3820;
   border-radius: 999px;
   padding: 8px 12px;
   font: inherit;
@@ -558,9 +560,9 @@ body {
 }
 
 .chip.active {
-  background: linear-gradient(180deg, #7dcf6a, #2d8f3c);
-  color: #fff8e0;
-  border-color: #1f5f28;
+  background: linear-gradient(180deg, #6aaa62, #3d7a48);
+  color: #f7f4ea;
+  border-color: #2d5a34;
 }
 
 .char-main {
@@ -591,8 +593,8 @@ body {
   gap: 6px;
   padding: 10px 8px 8px;
   border-radius: 14px;
-  border: 2px solid rgba(139, 90, 43, 0.35);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(232, 208, 154, 0.55));
+  border: 1px solid rgba(122, 98, 72, 0.32);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(236, 226, 204, 0.75));
   color: inherit;
   cursor: pointer;
   font: inherit;
@@ -604,25 +606,46 @@ body {
 
 .char-pick:hover,
 .char-pick.focused {
-  border-color: #c43c2c;
-  box-shadow: 0 0 0 2px rgba(196, 60, 44, 0.2);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .char-pick.selected {
-  border-color: #2d8f3c;
-  background: linear-gradient(180deg, rgba(180, 230, 160, 0.8), rgba(120, 200, 100, 0.45));
-  box-shadow: 0 0 0 2px rgba(45, 143, 60, 0.3);
+  border-color: var(--accent);
+  background: linear-gradient(180deg, rgba(200, 220, 190, 0.75), rgba(160, 190, 140, 0.4));
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.char-avatar-wrap {
+  position: relative;
+  width: 56px;
+  height: 56px;
 }
 
 .char-pick .char-avatar,
-.char-pick canvas {
+.char-pick canvas.char-avatar {
   width: 56px;
   height: 56px;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   border-radius: 10px;
-  background: linear-gradient(180deg, #9ad0f0, #6aaa4a);
-  border: 2px solid rgba(139, 90, 43, 0.35);
+  background: linear-gradient(180deg, #d6e0d0 0%, #a8b898 100%);
+  border: 1px solid rgba(122, 98, 72, 0.35);
+  display: block;
+}
+
+.job-weapon-icon {
+  position: absolute;
+  right: -6px;
+  bottom: -4px;
+  width: 22px;
+  height: 22px;
+  image-rendering: pixelated;
+  border-radius: 6px;
+  background: rgba(250, 246, 236, 0.92);
+  border: 1px solid rgba(122, 98, 72, 0.4);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
 }
 
 .char-pick-body {
@@ -630,16 +653,16 @@ body {
 }
 
 .char-pick .job-name {
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   font-weight: 800;
-  color: #5a3010;
+  color: #4a3820;
   line-height: 1.2;
 }
 
 .char-pick .stars {
   letter-spacing: 0.5px;
   font-size: 0.7rem;
-  color: #c9a227;
+  color: #a8892a;
   font-weight: 800;
 }
 
@@ -669,7 +692,7 @@ body {
   margin-top: 4px;
   font-size: 0.72rem;
   font-weight: 700;
-  color: #8b1e1e;
+  color: #6e4e32;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -681,11 +704,27 @@ body {
   right: 6px;
   font-size: 0.65rem;
   font-weight: 800;
-  color: #fff8e0;
-  background: #2d8f3c;
-  border: 1px solid #1f5f28;
+  color: #f7f4ea;
+  background: var(--accent);
+  border: 1px solid #2d5a34;
   border-radius: 999px;
   padding: 2px 6px;
+}
+
+.detail-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.detail-job-icon {
+  width: 36px;
+  height: 36px;
+  image-rendering: pixelated;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(122, 98, 72, 0.3);
+  flex-shrink: 0;
 }
 
 .char-detail {
@@ -722,7 +761,7 @@ body {
 .detail-title {
   font-size: 1.15rem;
   font-weight: 800;
-  color: #5a3010;
+  color: #4a3820;
 }
 
 .detail-role {
@@ -749,7 +788,7 @@ body {
   margin: 0;
   font-size: 0.85rem;
   line-height: 1.4;
-  color: #5a3010;
+  color: #4a3820;
 }
 
 .detail-actions {
@@ -811,8 +850,8 @@ body {
 
 .loadout-slot.filled {
   border-style: solid;
-  border-color: #2d8f3c;
-  background: rgba(120, 200, 120, 0.2);
+  border-color: var(--accent);
+  background: rgba(120, 160, 110, 0.16);
 }
 
 .loadout-slot canvas {
@@ -830,7 +869,7 @@ body {
 .slot-cap {
   font-size: 0.68rem;
   font-weight: 800;
-  color: #5a3010;
+  color: #4a3820;
   text-align: center;
   line-height: 1.15;
 }
@@ -871,7 +910,7 @@ body {
 }
 
 .skill-row strong {
-  color: #5a3010;
+  color: #4a3820;
 }
 
 .skill-row small {
@@ -886,9 +925,9 @@ body {
   padding: 6px 10px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(139, 90, 43, 0.3);
+  border: 1px solid rgba(122, 98, 72, 0.3);
   font-weight: 800;
-  color: #8b1e1e;
+  color: #5a4028;
 }
 
 /* ===== Full-screen overlays for pickers ===== */
@@ -899,7 +938,8 @@ body {
   z-index: 50;
   padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
     max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
-  background: rgba(20, 45, 25, 0.72);
+  background: rgba(28, 36, 28, 0.55);
+  backdrop-filter: blur(2px);
 }
 
 body.char-select-open {

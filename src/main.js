@@ -16,6 +16,7 @@ import {
   buildLeveledDef,
 } from "./data/card-progress.js";
 import { getSpecialistPortrait, getSpecialistHero } from "./game/sprites.js";
+import { getJobIcon } from "./data/job-icons.js";
 import { sfx } from "./audio/sfx.js";
 import { STAGES, loadProgress, isStageUnlocked, getStageByIndex } from "./data/stages.js";
 import { getItem } from "./data/items.js";
@@ -235,6 +236,8 @@ function openStageSelect() {
   hideAllOverlays();
   renderStageList();
   setOverlayOpen(els.stageOverlay, true);
+  void sfx.unlock();
+  sfx.startBgm("menu");
   if (game) ui.onState(game.getPublicState());
 }
 
@@ -251,6 +254,9 @@ function openCharacterSelect() {
   renderCharacterGrid();
   setOverlayOpen(els.charOverlay, true);
   document.body.classList.add("char-select-open");
+  void sfx.unlock();
+  sfx.startBgm("menu");
+  void sfx.preload();
   ui.onState(game.getPublicState());
 }
 
@@ -363,7 +369,10 @@ function renderUpgradePanel(typeId) {
 
   els.upgradeDetail.innerHTML = `
     <div class="detail-hero">
-      <div class="detail-title">${d.emoji || ""} ${d.nameZh}</div>
+      <div class="detail-title-row">
+        <img class="detail-job-icon" src="${getJobIcon(typeId, d.family)}" alt="" draggable="false" />
+        <div class="detail-title">${d.nameZh}</div>
+      </div>
       <div class="stars">${starsText(lv)}</div>
       <div class="detail-role">${d.role}</div>
       <div class="detail-stats">
@@ -509,6 +518,8 @@ function buildCharPickButton(id) {
   btn.setAttribute("role", "listitem");
 
   const hero = getSpecialistPortrait(id, d);
+  const avatarWrap = document.createElement("div");
+  avatarWrap.className = "char-avatar-wrap";
   const c = document.createElement("canvas");
   c.width = hero.width;
   c.height = hero.height;
@@ -516,11 +527,18 @@ function buildCharPickButton(id) {
   const ctx = c.getContext("2d");
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(hero, 0, 0);
+  const icon = document.createElement("img");
+  icon.className = "job-weapon-icon";
+  icon.src = getJobIcon(id, d.family);
+  icon.alt = "";
+  icon.draggable = false;
+  icon.loading = "lazy";
+  avatarWrap.append(c, icon);
 
   const body = document.createElement("div");
   body.className = "char-pick-body";
   body.innerHTML = `
-    <div class="job-name">${d.emoji || ""} ${d.nameZh}</div>
+    <div class="job-name">${d.nameZh}</div>
     <div class="stars">${starsText(lv)}</div>
     <div class="job-meta">
       <span class="pill-cost">${leveled.cost} 點</span>
@@ -536,7 +554,7 @@ function buildCharPickButton(id) {
     btn.appendChild(badge);
   }
 
-  btn.append(c, body);
+  btn.append(avatarWrap, body);
   btn.addEventListener("click", () => {
     void sfx.unlock();
     // First tap focuses detail; if already focused, toggle loadout
@@ -875,7 +893,13 @@ window.addEventListener("keydown", (e) => {
 });
 
 const unlockOnce = () => {
-  sfx.unlock();
+  void sfx.unlock().then(() => {
+    void sfx.preload();
+    // Menu / stage / char screens get soft town BGM after first gesture
+    if (screen === "stage" || screen === "char" || !document.body.classList.contains("in-play")) {
+      sfx.startBgm("menu");
+    }
+  });
   window.removeEventListener("pointerdown", unlockOnce);
   window.removeEventListener("keydown", unlockOnce);
 };

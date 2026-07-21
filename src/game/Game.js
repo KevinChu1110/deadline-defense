@@ -260,7 +260,7 @@ export class Game {
     this.spawnQueue.sort((a, b) => a.at - b.at);
     this.status = `第 ${next + 1} 波：${wave.name}`;
     this.sfx.play("waveStart");
-    this.sfx.startBgm();
+    this.sfx.startBgm("battle");
     this.ui?.onState?.(this.getPublicState());
     this.ui?.toast?.(
       isBossWave ? `⚠ ${wave.name}` : `第 ${next + 1} 波 — ${wave.name}`
@@ -423,7 +423,8 @@ export class Game {
 
   _onWaveCleared() {
     this.waveActive = false;
-    this.sfx.stopBgm();
+    // Soft town theme between waves (not silence)
+    this.sfx.startBgm("menu");
     const stageIndex = this.stage.index ?? 0;
     const leafGain = rewardForWaveClear(this.waveIndex, stageIndex);
     addMapleLeaves(leafGain, "wave");

@@ -1,0 +1,28 @@
+Audio credits — 神木防衛 / Maple Defense
+=====================================
+
+All audio below is free for commercial use under the stated licenses.
+Official MapleStory / Nexon audio is NOT used.
+
+BGM (CC0)
+---------
+- menu.mp3  — "Town Theme RPG" by cynicmusic (OpenGameArt, CC0)
+  https://opengameart.org/content/town-theme-rpg
+- battle.mp3 — "Battle Theme A" by cynicmusic (OpenGameArt, CC0)
+  https://opengameart.org/content/battle-theme-a
+
+SFX & UI (CC0 — Kenney.nl)
+--------------------------
+- UI Audio pack          https://kenney.nl/assets/ui-audio
+- Interface Sounds pack  https://kenney.nl/assets/interface-sounds
+- RPG Audio pack         https://kenney.nl/assets/rpg-audio
+- Impact Sounds pack     https://kenney.nl/assets/impact-sounds
+- Music Jingles pack     https://kenney.nl/assets/music-jingles
+
+Job / UI icons (CC0)
+--------------------
+- 496 Pixel Art Icons for Medieval/Fantasy RPG (OpenGameArt, CC0)
+  https://opengameart.org/content/496-pixel-art-icons-for-medievalfantasy-rpg
+
+Character body sprites are original procedural pixel art for this project
+(not official MapleStory assets).
