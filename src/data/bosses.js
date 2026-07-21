@@ -1,6 +1,13 @@
 /**
- * 五大競賽 Boss：拉圖斯 / 殘暴炎魔 / 暗黑龍王 / 皮卡啾 / 海怒斯
- * 可掛在 campaign 終關或排行挑戰關
+ * 五大 Boss — 地區／難度對齊 Discord bot（raid.js / adv-raid-data.json）
+ *
+ * | Boss     | 地區       | bot key / tier | 難度序 |
+ * |----------|------------|----------------|--------|
+ * | 海怒斯   | 水世界     | hainurs S 110  | 1 最易 |
+ * | 拉圖斯   | 玩具城     | papulatus S 125| 2      |
+ * | 殘暴炎魔 | 冰原雪域   | zakum S+ 140   | 3      |
+ * | 暗黑龍王 | 神木村     | darkdragon SS 160 | 4   |
+ * | 皮卡啾   | 時間神殿   | pinkbean SSS 180 | 5 最難 |
  */
 import { MAP_ARENA } from "./maps.js";
 
@@ -11,15 +18,55 @@ const baseBoss = (p) => ({
   ...p,
 });
 
+/**
+ * 難度錨點（局內 base HP；再乘 stage.hpScale）
+ * 對照 bot maxHp 比例粗略縮放：hainurs/zakum 20k、dark 23k、papu 45k、pink 48k
+ * 皮卡啾必須最高。
+ */
 export const BOSSES = {
+  // ── 水世界 · S · 海怒斯（bot: hainurs / pianus，深海巨怪）──
+  boss_hainurs: baseBoss({
+    id: "boss_hainurs",
+    nameZh: "海怒斯",
+    region: "aqua",
+    regionZh: "水世界",
+    tier: "S",
+    botKey: "hainurs",
+    color: "#1d4e89",
+    radius: 32,
+    hp: 3400,
+    speed: 26,
+    armor: 0.12,
+    leakDamage: 9,
+    sprite: "pianus.png",
+    spriteScale: 1.65,
+    tags: ["boss", "summoner", "dense"],
+    phaseSpawns: [
+      { at: 0.7, units: [["bubbling", 8], ["octopus", 1]], path: "both" },
+      { at: 0.4, units: [["croco", 4], ["bubbling", 6]], path: "alt" },
+      { at: 0.2, units: [["octopus", 2], ["croco", 3], ["slime", 6]], path: "both" },
+    ],
+    phaseBanner: [
+      { at: 0.7, text: "海怒斯 · 深海潮湧" },
+      { at: 0.4, text: "海怒斯 · 觸手狂舞" },
+      { at: 0.2, text: "海怒斯 · 深淵壓制" },
+    ],
+  }),
+
+  // ── 玩具城 · S · 拉圖斯 ──
   boss_papulatus: baseBoss({
     id: "boss_papulatus",
     nameZh: "拉圖斯",
+    region: "ludi",
+    regionZh: "玩具城",
+    tier: "S",
+    botKey: "papulatus",
     color: "#c084fc",
     radius: 32,
-    hp: 3800,
+    hp: 4000,
     speed: 28,
     armor: 0.15,
+    leakDamage: 9,
     sprite: "papulatus.png",
     spriteScale: 1.55,
     tags: ["boss", "summoner"],
@@ -37,14 +84,20 @@ export const BOSSES = {
     ],
   }),
 
+  // ── 冰原雪域 · S+ · 殘暴炎魔 ──
   boss_zakum: baseBoss({
     id: "boss_zakum",
     nameZh: "殘暴炎魔",
+    region: "elnath",
+    regionZh: "冰原雪域",
+    tier: "S+",
+    botKey: "zakum",
     color: "#ef4444",
     radius: 34,
-    hp: 4200,
+    hp: 4800,
     speed: 24,
     armor: 0.22,
+    leakDamage: 10,
     sprite: "zakum.png",
     spriteScale: 1.5,
     tags: ["boss", "armored", "summoner"],
@@ -60,98 +113,119 @@ export const BOSSES = {
     ],
   }),
 
+  // ── 神木村 · SS · 暗黑龍王（bot: darkdragon / 三頭）──
   boss_dark_dragon: baseBoss({
     id: "boss_dark_dragon",
     nameZh: "暗黑龍王",
-    color: "#1e1b4b",
-    radius: 33,
-    hp: 4500,
-    speed: 30,
-    armor: 0.28,
-    sprite: "red_drake.png",
-    spriteScale: 2.0,
-    tags: ["boss", "armored", "flyer"],
-    flying: true,
-    canGap: true,
+    region: "leafre",
+    regionZh: "神木村",
+    tier: "SS",
+    botKey: "darkdragon",
+    color: "#312e81",
+    radius: 35,
+    hp: 5800,
+    speed: 24,
+    armor: 0.3,
+    leakDamage: 11,
+    sprite: "horntail.png",
+    spriteScale: 1.75,
+    tags: ["boss", "armored", "summoner", "dense"],
+    // 左頭 → 右頭 → 本體（對齊 bot 多部位）
     phaseSpawns: [
-      { at: 0.65, units: [["drake", 4], ["red_drake", 2]], path: "both" },
-      { at: 0.4, units: [["hellhound", 5]], path: "alt" },
-      { at: 0.2, units: [["red_drake", 4], ["drake", 4]], path: "both" },
+      { at: 0.75, units: [["drake", 3], ["jr_wraith", 4]], path: "both" },
+      { at: 0.5, units: [["red_drake", 3], ["hellhound", 3]], path: "alt" },
+      { at: 0.25, units: [["drake", 4], ["red_drake", 3], ["iron_hog", 2]], path: "both" },
     ],
     phaseBanner: [
-      { at: 0.65, text: "暗黑龍王 · 盤旋" },
-      { at: 0.4, text: "暗黑龍王 · 落地狂襲" },
-      { at: 0.2, text: "暗黑龍王 · 闇息" },
+      { at: 0.75, text: "暗黑龍王 · 左頭甦醒" },
+      { at: 0.5, text: "暗黑龍王 · 右頭怒吼" },
+      { at: 0.25, text: "暗黑龍王 · 本體全力" },
     ],
   }),
 
+  // ── 時間神殿 · SSS · 皮卡啾（最難）──
   boss_pink_bean: baseBoss({
     id: "boss_pink_bean",
     nameZh: "皮卡啾",
+    region: "temple",
+    regionZh: "時間神殿",
+    tier: "SSS",
+    botKey: "pinkbean",
     color: "#f9a8d4",
-    radius: 30,
-    hp: 4000,
-    speed: 36,
+    radius: 32,
+    hp: 7800,
+    speed: 32,
+    armor: 0.18,
+    leakDamage: 14,
     sprite: "pepe.png",
-    spriteScale: 2.3,
+    spriteScale: 2.4,
     tags: ["boss", "summoner", "swift"],
-    hasteAura: 0.18,
-    hasteRadius: 130,
+    hasteAura: 0.22,
+    hasteRadius: 140,
+    speedBurstAt: 0.4,
+    speedBurstMult: 1.35,
     phaseSpawns: [
-      { at: 0.8, units: [["slime", 8], ["pig", 4]], path: "both" },
-      { at: 0.55, units: [["ribbon_pig", 6], ["bubbling", 4]], path: "alt" },
-      { at: 0.3, units: [["slime", 10], ["hellhound", 2]], path: "both" },
+      { at: 0.8, units: [["slime", 10], ["pig", 5]], path: "both" },
+      { at: 0.55, units: [["jr_wraith", 6], ["ribbon_pig", 5], ["bubbling", 4]], path: "both" },
+      { at: 0.35, units: [["hellhound", 4], ["wraith", 3], ["slime", 8]], path: "alt" },
+      { at: 0.15, units: [["hellhound", 5], ["red_drake", 3], ["iron_hog", 3], ["slime", 10]], path: "both" },
     ],
-    splitOnDeath: { type: "slime", count: 6 },
+    splitOnDeath: { type: "slime", count: 8 },
     phaseBanner: [
-      { at: 0.8, text: "皮卡啾 · 惡作劇" },
-      { at: 0.55, text: "皮卡啾 · 分身秀" },
-      { at: 0.3, text: "皮卡啾 · 暴走" },
-    ],
-  }),
-
-  boss_horntail: baseBoss({
-    id: "boss_horntail",
-    nameZh: "海怒斯",
-    color: "#166534",
-    radius: 36,
-    hp: 5000,
-    speed: 22,
-    armor: 0.32,
-    leakDamage: 12,
-    sprite: "drake.png",
-    spriteScale: 2.1,
-    tags: ["boss", "armored", "summoner", "dense"],
-    phaseSpawns: [
-      { at: 0.75, units: [["drake", 3], ["red_drake", 2]], path: "both" },
-      { at: 0.5, units: [["hellhound", 4], ["iron_hog", 3]], path: "alt" },
-      { at: 0.35, units: [["wraith", 4], ["jr_wraith", 5]], path: "both" },
-      { at: 0.15, units: [["red_drake", 5], ["hellhound", 4], ["iron_boar", 2]], path: "both" },
-    ],
-    phaseBanner: [
-      { at: 0.75, text: "海怒斯 · 左頭甦醒" },
-      { at: 0.5, text: "海怒斯 · 中頭" },
-      { at: 0.35, text: "海怒斯 · 右頭" },
-      { at: 0.15, text: "海怒斯 · 全力" },
+      { at: 0.8, text: "皮卡啾 · 石像甦醒" },
+      { at: 0.55, text: "皮卡啾 · 女神試煉" },
+      { at: 0.35, text: "皮卡啾 · 本體登場" },
+      { at: 0.15, text: "皮卡啾 · 狂暴（最難）" },
     ],
   }),
 };
 
-/** 競賽模式 Boss 輪替表 */
+/** 舊 id 相容：曾誤把海怒斯當 horntail */
+BOSSES.boss_horntail = {
+  ...BOSSES.boss_hainurs,
+  id: "boss_horntail",
+};
+
+/** 競賽列表：由易到難（對齊 bot tier） */
 export const ARENA_BOSS_ROTATION = [
+  "boss_hainurs",
   "boss_papulatus",
   "boss_zakum",
   "boss_dark_dragon",
   "boss_pink_bean",
-  "boss_horntail",
 ];
 
 export const ARENA_BOSS_META = {
-  boss_papulatus: { emoji: "⏰", blurb: "時鐘相位 · 半血加速" },
-  boss_zakum: { emoji: "🔥", blurb: "三階段手臂 · 煉獄加兵" },
-  boss_dark_dragon: { emoji: "🐉", blurb: "飛行龍王 · 落地狂襲" },
-  boss_pink_bean: { emoji: "💕", blurb: "惡作劇 · 分身與加速" },
-  boss_horntail: { emoji: "🐲", blurb: "多頭甦醒 · 高防重壓" },
+  boss_hainurs: {
+    emoji: "🦑",
+    blurb: "水世界 · S · 深海潮湧",
+    regionZh: "水世界",
+    tier: "S",
+  },
+  boss_papulatus: {
+    emoji: "⏰",
+    blurb: "玩具城 · S · 時鐘相位",
+    regionZh: "玩具城",
+    tier: "S",
+  },
+  boss_zakum: {
+    emoji: "🔥",
+    blurb: "冰原雪域 · S+ · 八臂煉獄",
+    regionZh: "冰原雪域",
+    tier: "S+",
+  },
+  boss_dark_dragon: {
+    emoji: "🐉",
+    blurb: "神木村 · SS · 三頭龍王",
+    regionZh: "神木村",
+    tier: "SS",
+  },
+  boss_pink_bean: {
+    emoji: "🌸",
+    blurb: "時間神殿 · SSS · 最終王（最難）",
+    regionZh: "時間神殿",
+    tier: "SSS",
+  },
 };
 
 export function getArenaBossId(weekOffset = 0) {
@@ -161,6 +235,15 @@ export function getArenaBossId(weekOffset = 0) {
 
 const g = (at, path, units, interval = 0.9) => ({ at, path, units, interval });
 
+/** 競賽難度：依 bot tier 調部署點／神木／波次壓 */
+const ARENA_SCALE = {
+  boss_hainurs: { core: 26, pts: 22, team: 9, hpScale: 1.0 },
+  boss_papulatus: { core: 26, pts: 22, team: 9, hpScale: 1.05 },
+  boss_zakum: { core: 28, pts: 24, team: 10, hpScale: 1.15 },
+  boss_dark_dragon: { core: 30, pts: 24, team: 10, hpScale: 1.3 },
+  boss_pink_bean: { core: 32, pts: 26, team: 10, hpScale: 1.55 },
+};
+
 /**
  * 建構競賽關：3 波（先鋒 → 加兵 → Boss）
  */
@@ -168,23 +251,32 @@ export function buildArenaStage(bossId) {
   const id = ARENA_BOSS_ROTATION.includes(bossId) ? bossId : getArenaBossId();
   const boss = BOSSES[id];
   const meta = ARENA_BOSS_META[id] || { emoji: "⚔️", blurb: "競賽 Boss" };
+  const sc = ARENA_SCALE[id] || ARENA_SCALE.boss_hainurs;
   const idx = ARENA_BOSS_ROTATION.indexOf(id);
+  // 地圖主題對齊地區
+  const codeByRegion = {
+    aqua: "AQUA",
+    ludi: "LUDI",
+    elnath: "ELNATH",
+    leafre: "LEAFRE",
+    temple: "TEMPLE",
+  };
   return {
     id: `arena-${id}`,
     index: 100 + Math.max(0, idx),
-    code: "ALTAR",
+    code: codeByRegion[boss.region] || "ALTAR",
     name: `競賽場 · ${boss.nameZh}`,
     nameEn: id,
     arena: true,
     arenaBossId: id,
-    briefing: `${meta.emoji} ${boss.nameZh}：${meta.blurb}。3 波速決，分數進排行榜。`,
-    coreHp: 28,
-    teamLimit: 10,
-    deploymentPoints: 24,
+    briefing: `${meta.emoji} ${boss.regionZh || ""} · ${meta.blurb}。3 波速決，分數進排行榜。`,
+    coreHp: sc.core,
+    teamLimit: sc.team,
+    deploymentPoints: sc.pts,
     sellEnabled: true,
-    hpScale: 1.0,
-    speedScale: 1.0,
-    leakScale: 1.0,
+    hpScale: sc.hpScale,
+    speedScale: 1 + idx * 0.02,
+    leakScale: 1 + idx * 0.05,
     map: MAP_ARENA,
     waves: [
       {
@@ -205,7 +297,7 @@ export function buildArenaStage(bossId) {
         ],
       },
       {
-        name: `【競賽Boss】${boss.nameZh}`,
+        name: `【競賽Boss】${boss.nameZh}（${meta.tier || "?"}）`,
         intel: `${meta.blurb}。守住神木！`,
         groups: [
           g(0, "workflow", [[id, 1]], 1),

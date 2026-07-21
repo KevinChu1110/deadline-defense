@@ -298,9 +298,10 @@ const S06_WAVES = [
     g(0, "workflow", [["pepe", 10], ["jr_wraith", 6]], 0.65),
     g(3, "workflow", [["cold_eye", 2]], 2.0),
   ]),
-  W("【Boss】雪吉拉王", "光環加速；半血召冰眼與企鵝。", [
-    g(0, "workflow", [["boss_yeti", 1]], 1),
-    g(3, "workflow", [["pepe", 8], ["snail", 10]], 0.55),
+  W("【Boss】殘暴炎魔", "冰原雪域之王！手臂甦醒三階段。", [
+    g(0, "workflow", [["boss_zakum", 1]], 1),
+    g(3, "workflow", [["pepe", 6], ["fire_boar", 5]], 0.65),
+    g(6, "workflow", [["hellhound", 3], ["cold_eye", 1]], 0.9),
   ]),
 ];
 
@@ -344,9 +345,10 @@ const S07_WAVES = [
     g(0, "workflow", [["octopus", 2], ["zombie_mushroom", 5]], 0.85),
     g(0, "event", [["octopus", 2], ["slime", 5]], 0.85),
   ]),
-  W("【Boss】刺章魚王", "高速召喚；半血另一路生小章魚。", [
-    g(0, "workflow", [["boss_octopus", 1]], 1),
-    g(2, "event", [["croco", 4], ["bubbling", 8]], 0.65),
+  W("【Boss】海怒斯", "水世界深海巨怪！觸手潮湧與召喚。", [
+    g(0, "workflow", [["boss_hainurs", 1]], 1),
+    g(2, "event", [["octopus", 2], ["bubbling", 8]], 0.7),
+    g(5, "workflow", [["croco", 4], ["bubbling", 6]], 0.75),
   ]),
 ];
 
@@ -387,10 +389,10 @@ const S08_WAVES = [
     g(0, "event", [["stone_golem", 2], ["pig", 5]], 0.85),
     g(0, "pathC", [["croco", 4], ["jr_wraith", 4]], 0.75),
   ]),
-  W("【Boss】皮卡啾", "玩具城惡作劇王！分身＋加速光環。", [
-    g(0, "event", [["boss_pink_bean", 1]], 1),
-    g(2, "workflow", [["slime", 6], ["pig", 4]], 0.65),
-    g(2, "pathC", [["ribbon_pig", 5], ["bubbling", 3]], 0.7),
+  W("【Boss】拉圖斯", "玩具城時空之鐘！半血加速與次元裂縫。", [
+    g(0, "event", [["boss_papulatus", 1]], 1),
+    g(2, "workflow", [["jr_wraith", 5], ["bat", 4]], 0.7),
+    g(2, "pathC", [["slime", 6], ["iron_hog", 1]], 0.75),
   ]),
 ];
 
@@ -434,8 +436,8 @@ const S09_WAVES = [
     g(0, "workflow", [["hellhound", 4], ["drake", 3]], 0.8),
     g(0, "event", [["hellhound", 3], ["red_drake", 3]], 0.8),
   ]),
-  W("【Boss】海怒斯", "多頭甦醒！高防龍王，分段加兵。", [
-    g(0, "workflow", [["boss_horntail", 1]], 1),
+  W("【Boss】暗黑龍王", "神木村三頭龍王！左頭→右頭→本體。", [
+    g(0, "workflow", [["boss_dark_dragon", 1]], 1),
     g(2, "event", [["drake", 4], ["hellhound", 3]], 0.75),
     g(5, "workflow", [["red_drake", 3], ["jr_wraith", 5]], 0.8),
   ]),
@@ -461,9 +463,9 @@ const S10_WAVES = [
     g(0, "workflow", [["octopus", 2], ["drake", 3]], 1.0),
     g(0, "event", [["octopus", 2], ["red_drake", 3]], 1.0),
   ]),
-  W("【中Boss】拉圖斯", "時鐘相位 · 半血加速與次元裂縫！", [
-    g(0, "workflow", [["boss_papulatus", 1]], 1),
-    g(2, "event", [["hellhound", 4], ["fire_boar", 5]], 0.7),
+  W("【中Boss】神殿守衛", "時間神殿先遣 · 隱形與召喚。", [
+    g(0, "workflow", [["mid_ghost_lieutenant", 1]], 1),
+    g(2, "event", [["hellhound", 4], ["dark_stump", 5]], 0.7),
   ]),
   W("最後喘息", "補陣形。", [
     g(0, "workflow", [["pig", 10]], 0.6),
@@ -478,15 +480,26 @@ const S10_WAVES = [
     g(0, "event", [["drake", 4], ["iron_hog", 2]], 0.85),
     g(2, "workflow", [["fire_boar", 5], ["hellhound", 2]], 0.7),
   ]),
-  W("【Boss】暗黑龍王", "飛行龍王登場！落地後狂襲。", [
-    g(0, "workflow", [["boss_dark_dragon", 1]], 1),
-    g(3, "event", [["drake", 4], ["red_drake", 2]], 0.85),
-    g(6, "workflow", [["hellhound", 3], ["bat", 6]], 0.7),
+  W("神殿狂潮", "全機制壓力 · 皮卡啾前哨。", [
+    g(0, "workflow", [
+      ["hellhound", 3],
+      ["wraith", 3],
+      ["iron_hog", 2],
+      ["dark_stump", 3],
+    ], 0.65),
+    g(0, "event", [
+      ["jr_wraith", 5],
+      ["red_drake", 2],
+      ["slime", 6],
+      ["octopus", 1],
+    ], 0.7),
+    { at: 4, path: "workflow", units: [["bat", 8]], interval: 0.35, distanceRatio: 0.6 },
   ]),
-  W("【最終Boss】殘暴炎魔", "三階段加兵。守住神木！", [
-    g(0, "workflow", [["boss_zakum", 1]], 1),
-    g(4, "event", [["hellhound", 3], ["fire_boar", 5]], 0.7),
-    g(8, "workflow", [["iron_hog", 2], ["drake", 3]], 0.9),
+  W("【最終Boss】皮卡啾", "時間神殿 SSS · 石像→女神→本體狂暴。全作最難！", [
+    g(0, "workflow", [["boss_pink_bean", 1]], 1),
+    g(3, "event", [["slime", 8], ["jr_wraith", 5]], 0.65),
+    g(6, "workflow", [["hellhound", 4], ["iron_hog", 2]], 0.8),
+    g(9, "event", [["red_drake", 3], ["wraith", 3]], 0.85),
   ]),
 ];
 
@@ -541,7 +554,7 @@ export const CAMPAIGN_STAGES = [
     index: 5,
     code: "ELNATH",
     name: "冰原雪域",
-    briefing: "企鵝抗緩，冰冷之眼會加速友軍——優先擊殺！",
+    briefing: "企鵝抗緩 · 第 10 波殘暴炎魔（冰原雪域之王）。",
     map: MAP_SINGLE,
     waves: S06_WAVES,
   }),
@@ -550,7 +563,7 @@ export const CAMPAIGN_STAGES = [
     index: 6,
     code: "AQUA",
     name: "水下世界",
-    briefing: "章魚會不斷召喚小怪。先打掉召喚源。",
+    briefing: "章魚召喚 · 第 10 波海怒斯（深海巨怪）。",
     map: MAP_DUAL,
     waves: S07_WAVES,
   }),
@@ -559,7 +572,7 @@ export const CAMPAIGN_STAGES = [
     index: 7,
     code: "LUDI",
     name: "玩具城工廠",
-    briefing: "三路線同時進攻 · 第 10 波皮卡啾惡作劇！",
+    briefing: "三路線進攻 · 第 10 波拉圖斯（時空之鐘）。",
     map: MAP_TRIPLE,
     waves: S08_WAVES,
   }),
@@ -568,16 +581,16 @@ export const CAMPAIGN_STAGES = [
     index: 8,
     code: "LEAFRE",
     name: "神木村外圍",
-    briefing: "飛龍換路 · 第 10 波海怒斯多頭甦醒！",
+    briefing: "飛龍換路 · 第 10 波暗黑龍王（三頭，SS）。",
     map: MAP_DUAL,
     waves: S09_WAVES,
   }),
   stage({
     id: "s10-altar",
     index: 9,
-    code: "ALTAR",
-    name: "神木祭壇",
-    briefing: "最終戰：W5 拉圖斯 · W9 暗黑龍王 · W10 殘暴炎魔！",
+    code: "TEMPLE",
+    name: "時間神殿",
+    briefing: "最終戰 · 第 10 波皮卡啾（SSS，全作最難）！",
     map: MAP_ARENA,
     waves: S10_WAVES,
   }),

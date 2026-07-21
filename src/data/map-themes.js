@@ -93,6 +93,16 @@ export const MAP_THEMES = {
     decor: "lava",
     bgAlpha: 0,
   },
+  temple: {
+    id: "temple",
+    nameZh: "時間神殿",
+    sky: ["#2e1065", "#4c1d95"],
+    ground: ["#1e1b4b", "#312e81"],
+    accent: "#f9a8d4",
+    path: "cloud",
+    decor: "gears",
+    bgAlpha: 0,
+  },
 };
 
 /** stage id / map type → theme */
@@ -109,6 +119,8 @@ export function themeForStage(stage) {
     LUDI: "ludi",
     LEAFRE: "leafre",
     ALTAR: "altar",
+    TEMPLE: "temple",
+    TIME: "temple",
   };
   const key = map[code] || "victoria";
   return MAP_THEMES[key] || MAP_THEMES.victoria;

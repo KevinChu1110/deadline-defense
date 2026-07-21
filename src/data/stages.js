@@ -7,7 +7,9 @@ const PROGRESS_KEY = "deadline-defense-progress-v1";
 
 export function getStageById(id) {
   if (typeof id === "string" && id.startsWith("arena-")) {
-    const bossId = id.slice("arena-".length);
+    let bossId = id.slice("arena-".length);
+    // 舊競賽 id 相容
+    if (bossId === "boss_horntail") bossId = "boss_hainurs";
     return buildArenaStage(ARENA_BOSS_ROTATION.includes(bossId) ? bossId : undefined);
   }
   return STAGES.find((s) => s.id === id) || STAGES[0];

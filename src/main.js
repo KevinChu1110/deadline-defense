@@ -307,10 +307,10 @@ function renderArenaList() {
     btn.innerHTML = `
       <span class="idx arena-emoji">${meta.emoji || "⚔️"}</span>
       <span>
-        <strong>${boss.nameZh}${isToday ? " · 今日推薦" : ""}</strong>
-        <small>${meta.blurb || "競賽 Boss"}</small>
+        <strong>${boss.nameZh}${isToday ? " · 今日推薦" : ""} · ${meta.tier || ""}</strong>
+        <small>${meta.regionZh || boss.regionZh || ""} · ${meta.blurb || "競賽 Boss"}</small>
       </span>
-      <span class="badge">${isToday ? "推薦" : "挑戰"}</span>
+      <span class="badge">${meta.tier === "SSS" ? "最難" : isToday ? "推薦" : "挑戰"}</span>
     `;
     btn.addEventListener("click", () => {
       void sfx.unlock();
