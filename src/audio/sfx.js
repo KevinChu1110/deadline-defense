@@ -43,10 +43,17 @@ class SfxEngine {
 
   async unlock() {
     this.ensure();
-    if (!this.ctx) return;
+    if (!this.ctx) {
+      this._unlocked = true;
+      return;
+    }
     if (this.ctx.state === "suspended") {
       try {
-        await this.ctx.resume();
+        // Never hang UI if resume never settles (some browsers / headless).
+        await Promise.race([
+          this.ctx.resume(),
+          new Promise((r) => setTimeout(r, 400)),
+        ]);
       } catch {
         /* ignore */
       }

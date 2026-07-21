@@ -184,8 +184,8 @@ function renderStageList() {
         ${!unlocked ? "未解鎖" : cleared ? "已通關" : "可挑戰"}
       </span>
     `;
-    btn.addEventListener("click", async () => {
-      await sfx.unlock();
+    btn.addEventListener("click", () => {
+      void sfx.unlock();
       sfx.play("uiClick");
       pendingStageId = stage.id;
       openCharacterSelect();
@@ -396,9 +396,9 @@ function buildCharPickButton(id) {
     upBtn.textContent = `升級 🍁${nextCost}`;
     upBtn.disabled = leaves < nextCost;
   }
-  upBtn.addEventListener("click", async (ev) => {
+  upBtn.addEventListener("click", (ev) => {
     ev.stopPropagation();
-    await sfx.unlock();
+    void sfx.unlock();
     focusCardId = id;
     const result = tryUpgradeCard(id);
     if (!result.ok) {
@@ -417,8 +417,8 @@ function buildCharPickButton(id) {
 
   btn.append(name, stars, role, skill, traits, cost, upBtn);
 
-  btn.addEventListener("click", async () => {
-    await sfx.unlock();
+  btn.addEventListener("click", () => {
+    void sfx.unlock();
     focusCardId = id;
     renderUpgradePanel(id);
     toggleDraftJob(id);
@@ -459,8 +459,8 @@ function showRewards(items) {
       </span>
       <span class="cost">選擇</span>
     `;
-    btn.addEventListener("click", async () => {
-      await sfx.unlock();
+    btn.addEventListener("click", () => {
+      void sfx.unlock();
       game.pickReward(item.id);
     });
     els.rewardList.appendChild(btn);
@@ -594,8 +594,8 @@ function renderSpecialistCards(state) {
     cost.textContent = String(leveled.cost);
 
     btn.append(img, text, cost);
-    btn.addEventListener("click", async () => {
-      await sfx.unlock();
+    btn.addEventListener("click", () => {
+      void sfx.unlock();
       if (blocked) return;
       if ((state?.points ?? game.points) < leveled.cost) {
         sfx.play("error");
@@ -613,14 +613,15 @@ function renderSpecialistCards(state) {
   }
 }
 
-async function withAudio(fn) {
-  await sfx.unlock();
+/** Run UI immediately; unlock audio in background so clicks never hang. */
+function withAudio(fn) {
+  void sfx.unlock();
   fn();
 }
 
-els.btnStart.addEventListener("click", () => withAudio(() => game.startNextWave()));
-els.btnSpeed.addEventListener("click", () => withAudio(() => game.toggleSpeed()));
-els.btnSell.addEventListener("click", () => withAudio(() => game.sellSelected()));
+els.btnStart?.addEventListener("click", () => withAudio(() => game.startNextWave()));
+els.btnSpeed?.addEventListener("click", () => withAudio(() => game.toggleSpeed()));
+els.btnSell?.addEventListener("click", () => withAudio(() => game.sellSelected()));
 els.btnMute?.addEventListener("click", () => withAudio(() => game.toggleMute()));
 els.btnStages?.addEventListener("click", () =>
   withAudio(() => {
@@ -646,7 +647,7 @@ els.btnCharConfirm?.addEventListener("click", () =>
     confirmLoadoutAndStart();
   })
 );
-els.btnRestart.addEventListener("click", () =>
+els.btnRestart?.addEventListener("click", () =>
   withAudio(() => {
     hideAllOverlays();
     screen = "play";
