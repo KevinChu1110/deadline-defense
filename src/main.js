@@ -164,6 +164,7 @@ function refreshWaveIntel() {
 }
 
 function renderStageList() {
+  if (!els.stageList) return;
   const progress = loadProgress();
   els.stageList.innerHTML = "";
   STAGES.forEach((stage, i) => {
@@ -197,18 +198,19 @@ function openStageSelect() {
   screen = "stage";
   hideAllOverlays();
   renderStageList();
-  els.stageOverlay.hidden = false;
-  ui.onState(game.getPublicState());
+  if (els.stageOverlay) els.stageOverlay.hidden = false;
+  if (game) ui.onState(game.getPublicState());
 }
 
 function openCharacterSelect() {
+  if (!game) return;
   screen = "char";
   hideAllOverlays();
   draftLoadout = [...(game.loadout?.length ? game.loadout : DEFAULT_LOADOUT)];
-  els.loadoutMaxLabel.textContent = String(LOADOUT_MAX);
+  if (els.loadoutMaxLabel) els.loadoutMaxLabel.textContent = String(LOADOUT_MAX);
   focusCardId = draftLoadout[0] || SPECIALIST_ORDER[0];
   renderCharacterGrid();
-  els.charOverlay.hidden = false;
+  if (els.charOverlay) els.charOverlay.hidden = false;
   ui.onState(game.getPublicState());
 }
 
@@ -471,12 +473,27 @@ function hideRewards() {
   if (screen === "reward") screen = "play";
 }
 
+/** Assigned after Game is constructed — onState may run during constructor (reset). */
+let game = null;
+
 const ui = {
   toast: showToast,
   onResult: showResult,
   onRewardOffer: showRewards,
   onRewardClosed: hideRewards,
   onState(state) {
+    // Guard: Game constructor calls reset → onState before `game = new Game(...)` returns.
+    if (!game) {
+      if (els.core) els.core.textContent = `${state.coreHp ?? 0}`;
+      if (els.wave)
+        els.wave.textContent =
+          state.waveIndex < 0 ? `0 / ${state.waveTotal}` : `${state.waveIndex + 1} / ${state.waveTotal}`;
+      if (els.points) els.points.textContent = `${state.points ?? 0}`;
+      if (els.status) els.status.textContent = state.status || "";
+      refreshLeavesUI();
+      return;
+    }
+
     els.core.textContent = `${state.coreHp}`;
     els.wave.textContent =
       state.waveIndex < 0 ? `0 / ${state.waveTotal}` : `${state.waveIndex + 1} / ${state.waveTotal}`;
@@ -533,9 +550,10 @@ const ui = {
   },
 };
 
-const game = new Game(canvas, ui, STAGES[0]?.id || "s01-victoria");
+game = new Game(canvas, ui, STAGES[0]?.id || "s01-victoria");
 
 function renderSpecialistCards(state) {
+  if (!els.specialistList || !game) return;
   els.specialistList.innerHTML = "";
   const loadout = state?.loadout?.length ? state.loadout : game.loadout;
   const blocked = screen !== "play" || state?.result || state?.pausedForReward;
