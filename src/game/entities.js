@@ -363,7 +363,8 @@ export function isTargetable(enemy, specialist, now) {
   if (enemy.hidden && !enemy.revealed && !canReveal) {
     if (enemy.status.analyzedUntil <= now) return false;
   }
-  const r = specialist.def.range;
+  // 含怪物碰撞半徑，避免「圈碰到怪中心才算」造成邊緣點位打不到
+  const r = (specialist.def.range || 0) + (enemy.def?.radius || 12) * 0.55;
   return dist2(specialist.x, specialist.y, enemy.x, enemy.y) <= r * r;
 }
 
