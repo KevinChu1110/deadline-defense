@@ -334,19 +334,36 @@ body {
 .overlay {
   position: absolute;
   inset: 0;
-  display: grid;
+  display: none;
   place-items: center;
   background: rgba(20, 40, 20, 0.55);
   backdrop-filter: blur(3px);
-  z-index: 10;
+  z-index: 20;
   padding: 12px;
   overflow: auto;
+  pointer-events: none;
+}
+
+/* Prefer class toggle over [hidden] alone — more reliable across browsers */
+.overlay.is-open {
+  display: grid;
+  pointer-events: auto;
 }
 
 .overlay-card {
   width: min(94%, 420px);
   padding: 22px;
   text-align: center;
+  pointer-events: auto;
+  position: relative;
+  z-index: 21;
+}
+
+.overlay-actions .btn {
+  pointer-events: auto;
+  position: relative;
+  z-index: 22;
+  min-width: 96px;
 }
 
 .overlay-kicker {

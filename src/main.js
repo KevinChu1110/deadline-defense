@@ -87,39 +87,67 @@ function showToast(msg) {
   }, 1800);
 }
 
+function setOverlayOpen(el, open) {
+  if (!el) return;
+  el.classList.toggle("is-open", !!open);
+  el.hidden = !open;
+}
+
 function hideAllOverlays() {
-  els.stageOverlay.hidden = true;
-  els.charOverlay.hidden = true;
-  els.rewardOverlay.hidden = true;
-  els.overlay.hidden = true;
+  setOverlayOpen(els.stageOverlay, false);
+  setOverlayOpen(els.charOverlay, false);
+  setOverlayOpen(els.rewardOverlay, false);
+  setOverlayOpen(els.overlay, false);
+}
+
+/** Clear end-of-run flags so menus work after victory/defeat. */
+function clearRunState() {
+  if (!game) return;
+  game.result = null;
+  game.waveActive = false;
+  game.pausedForReward = false;
+  game.pendingRewardChoices = null;
 }
 
 function showResult(kind) {
-  screen = "result";
-  hideAllOverlays();
-  els.overlay.hidden = false;
-  const stage = game.stage;
-  const nextIndex = (stage.index ?? 0) + 1;
+  try {
+    screen = "result";
+    hideAllOverlays();
 
-  if (kind === "win") {
-    els.overlayKicker.textContent = "🎉 任務完成";
-    els.overlayTitle.textContent = "神木平安！";
-    const refreshed = loadProgress();
-    const canNext = nextIndex < STAGES.length && isStageUnlocked(nextIndex, refreshed);
-    els.overlayCopy.textContent =
-      nextIndex < STAGES.length
-        ? `${stage.name} 守護成功！${canNext ? "下一關已解鎖。" : ""}`
-        : "目前全部關卡完成！你是真正的冒險家。";
-    els.btnNextStage.hidden = nextIndex >= STAGES.length;
-    els.btnNextStage.disabled = !canNext;
-    els.btnNextStage.textContent = canNext
-      ? `下一關：${getStageByIndex(nextIndex).name}`
-      : "下一關（未解鎖）";
-  } else {
-    els.overlayKicker.textContent = "💀 任務失敗";
-    els.overlayTitle.textContent = "神木被攻陷…";
-    els.overlayCopy.textContent = "換個職業組合或佈陣再試一次吧！";
-    els.btnNextStage.hidden = true;
+    // Write copy first so UI never shows empty/default if something throws later
+    if (kind === "win") {
+      if (els.overlayKicker) els.overlayKicker.textContent = "任務完成";
+      if (els.overlayTitle) els.overlayTitle.textContent = "勝利";
+      const stage = game?.stage;
+      const stageName = stage?.name || "本關";
+      const nextIndex = (stage?.index ?? 0) + 1;
+      const refreshed = loadProgress();
+      const canNext = nextIndex < STAGES.length && isStageUnlocked(nextIndex, refreshed);
+      if (els.overlayCopy) {
+        els.overlayCopy.textContent =
+          nextIndex < STAGES.length
+            ? `${stageName} 守護成功！神木平安無事。${canNext ? " 下一關已解鎖。" : ""}`
+            : `${stageName} 完成！你已通關全部關卡。`;
+      }
+      if (els.btnNextStage) {
+        els.btnNextStage.hidden = nextIndex >= STAGES.length;
+        els.btnNextStage.disabled = !canNext;
+        els.btnNextStage.textContent = canNext
+          ? `下一關：${getStageByIndex(nextIndex).name}`
+          : "下一關（未解鎖）";
+      }
+    } else {
+      if (els.overlayKicker) els.overlayKicker.textContent = "任務失敗";
+      if (els.overlayTitle) els.overlayTitle.textContent = "失敗";
+      if (els.overlayCopy) els.overlayCopy.textContent = "神木被攻陷…換個職業或佈陣再試一次！";
+      if (els.btnNextStage) els.btnNextStage.hidden = true;
+    }
+
+    setOverlayOpen(els.overlay, true);
+  } catch (err) {
+    console.error("[showResult]", err);
+    // Last resort: still show dialog
+    setOverlayOpen(els.overlay, true);
   }
 }
 
@@ -198,7 +226,7 @@ function openStageSelect() {
   screen = "stage";
   hideAllOverlays();
   renderStageList();
-  if (els.stageOverlay) els.stageOverlay.hidden = false;
+  setOverlayOpen(els.stageOverlay, true);
   if (game) ui.onState(game.getPublicState());
 }
 
@@ -210,7 +238,7 @@ function openCharacterSelect() {
   if (els.loadoutMaxLabel) els.loadoutMaxLabel.textContent = String(LOADOUT_MAX);
   focusCardId = draftLoadout[0] || SPECIALIST_ORDER[0];
   renderCharacterGrid();
-  if (els.charOverlay) els.charOverlay.hidden = false;
+  setOverlayOpen(els.charOverlay, true);
   ui.onState(game.getPublicState());
 }
 
@@ -432,6 +460,7 @@ function confirmLoadoutAndStart() {
     showToast("至少選 1 個職業");
     return;
   }
+  clearRunState();
   game.loadStage(pendingStageId);
   game.setLoadout(draftLoadout);
   hideAllOverlays();
@@ -446,6 +475,7 @@ function confirmLoadoutAndStart() {
 
 function showRewards(items) {
   screen = "reward";
+  if (!els.rewardList) return;
   els.rewardList.innerHTML = "";
   for (const item of items) {
     const btn = document.createElement("button");
@@ -459,17 +489,19 @@ function showRewards(items) {
       </span>
       <span class="cost">選擇</span>
     `;
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
       void sfx.unlock();
       game.pickReward(item.id);
     });
     els.rewardList.appendChild(btn);
   }
-  els.rewardOverlay.hidden = false;
+  setOverlayOpen(els.rewardOverlay, true);
 }
 
 function hideRewards() {
-  els.rewardOverlay.hidden = true;
+  setOverlayOpen(els.rewardOverlay, false);
   if (screen === "reward") screen = "play";
 }
 
@@ -490,6 +522,16 @@ const ui = {
           state.waveIndex < 0 ? `0 / ${state.waveTotal}` : `${state.waveIndex + 1} / ${state.waveTotal}`;
       if (els.points) els.points.textContent = `${state.points ?? 0}`;
       if (els.status) els.status.textContent = state.status || "";
+      refreshLeavesUI();
+      return;
+    }
+
+    // During result dialog, skip heavy DOM rebuilds (keeps victory buttons clickable).
+    if (screen === "result") {
+      if (els.status) els.status.textContent = state.status || "";
+      if (els.leavesHud) {
+        els.leavesHud.textContent = String(state.leaves ?? loadCardProgress().leaves);
+      }
       refreshLeavesUI();
       return;
     }
@@ -647,18 +689,24 @@ els.btnCharConfirm?.addEventListener("click", () =>
     confirmLoadoutAndStart();
   })
 );
-els.btnRestart?.addEventListener("click", () =>
+els.btnRestart?.addEventListener("click", (ev) => {
+  ev.preventDefault();
+  ev.stopPropagation();
   withAudio(() => {
+    clearRunState();
     hideAllOverlays();
     screen = "play";
     game.reset();
     refreshWaveIntel();
     renderSpecialistCards(game.getPublicState());
-    showToast("關卡重置");
+    ui.onState(game.getPublicState());
+    showToast("關卡重置 — 可重新部署後開始波次");
     sfx.play("uiClick");
-  })
-);
-els.btnNextStage?.addEventListener("click", () =>
+  });
+});
+els.btnNextStage?.addEventListener("click", (ev) => {
+  ev.preventDefault();
+  ev.stopPropagation();
   withAudio(() => {
     const next = (game.stage.index ?? 0) + 1;
     if (next >= STAGES.length || !isStageUnlocked(next)) {
@@ -667,23 +715,36 @@ els.btnNextStage?.addEventListener("click", () =>
       return;
     }
     sfx.play("uiClick");
+    clearRunState();
     pendingStageId = STAGES[next].id;
     openCharacterSelect();
-  })
-);
-els.btnToStages?.addEventListener("click", () =>
+  });
+});
+els.btnToStages?.addEventListener("click", (ev) => {
+  ev.preventDefault();
+  ev.stopPropagation();
   withAudio(() => {
     sfx.play("uiClick");
+    clearRunState();
+    // Soft reset so menu isn't stuck in win/lose flags
+    if (game) {
+      game.result = null;
+      game.waveActive = false;
+      game.pausedForReward = false;
+    }
     openStageSelect();
-  })
-);
-els.btnRepickChars?.addEventListener("click", () =>
+  });
+});
+els.btnRepickChars?.addEventListener("click", (ev) => {
+  ev.preventDefault();
+  ev.stopPropagation();
   withAudio(() => {
     sfx.play("uiClick");
+    clearRunState();
     pendingStageId = game.stageId || STAGES[0]?.id || "s01-victoria";
     openCharacterSelect();
-  })
-);
+  });
+});
 
 window.addEventListener("keydown", (e) => {
   sfx.unlock();

@@ -465,10 +465,12 @@ export class Game {
   update(dt, rawDt = dt) {
     this.fx = updateFx(this.fx, rawDt);
 
-    if (this.result || this.pausedForReward) {
+    // Freeze combat on result/reward — do NOT thrash full UI re-renders (breaks clicks).
+    if (this.result) return;
+    if (this.pausedForReward) {
       if (!this._uiAcc) this._uiAcc = 0;
       this._uiAcc += rawDt;
-      if (this._uiAcc > 0.15) {
+      if (this._uiAcc > 0.25) {
         this._uiAcc = 0;
         this.ui?.onState?.(this.getPublicState());
       }
