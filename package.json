@@ -1,0 +1,18 @@
+{
+  "name": "deadline-defense",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Office-themed tower defense web mini-game MVP",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^6.3.5"
+  },
+  "dependencies": {
+    "gifuct-js": "^2.1.2"
+  }
+}

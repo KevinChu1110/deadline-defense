@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#2d5a27" />
+    <meta name="description" content="楓之谷風格塔防小遊戲 — 選擇職業，守護神木。" />
+    <title>神木防衛 · Maple Defense</title>
+    <link rel="stylesheet" href="/src/styles/main.css" />
+  </head>
+  <body>
+    <div id="app" class="maple-app">
+      <header class="top-bar maple-frame">
+        <div class="brand">
+          <span class="maple-leaf" aria-hidden="true">🍁</span>
+          <div>
+            <small>MAPLE DEFENSE</small>
+            <strong id="stage-title">神木防衛</strong>
+          </div>
+        </div>
+        <div class="hud-stats" id="hud-stats">
+          <div class="stat">
+            <small>神木</small>
+            <strong id="stat-core">20</strong>
+          </div>
+          <div class="stat">
+            <small>波次</small>
+            <strong id="stat-wave">0 / 0</strong>
+          </div>
+          <div class="stat">
+            <small>點數</small>
+            <strong id="stat-points">0</strong>
+          </div>
+          <div class="stat">
+            <small>場上</small>
+            <strong id="stat-team">0 / 0</strong>
+          </div>
+          <div class="stat">
+            <small>楓葉</small>
+            <strong id="stat-leaves">0</strong>
+          </div>
+          <button type="button" id="btn-chars" class="btn maple-btn" title="重選職業">
+            👥 職業
+          </button>
+          <button type="button" id="btn-stages" class="btn maple-btn" title="選擇關卡">
+            🗺️ 關卡
+          </button>
+          <button type="button" id="btn-mute" class="btn maple-btn" aria-pressed="false" title="音效 (M)">
+            🔊 音效
+          </button>
+        </div>
+      </header>
+
+      <main class="stage">
+        <aside class="panel panel-left">
+          <section class="panel-block maple-frame">
+            <h2>任務說明</h2>
+            <p id="briefing-text">選擇職業出戰，守護神木！</p>
+            <ul id="wave-intel" class="wave-intel"></ul>
+          </section>
+          <section class="panel-block maple-frame">
+            <h2>增益 / 道具</h2>
+            <div id="buff-list" class="buff-list muted">尚未獲得道具</div>
+          </section>
+          <section class="panel-block maple-frame">
+            <h2>操作</h2>
+            <ol class="controls">
+              <li>先「選職業」組成出戰名單</li>
+              <li>點右側職業卡再點綠色格子部署</li>
+              <li>開始波次（空白鍵）</li>
+              <li>清波後可選道具</li>
+            </ol>
+          </section>
+        </aside>
+
+        <section class="canvas-wrap maple-frame">
+          <canvas id="game" width="960" height="540" aria-label="戰場"></canvas>
+          <div id="toast" class="toast" hidden></div>
+
+          <!-- Stage select -->
+          <div id="stage-overlay" class="overlay">
+            <div class="overlay-card stage-card maple-panel">
+              <p class="overlay-kicker">🌍 冒險島 · 關卡選擇</p>
+              <h2>選擇要守護的地區</h2>
+              <p class="muted">通關後解鎖下一關。怪物會朝神木前進！</p>
+              <div id="stage-list" class="stage-list"></div>
+            </div>
+          </div>
+
+          <!-- Character select — THE main missing piece -->
+          <div id="char-overlay" class="overlay" hidden>
+            <div class="overlay-card char-card maple-panel">
+              <p class="overlay-kicker">⚔️ 角色選擇 · 共 22 職業 · 可升級</p>
+              <h2>選擇出戰職業</h2>
+              <p class="muted">
+                點卡片選出戰 · <strong>升級</strong>解鎖新技能 · 最多
+                <strong id="loadout-max-label">4</strong>
+                名 · 已選
+                <strong id="loadout-count">0</strong>
+                · 🍁
+                <strong id="leaves-balance">0</strong>
+              </p>
+              <div id="char-grid" class="char-grid"></div>
+              <div class="char-footer">
+                <div id="loadout-preview" class="loadout-preview"></div>
+                <div id="upgrade-panel" class="upgrade-panel" hidden>
+                  <div id="upgrade-detail"></div>
+                </div>
+                <div class="overlay-actions">
+                  <button type="button" id="btn-char-back" class="btn">← 回關卡</button>
+                  <button type="button" id="btn-char-confirm" class="btn primary maple-primary">
+                    出戰！開始部署
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reward pick -->
+          <div id="reward-overlay" class="overlay" hidden>
+            <div class="overlay-card reward-card maple-panel">
+              <p class="overlay-kicker">🎁 戰利品</p>
+              <h2>選擇一個道具</h2>
+              <p class="muted">本波清場獎勵 — 三選一</p>
+              <div id="reward-list" class="reward-list"></div>
+            </div>
+          </div>
+
+          <!-- Win / Lose -->
+          <div id="overlay" class="overlay" hidden>
+            <div class="overlay-card maple-panel">
+              <p class="overlay-kicker" id="overlay-kicker">結果</p>
+              <h2 id="overlay-title">勝利</h2>
+              <p id="overlay-copy">神木平安無事！</p>
+              <div class="overlay-actions">
+                <button type="button" id="btn-restart" class="btn primary maple-primary">再打一次</button>
+                <button type="button" id="btn-next-stage" class="btn" hidden>下一關</button>
+                <button type="button" id="btn-to-stages" class="btn">關卡選擇</button>
+                <button type="button" id="btn-repick-chars" class="btn">重選職業</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="panel panel-right">
+          <section class="panel-block maple-frame">
+            <h2>出戰職業 · 點選部署</h2>
+            <p class="hint muted" id="loadout-hint">請先完成角色選擇</p>
+            <div id="specialist-list" class="specialist-list"></div>
+          </section>
+          <section class="panel-block actions maple-frame">
+            <button type="button" id="btn-start" class="btn primary maple-primary">開始波次</button>
+            <button type="button" id="btn-speed" class="btn">速度 ×1</button>
+            <button type="button" id="btn-sell" class="btn danger" disabled>賣出選中</button>
+          </section>
+          <section class="panel-block maple-frame">
+            <h2>目前選取</h2>
+            <p id="selected-info" class="muted">尚未選擇職業</p>
+          </section>
+        </aside>
+      </main>
+
+      <footer class="bottom-bar maple-frame">
+        <span id="footer-stage">STAGE 01</span>
+        <span id="status-line">Ready</span>
+      </footer>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
