@@ -37,6 +37,7 @@ const els = {
   core: document.querySelector("#stat-core"),
   wave: document.querySelector("#stat-wave"),
   points: document.querySelector("#stat-points"),
+  mesosHud: document.querySelector("#stat-mesos"),
   team: document.querySelector("#stat-team"),
   leavesHud: document.querySelector("#stat-leaves"),
   briefing: document.querySelector("#briefing-text"),
@@ -637,7 +638,7 @@ function confirmLoadoutAndStart() {
   renderSpecialistCards(game.getPublicState());
   ui.onState(game.getPublicState());
   const names = draftLoadout.map((id) => SPECIALISTS[id].nameZh).join("、");
-  showToast(`出戰：${names} — 拖到地圖部署；點角色可轉職`);
+  showToast(`出戰：${names} — 打怪賺楓幣，點角色付幣轉職`);
   sfx.play("waveStart");
 }
 
@@ -709,6 +710,9 @@ const ui = {
       state.waveIndex < 0 ? `0 / ${state.waveTotal}` : `${state.waveIndex + 1} / ${state.waveTotal}`;
     els.points.textContent = `${state.points}`;
     els.team.textContent = `${state.teamCount} / ${state.teamLimit}`;
+    if (els.mesosHud) {
+      els.mesosHud.textContent = String(state.mesos ?? 0);
+    }
     if (els.leavesHud) {
       els.leavesHud.textContent = String(state.leaves ?? loadCardProgress().leaves);
     }
@@ -765,20 +769,22 @@ function renderSelectedUnitPanel(selected, state) {
   if (!els.selectedInfo) return;
   const tier = selected.def.jobTier ?? 4;
   const opts = state.jobChangeOptions || [];
+  const mesos = state.mesos ?? 0;
   let html = `<strong style="color:${selected.def.color}">${selected.def.nameZh}</strong>`;
   html += ` · ${tier === 0 ? "初心者" : `${tier} 轉`} · ${selected.def.skill}<br/>`;
   html += `<span class="muted">${selected.def.blurb}<br/>擊殺 ${selected.kills} · 賣出 +${selected.def.sellRefund}</span>`;
 
   if (opts.length) {
-    html += `<div class="job-change-box"><div class="job-change-title">場上轉職 🍁${state.leaves ?? 0}</div>`;
+    html += `<div class="job-change-box"><div class="job-change-title">場上轉職 · 楓幣 🪙${mesos}</div>`;
+    html += `<p class="muted jc-hint">打怪、清波賺楓幣（本關累積，重開關卡會重置）</p>`;
     html += `<div class="job-change-list">`;
     for (const o of opts) {
       const disabled = !o.ok ? "disabled" : "";
-      const tip = o.reason || `🍁${o.cost}`;
+      const tip = o.reason || `🪙${o.cost}`;
       html += `<button type="button" class="job-change-btn" data-to="${o.id}" ${disabled}
         style="--jc:${o.color}" title="${tip}">
         <span class="jc-name">${o.nameZh}</span>
-        <span class="jc-meta">${o.ok ? `🍁${o.cost}` : o.reason || "鎖定"}</span>
+        <span class="jc-meta">${o.ok ? `🪙${o.cost}` : o.reason || "鎖定"}</span>
       </button>`;
     }
     html += `</div></div>`;

@@ -61,22 +61,41 @@ export function isTierUnlocked(tier, progress = loadProgress()) {
   return stagesCleared >= need;
 }
 
-/** 轉職費用（楓葉）依目標階 */
+/**
+ * 轉職費用（局內楓幣）— 靠擊殺／清波累積，不是帳號楓葉
+ * 一轉約需打過 1～2 波小怪
+ */
 export const JOB_CHANGE_COST = {
-  1: 25,
-  2: 45,
-  3: 70,
-  4: 110,
+  1: 100, // 一轉
+  2: 240, // 二轉
+  3: 420, // 三轉
+  4: 700, // 四轉
 };
 
 export function getJobChangeCost(fromId, toId) {
   const to = SPECIALISTS[toId];
   if (!to) return 9999;
   const tier = to.jobTier ?? 4;
-  let cost = JOB_CHANGE_COST[tier] ?? 80;
-  if (to.series === "royal") cost = Math.round(cost * 1.25);
-  if (to.series === "hero") cost = Math.round(cost * 1.5);
+  let cost = JOB_CHANGE_COST[tier] ?? 400;
+  if (to.series === "royal") cost = Math.round(cost * 1.35);
+  if (to.series === "hero") cost = Math.round(cost * 1.6);
   return cost;
+}
+
+/** 擊殺掉落楓幣 */
+export function mesosForKill(enemyDef) {
+  if (!enemyDef) return 4;
+  const hp = enemyDef.hp || 30;
+  let m = Math.max(4, Math.round(hp * 0.18));
+  if (enemyDef.boss) m += 90;
+  if (enemyDef.stealth) m += 6;
+  if (enemyDef.armor) m += Math.round((enemyDef.armor || 0) * 40);
+  return m;
+}
+
+/** 清波楓幣（與帳號楓葉分開） */
+export function mesosForWaveClear(waveIndex, stageIndex = 0) {
+  return 35 + waveIndex * 12 + stageIndex * 4;
 }
 
 /**

@@ -13,7 +13,6 @@ import {
   rewardForWaveClear,
   rewardForStageWin,
   loadCardProgress,
-  spendMapleLeaves,
 } from "../data/card-progress.js";
 import {
   canJobChange,
@@ -21,6 +20,8 @@ import {
   markJobLearned,
   getJobChangeCost,
   canDeployJob,
+  mesosForKill,
+  mesosForWaveClear,
 } from "../data/job-tree.js";
 import { buildPathMetrics } from "./path.js";
 import {
@@ -123,6 +124,9 @@ export class Game {
     this.coreMax = this.stage.coreHp;
     this.points = this.stage.deploymentPoints;
     this.teamLimit = this.stage.teamLimit;
+    /** 局內楓幣：擊殺／清波獲得，用於場上轉職（每關重置） */
+    this.mesos = 0;
+    this.mesosEarned = 0;
     this.waveIndex = -1;
     this.waveActive = false;
     this.spawnQueue = [];
@@ -142,9 +146,19 @@ export class Game {
     this.pendingRewardChoices = null;
     this.buffs = defaultBuffs();
     this.pickedItems = [];
-    this.status = "Ready — 選擇職業後點格子部署，再開始波次";
+    this.status = "Ready — 部署初心者、清怪賺楓幣，再場上轉職";
     this.sfx.stopBgm();
     this.ui?.onState?.(this.getPublicState());
+  }
+
+  addMesos(amount, { x, y, silent = false } = {}) {
+    const n = Math.max(0, Math.floor(amount));
+    if (!n) return;
+    this.mesos += n;
+    this.mesosEarned = (this.mesosEarned || 0) + n;
+    if (!silent && x != null && y != null) {
+      this.fx.push(createFloatText(x, y - 10, `+${n}幣`, "#fbbf24"));
+    }
   }
 
   start() {
@@ -202,6 +216,8 @@ export class Game {
       loadout: [...this.loadout],
       loadoutMax: LOADOUT_MAX,
       leaves: loadCardProgress().leaves,
+      mesos: this.mesos || 0,
+      mesosEarned: this.mesosEarned || 0,
       jobChangeOptions: this.selectedSpecialistId
         ? this.getJobChangeOptions(this.selectedSpecialistId)
         : [],
@@ -426,7 +442,7 @@ export class Game {
     this.ui?.onState?.(this.getPublicState());
   }
 
-  /** 場上轉職 */
+  /** 場上轉職 — 消耗局內楓幣（擊殺／清波賺） */
   tryJobChange(unitId, toJobId) {
     if (this.result || this.pausedForReward) return false;
     const unit = this.specialists.find((s) => s.id === unitId);
@@ -442,15 +458,18 @@ export class Game {
       return false;
     }
     const cost = check.cost ?? getJobChangeCost(fromId, toJobId);
-    const spent = spendMapleLeaves(cost, "job-change");
-    if (!spent.ok) {
+    if ((this.mesos || 0) < cost) {
       this.sfx.play("error");
-      this.ui?.toast?.(spent.reason || "楓葉不足");
+      this.ui?.toast?.(
+        `楓幣不足（需要 ${cost}，目前 ${this.mesos || 0}）— 多打怪、清波再轉`
+      );
       return false;
     }
+    this.mesos -= cost;
     const level = getCardLevel(toJobId);
     const def = buildLeveledDef(toJobId, level);
     if (!def) {
+      this.mesos += cost; // refund
       this.sfx.play("error");
       return false;
     }
@@ -463,8 +482,9 @@ export class Game {
     this.sfx.play("waveClear");
     this.fx.push(...createParticles(unit.x, unit.y, def.color, 18, { speed: 100, life: 0.5 }));
     this.fx.push(createRing(unit.x, unit.y, def.color, { maxR: 50, life: 0.4 }));
-    this.status = `${SPECIALISTS[fromId]?.nameZh || fromId} → ${def.nameZh}！（🍁−${cost}）`;
-    this.ui?.toast?.(`轉職成功！${def.nameZh}（🍁−${cost}）`);
+    this.fx.push(createFloatText(unit.x, unit.y - 28, `轉職 ${def.nameZh}`, "#fde68a"));
+    this.status = `${SPECIALISTS[fromId]?.nameZh || fromId} → ${def.nameZh}！（🪙−${cost}）`;
+    this.ui?.toast?.(`轉職成功！${def.nameZh}（🪙−${cost} 楓幣）`);
     this.ui?.onState?.(this.getPublicState());
     return true;
   }
@@ -472,19 +492,24 @@ export class Game {
   getJobChangeOptions(unitId) {
     const unit = this.specialists.find((s) => s.id === unitId);
     if (!unit) return [];
-    const leaves = loadCardProgress().leaves;
+    const mesos = this.mesos || 0;
     return getNextJobIds(unit.typeId).map((toId) => {
       const check = canJobChange(unit.typeId, toId);
       const cost = getJobChangeCost(unit.typeId, toId);
       const def = SPECIALISTS[toId];
+      const needMore = Math.max(0, cost - mesos);
       return {
         id: toId,
         nameZh: def?.nameZh || toId,
         skill: def?.skill || "",
         tier: def?.jobTier ?? 4,
         cost,
-        ok: check.ok && leaves >= cost,
-        reason: !check.ok ? check.reason : leaves < cost ? "楓葉不足" : "",
+        ok: check.ok && mesos >= cost,
+        reason: !check.ok
+          ? check.reason
+          : mesos < cost
+            ? `還差 ${needMore} 楓幣（多打怪）`
+            : "",
         color: def?.color || "#888",
       };
     });
@@ -524,12 +549,17 @@ export class Game {
     const stageIndex = this.stage.index ?? 0;
     const leafGain = rewardForWaveClear(this.waveIndex, stageIndex);
     addMapleLeaves(leafGain, "wave");
+    // 局內楓幣：清波大筆收入（轉職用）
+    const mesoWave = mesosForWaveClear(this.waveIndex, stageIndex);
+    this.addMesos(mesoWave, { silent: true });
     const bonus = this.stage.waveClearBonus?.[this.waveIndex] ?? 0;
     if (bonus > 0) {
       this.points += bonus;
-      this.ui?.toast?.(`波次完成 · +${bonus} 部署點 · 🍁+${leafGain}`);
+      this.ui?.toast?.(
+        `波次完成 · 🪙+${mesoWave} 楓幣 · +${bonus} 部署 · 🍁+${leafGain}`
+      );
     } else {
-      this.ui?.toast?.(`波次完成 · 🍁+${leafGain}`);
+      this.ui?.toast?.(`波次完成 · 🪙+${mesoWave} 楓幣 · 🍁+${leafGain}`);
     }
 
     if (this.waveIndex >= this.stage.waves.length - 1) {
@@ -688,6 +718,13 @@ export class Game {
           if (killed) {
             if (owner) owner.kills += 1;
             this.sfx.play("kill");
+            const mesoGain = mesosForKill(target.def);
+            this.addMesos(mesoGain, {
+              x: target.x,
+              y: target.y,
+              // 小怪也顯示，但 Boss 一定顯示
+              silent: false,
+            });
             this.fx.push(...createParticles(target.x, target.y, target.def.color, 16, { speed: 110 }));
             this.fx.push(createRing(target.x, target.y, target.def.color, { maxR: 30 }));
             if (wasBoss) {

@@ -933,7 +933,13 @@ body.is-dragging-job .specialist-card {
   font-size: 0.78rem;
   font-weight: 800;
   color: #5a4028;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
+}
+
+.jc-hint {
+  font-size: 0.72rem !important;
+  margin: 0 0 8px !important;
+  line-height: 1.35;
 }
 
 .job-change-list {
