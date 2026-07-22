@@ -709,6 +709,13 @@ body.is-dragging-job .specialist-card {
   pointer-events: none;
 }
 
+/* 說明／排行要蓋過全螢幕主選單 (z-index 80) */
+#guide-overlay,
+#rank-overlay {
+  position: fixed;
+  z-index: 90;
+}
+
 /* Prefer class toggle over [hidden] alone — more reliable across browsers */
 .overlay.is-open {
   display: grid;
@@ -756,22 +763,240 @@ body.is-dragging-job .specialist-card {
   justify-content: center;
 }
 
-/* ===== Home / Stage select ===== */
+/* ===== Title screen (clean main menu) ===== */
 .home-overlay {
-  align-items: start;
-  padding: 10px;
-  background:
-    radial-gradient(ellipse 90% 50% at 50% 0%, rgba(255, 230, 160, 0.2), transparent 50%),
-    rgba(30, 22, 12, 0.62);
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 0;
+  background: #1a140c;
+  /* cover entire viewport — no game chrome peeking through */
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  z-index: 80;
 }
 
-.home-shell {
+.title-screen {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.title-screen-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    url("/maps/bg_home.jpg") center 35% / cover no-repeat;
+  transform: scale(1.04);
+  animation: title-bg-drift 28s ease-in-out infinite alternate;
+}
+
+@keyframes title-bg-drift {
+  0% {
+    transform: scale(1.04) translate(0, 0);
+  }
+  100% {
+    transform: scale(1.08) translate(-1.5%, -1%);
+  }
+}
+
+.title-screen-vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 42%, rgba(20, 14, 8, 0.15) 0%, rgba(20, 14, 8, 0.55) 70%, rgba(12, 8, 4, 0.82) 100%),
+    linear-gradient(180deg, rgba(30, 22, 12, 0.35) 0%, transparent 30%, transparent 55%, rgba(20, 14, 8, 0.75) 100%);
+  pointer-events: none;
+}
+
+.title-menu {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 28px 24px 32px;
+  width: min(92vw, 420px);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 248, 230, 0.88) 0%, rgba(244, 228, 188, 0.82) 55%, rgba(220, 200, 150, 0.78) 100%);
+  border: 3px solid #5a3a18;
+  box-shadow:
+    0 0 0 2px rgba(196, 160, 90, 0.55),
+    0 18px 48px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(6px);
+}
+
+.home-hero-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: #6e3e1a;
+  background: linear-gradient(180deg, #fff8e0, #f0dca0);
+  border: 1px solid #8b5a2b;
+  border-radius: 999px;
+  padding: 4px 14px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 0 rgba(107, 68, 35, 0.2);
+}
+
+.home-title {
+  margin: 0 0 6px;
+  font-size: clamp(1.55rem, 5vw, 2.05rem);
+  color: #5a2810;
+  letter-spacing: 0.06em;
+  text-shadow: var(--title-shadow), 0 2px 0 rgba(196, 160, 90, 0.35);
+  line-height: 1.25;
+}
+
+.home-title .leaf-deco {
+  font-size: 0.85em;
+  opacity: 0.9;
+}
+
+.home-sub {
+  margin: 0 0 18px;
+  color: #6e4e32;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.title-menu-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.title-btn {
+  width: 100%;
+  min-height: 52px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  border-radius: 14px;
+  border: 2px solid #5a3a18;
+  background: linear-gradient(180deg, #fffaf0, #efe0c0);
+  color: #3a2412;
+  box-shadow: 0 3px 0 rgba(90, 58, 24, 0.2);
+  transition: transform 0.14s ease, box-shadow 0.14s ease, filter 0.14s ease;
+}
+
+.title-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  filter: brightness(1.04);
+  box-shadow: 0 5px 0 rgba(90, 58, 24, 0.22), 0 8px 18px rgba(60, 40, 20, 0.15);
+}
+
+.title-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 rgba(90, 58, 24, 0.2);
+}
+
+.title-btn-primary {
+  background: linear-gradient(180deg, #6aaa4a, #3d7a32);
+  color: #fff8e0;
+  border-color: #1e3d1a;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+  font-size: 1.12rem;
+  min-height: 56px;
+}
+
+.title-btn-primary:hover {
+  background: linear-gradient(180deg, #78b858, #468a3a);
+}
+
+.title-btn-continue {
+  background: linear-gradient(180deg, #f0c060, #c4921a);
+  color: #3a2412;
+  border-color: #8b5a2b;
+}
+
+.title-btn-continue:hover {
+  background: linear-gradient(180deg, #f8d070, #d4a020);
+}
+
+.title-hint {
+  margin: 16px 0 0;
+  font-size: 0.78rem;
+}
+
+/* Campaign panel (after 開始遊戲) */
+.campaign-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: start center;
+  padding: 12px 10px;
+  overflow: auto;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255, 230, 160, 0.12), transparent 55%),
+    rgba(18, 12, 8, 0.72);
+  -webkit-overflow-scrolling: touch;
+}
+
+.campaign-panel[hidden] {
+  display: none !important;
+}
+
+.home-shell,
+.campaign-shell {
   width: min(96%, 740px);
   max-height: min(94vh, 900px);
   overflow-y: auto;
   padding: 0 0 14px;
   text-align: left;
   margin: 8px auto;
+}
+
+.campaign-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 2px solid rgba(107, 68, 35, 0.3);
+  background: linear-gradient(180deg, #8b5a2b 0%, #6b4423 100%);
+  border-radius: 10px 10px 0 0;
+  color: #fff4d8;
+}
+
+.campaign-head-titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.campaign-head-titles h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #fff8e0;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+}
+
+.campaign-head-titles .muted {
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  color: rgba(255, 244, 216, 0.75);
+}
+
+.campaign-head .btn {
+  background: linear-gradient(180deg, #fff8e0, #e8d4a0);
+  color: #3a2412;
+  border-color: #3a2412;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.campaign-leaves {
+  color: #fff4d8 !important;
+}
+
+.campaign-leaves strong {
+  color: #ffe080 !important;
 }
 
 .home-hero {
@@ -797,40 +1022,6 @@ body.is-dragging-job .specialist-card {
   position: relative;
   z-index: 1;
   padding: 22px 18px 16px;
-}
-
-.home-hero-badge {
-  display: inline-block;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  color: #6e3e1a;
-  background: linear-gradient(180deg, #fff8e0, #f0dca0);
-  border: 1px solid #8b5a2b;
-  border-radius: 999px;
-  padding: 4px 14px;
-  margin-bottom: 8px;
-  box-shadow: 0 2px 0 rgba(107, 68, 35, 0.2);
-}
-
-.home-title {
-  margin: 0 0 4px;
-  font-size: clamp(1.65rem, 4.2vw, 2.15rem);
-  color: #5a2810;
-  letter-spacing: 0.08em;
-  text-shadow: var(--title-shadow), 0 2px 0 rgba(196, 160, 90, 0.35);
-}
-
-.home-title .leaf-deco {
-  font-size: 0.85em;
-  opacity: 0.9;
-}
-
-.home-sub {
-  margin: 0 0 14px;
-  color: #6e4e32;
-  font-size: 0.92rem;
-  font-weight: 600;
 }
 
 /* Save slots */
@@ -969,7 +1160,7 @@ body.is-dragging-job .specialist-card {
 
 .home-player {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr;
   gap: 10px;
   align-items: center;
   text-align: left;
@@ -977,8 +1168,8 @@ body.is-dragging-job .specialist-card {
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.55);
   border: 1px solid rgba(122, 98, 72, 0.28);
-  max-width: 440px;
-  margin: 0 auto 12px;
+  max-width: 100%;
+  margin: 0 0 12px;
 }
 
 .home-avatar {
@@ -1024,22 +1215,6 @@ body.is-dragging-job .specialist-card {
 .home-leaves strong {
   font-size: 1.05rem;
   color: #a84a3c;
-}
-
-.home-cta-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-}
-
-.home-cta {
-  min-width: 140px;
-  font-weight: 800;
-}
-
-.home-cta-sec {
-  min-width: 110px;
 }
 
 .home-section {
@@ -1298,12 +1473,38 @@ body.is-dragging-job .specialist-card {
   margin-bottom: 16px;
 }
 
-/* body class when home open */
+/* body class when home open — fully hide game chrome (no peek-through) */
+body.home-open .top-bar,
 body.home-open .panel-left,
 body.home-open .panel-right,
-body.home-open .bottom-bar #status-line {
-  opacity: 0.35;
-  pointer-events: none;
+body.home-open .bottom-bar,
+body.home-open .canvas-wrap > canvas,
+body.home-open .combat-hud {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+body.home-open #app {
+  padding: 0;
+  gap: 0;
+}
+
+body.home-open .stage {
+  display: block;
+  min-height: 100vh;
+}
+
+body.home-open .canvas-wrap {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+  min-height: 100vh;
+}
+
+body.home-open .toast {
+  position: fixed;
+  z-index: 95;
 }
 
 /* Nick + Arena + Ranking */

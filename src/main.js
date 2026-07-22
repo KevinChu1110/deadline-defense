@@ -107,6 +107,10 @@ const els = {
   nickInput: document.querySelector("#nick-input"),
   btnSaveNick: document.querySelector("#btn-save-nick"),
   btnContinue: document.querySelector("#btn-continue"),
+  btnStartGame: document.querySelector("#btn-start-game"),
+  btnCampaignBack: document.querySelector("#btn-campaign-back"),
+  campaignPanel: document.querySelector("#campaign-panel"),
+  titleScreen: document.querySelector("#title-screen"),
   btnHomeRank: document.querySelector("#btn-home-rank"),
   btnHomeGuide: document.querySelector("#btn-home-guide"),
   homeLeaves: document.querySelector("#home-leaves"),
@@ -344,7 +348,7 @@ function refreshWaveIntel() {
   els.waveIntel.innerHTML = game.stage.waves
     .map((w, i) => `<li><strong>第${i + 1}波 ${w.name}</strong> — ${w.intel}</li>`)
     .join("");
-  els.stageTitle.textContent = `${game.stage.name} · 神木防衛`;
+  els.stageTitle.textContent = `${game.stage.name} · 楓之谷防衛戰`;
   els.footerStage.textContent = `STAGE ${String((game.stage.index ?? 0) + 1).padStart(2, "0")} // ${game.stage.code}`;
   els.briefing.textContent = game.stage.briefing;
 }
@@ -418,22 +422,27 @@ function renderStageList() {
   renderSaveSlots();
 }
 
+function getNextStageId(progress = loadProgress()) {
+  let nextIdx = STAGES.findIndex((_, i) => isStageUnlocked(i, progress) && !progress.cleared[STAGES[i].id]);
+  if (nextIdx < 0) nextIdx = Math.min(STAGES.length - 1, (progress.unlocked || 1) - 1);
+  return STAGES[Math.max(0, nextIdx)]?.id || STAGES[0]?.id;
+}
+
+function hasAnyProgress(progress = loadProgress()) {
+  return (progress.unlocked || 1) > 1 || Object.keys(progress.cleared || {}).length > 0;
+}
+
 function refreshHomeMeta(progress = loadProgress(), nextIdx = 0) {
   if (els.homeLeaves) {
     els.homeLeaves.textContent = String(loadCardProgress().leaves || 0);
   }
   if (els.btnContinue) {
-    const hasProgress = (progress.unlocked || 1) > 1 || Object.keys(progress.cleared || {}).length > 0;
     const stage = STAGES[Math.max(0, nextIdx)] || STAGES[0];
-    els.btnContinue.hidden = !hasProgress;
-    if (hasProgress && stage) {
-      els.btnContinue.textContent = `繼續 · ${stage.name}`;
-      els.btnContinue.onclick = () => {
-        void sfx.unlock();
-        sfx.play("uiClick");
-        pendingStageId = stage.id;
-        openCharacterSelect();
-      };
+    const show = hasAnyProgress(progress) && !!stage;
+    els.btnContinue.hidden = !show;
+    if (show) {
+      els.btnContinue.textContent = `↻ 繼續遊戲 · ${stage.name}`;
+      els.btnContinue.dataset.stageId = stage.id;
     }
   }
 }
@@ -612,7 +621,7 @@ const GUIDE_PAGES = {
       <li><strong>Space</strong> 暫停 · <strong>Enter</strong> 開始波次 · <strong>H / ?</strong> 說明</li>
       <li>1–4 選出戰卡 · M 靜音</li>
     </ul>
-    <div class="guide-tip">💡 首頁可切換 3 個存檔；排行榜為本機多暱稱競分。</div>
+    <div class="guide-tip">💡 「開始遊戲」可切換 3 個存檔；排行榜為本機多暱稱競分。</div>
   `,
 };
 
@@ -709,7 +718,36 @@ function escapeHtml(s) {
     .replace(/"/g, "&quot;");
 }
 
-function openStageSelect() {
+function setCampaignPanelOpen(open) {
+  if (!els.campaignPanel) return;
+  els.campaignPanel.hidden = !open;
+  if (els.titleScreen) {
+    els.titleScreen.style.visibility = open ? "hidden" : "visible";
+  }
+}
+
+/** 主選單（大背景 + 四顆按鈕） */
+function openTitleScreen() {
+  screen = "stage";
+  closeCharacterChrome();
+  document.body.classList.remove("in-play");
+  document.body.classList.add("home-open");
+  hideAllOverlays();
+  flushActiveSlot();
+  setCampaignPanelOpen(false);
+  // 只刷新繼續按鈕／楓葉，不把關卡列表塞進主畫面
+  const progress = loadProgress();
+  let nextIdx = STAGES.findIndex((_, i) => isStageUnlocked(i, progress) && !progress.cleared[STAGES[i].id]);
+  if (nextIdx < 0) nextIdx = Math.min(STAGES.length - 1, (progress.unlocked || 1) - 1);
+  refreshHomeMeta(progress, nextIdx);
+  setOverlayOpen(els.stageOverlay, true);
+  void sfx.unlock();
+  if (!sfx.muted) sfx.startBgm("menu");
+  if (game) ui.onState(game.getPublicState());
+}
+
+/** 開始遊戲 → 存檔 + 地區戰役 */
+function openCampaignPanel() {
   screen = "stage";
   closeCharacterChrome();
   document.body.classList.remove("in-play");
@@ -718,11 +756,17 @@ function openStageSelect() {
   flushActiveSlot();
   renderSaveSlots();
   renderStageList();
+  setCampaignPanelOpen(true);
   setOverlayOpen(els.stageOverlay, true);
-  // Sync unlock + BGM (no await)
   void sfx.unlock();
   if (!sfx.muted) sfx.startBgm("menu");
+  sfx.play("uiClick");
   if (game) ui.onState(game.getPublicState());
+}
+
+/** 相容舊呼叫：回主選單 */
+function openStageSelect() {
+  openTitleScreen();
 }
 
 function openCharacterSelect() {
@@ -1803,7 +1847,7 @@ els.btnPauseStages?.addEventListener("click", () =>
     }
     clearRunState();
     closePauseOverlay({ resume: false });
-    openStageSelect();
+    openTitleScreen();
   })
 );
 els.btnHelpClose?.addEventListener("click", () =>
@@ -1814,7 +1858,7 @@ els.btnHelpClose?.addEventListener("click", () =>
 els.btnStages?.addEventListener("click", () =>
   withAudio(() => {
     sfx.play("uiClick");
-    openStageSelect();
+    openCampaignPanel();
   })
 );
 els.btnChars?.addEventListener("click", () =>
@@ -1827,7 +1871,7 @@ els.btnChars?.addEventListener("click", () =>
 els.btnCharBack?.addEventListener("click", () =>
   withAudio(() => {
     sfx.play("uiClick");
-    openStageSelect();
+    openCampaignPanel();
   })
 );
 els.btnCharConfirm?.addEventListener("click", () =>
@@ -1879,6 +1923,25 @@ els.btnRank?.addEventListener("click", () =>
     openRankOverlay(rankTab || "all");
   })
 );
+els.btnStartGame?.addEventListener("click", () =>
+  withAudio(() => {
+    openCampaignPanel();
+  })
+);
+els.btnCampaignBack?.addEventListener("click", () =>
+  withAudio(() => {
+    sfx.play("uiClick");
+    openTitleScreen();
+  })
+);
+els.btnContinue?.addEventListener("click", () =>
+  withAudio(() => {
+    sfx.play("uiClick");
+    const id = els.btnContinue.dataset.stageId || getNextStageId();
+    pendingStageId = id;
+    openCharacterSelect();
+  })
+);
 els.btnHomeRank?.addEventListener("click", () =>
   withAudio(() => {
     openRankOverlay(rankTab || "all");
@@ -1905,7 +1968,7 @@ els.btnRankClose?.addEventListener("click", () =>
   withAudio(() => {
     sfx.play("uiClick");
     setOverlayOpen(els.rankOverlay, false);
-    if (screen === "stage" || !game || game.result) openStageSelect();
+    if (screen === "stage" || !game || game.result) openTitleScreen();
   })
 );
 els.btnRankExport?.addEventListener("click", () =>
@@ -1957,7 +2020,7 @@ els.btnToStages?.addEventListener("click", (ev) => {
       game.waveActive = false;
       game.pausedForReward = false;
     }
-    openStageSelect();
+    openTitleScreen();
   });
 });
 els.btnRepickChars?.addEventListener("click", (ev) => {
@@ -2065,4 +2128,4 @@ refreshWaveIntel();
 renderSpecialistCards(game.getPublicState());
 ui.onState(game.getPublicState());
 game.start();
-openStageSelect();
+openTitleScreen();
