@@ -11,6 +11,7 @@ import { sampleGifFrame, getCachedMob } from "./assets.js";
 import { drawFx } from "./fx.js";
 import { drawHazards } from "./hazards.js";
 import { MAP_THEMES } from "../data/map-themes.js";
+import { drawBossTelegraphs } from "./boss-attacks.js";
 
 /** @type {Map<string, HTMLImageElement>} */
 const bgCache = new Map();
@@ -90,6 +91,7 @@ export function drawScene(ctx, state) {
   drawCore(ctx, core, state.coreHp, state.coreMax, state.now, buffs.coreShield || 0);
   drawSpecialists(ctx, specialists, state.selectedSpecialistId, state.now);
   drawEnemies(ctx, enemies, state.now);
+  drawBossTelegraphs(ctx, enemies);
   drawProjectiles(ctx, projectiles, state.now);
   drawFx(ctx, fx);
   drawRangePreview(ctx, state);
@@ -550,6 +552,8 @@ function drawCore(ctx, core, hp, maxHp, now, shield = 0) {
 function drawSpecialists(ctx, specialists, selectedId, now) {
   for (const s of specialists) {
     const selected = s.id === selectedId;
+    const stunned = (s.stunnedUntil || 0) > now;
+    const silenced = (s.silencedUntil || 0) > now;
     const bob = s.attackT > 0 ? 0 : Math.sin(now * 4 + s.id) * 1.5;
     const lunge = s.attackT > 0 ? (s.facing || 1) * 3 : 0;
     // Prefer AI chibi portrait on the field; fall back to pixel sprite
@@ -557,6 +561,9 @@ function drawSpecialists(ctx, specialists, selectedId, now) {
     const usePortrait = portrait && (portrait.naturalWidth > 0 || portrait.width > 0);
 
     ctx.save();
+    if (stunned || silenced) {
+      ctx.globalAlpha = 0.55;
+    }
     if (selected) {
       ctx.beginPath();
       ctx.arc(s.x, s.y, s.def.range, 0, Math.PI * 2);
@@ -623,6 +630,14 @@ function drawSpecialists(ctx, specialists, selectedId, now) {
     ctx.fillStyle = "#ffe9a8";
     ctx.textAlign = "center";
     ctx.fillText(label, s.x, s.y + 32);
+
+    // Boss 控制狀態
+    if (stunned || silenced) {
+      ctx.globalAlpha = 1;
+      ctx.font = "800 12px 'PingFang TC', system-ui";
+      ctx.fillStyle = stunned ? "#fbbf24" : "#c4b5fd";
+      ctx.fillText(stunned ? "暈眩" : "沉默", s.x, s.y - 36);
+    }
 
     ctx.restore();
   }
@@ -717,6 +732,15 @@ function drawEnemies(ctx, enemies, now) {
       ctx.fillStyle = "#ff6b6b";
       ctx.font = "800 10px 'PingFang TC', system-ui";
       ctx.fillText("BOSS", e.x, by - 14);
+      // 施法中光環
+      if (e.bossAtk?.casting) {
+        const pulse = 0.4 + 0.3 * Math.sin((now || 0) * 12);
+        ctx.strokeStyle = `rgba(252, 165, 165, ${pulse})`;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, e.def.radius + 14, 0, Math.PI * 2);
+        ctx.stroke();
+      }
     }
     ctx.restore();
   }

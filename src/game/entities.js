@@ -2,6 +2,12 @@ import { ENEMIES } from "../data/enemies.js";
 import { SPECIALISTS } from "../data/specialists.js";
 import { getJobSkill, deriveEnemyTags } from "../data/combat-skills.js";
 import { samplePath, dist2 } from "./path.js";
+import {
+  initBossAttackState,
+  tickBossAttacks,
+  getBossArmorBonus,
+  getBossHasteBonus,
+} from "./boss-attacks.js";
 
 let nextId = 1;
 const uid = () => nextId++;
@@ -34,7 +40,7 @@ export function createEnemy(typeId, pathKey, pathMetrics, opts = {}) {
   const pos = samplePath(pathMetrics, distance);
 
   const tags = deriveEnemyTags(def);
-  return {
+  const enemy = {
     id: uid(),
     typeId,
     def,
@@ -62,6 +68,7 @@ export function createEnemy(typeId, pathKey, pathMetrics, opts = {}) {
     pendingSpawns: [],
     hitCountFrom: {}, // ownerId -> hits (rage/lock)
     burnStacks: 0,
+    bossEvents: [],
     status: {
       slowUntil: 0,
       slowPower: 1,
@@ -74,8 +81,14 @@ export function createEnemy(typeId, pathKey, pathMetrics, opts = {}) {
       armorBreakAmt: 0,
       noSlow: false,
       hazardSpeedMul: 1,
+      bossArmorUntil: 0,
+      bossArmorAdd: 0,
+      bossHasteUntil: 0,
+      bossHasteAdd: 0,
     },
   };
+  initBossAttackState(enemy);
+  return enemy;
 }
 
 export function createSpecialist(typeId, padIndex, pad, leveledDef = null) {
@@ -94,6 +107,8 @@ export function createSpecialist(typeId, padIndex, pad, leveledDef = null) {
     attackT: 0,
     facing: 1,
     cardLevel: def.cardLevel || 1,
+    stunnedUntil: 0,
+    silencedUntil: 0,
   };
 }
 
@@ -166,7 +181,7 @@ export function updateEnemy(enemy, dt, now, ctx = {}) {
   enemy.animTime += dt;
   if (enemy.hitFlash > 0) enemy.hitFlash = Math.max(0, enemy.hitFlash - dt);
 
-  // haste aura from other units
+  // haste aura from other units + boss self haste buff
   let haste = 1;
   if (ctx.auras?.length) {
     for (const a of ctx.auras) {
@@ -176,7 +191,20 @@ export function updateEnemy(enemy, dt, now, ctx = {}) {
       }
     }
   }
+  haste = Math.max(haste, 1 + getBossHasteBonus(enemy, now));
+  if (enemy.status._hasteExpire && enemy.status._hasteExpire < now) {
+    enemy.status._hasteExpire = 0;
+  } else if (enemy.status._hasteExpire > now) {
+    haste = Math.max(haste, enemy.status.hastePower || 1);
+  }
   enemy.status.hastePower = haste;
+
+  // boss attacks (telegraph → cast events)
+  if (enemy.def.boss) {
+    enemy.bossEvents = tickBossAttacks(enemy, dt, now);
+  } else {
+    enemy.bossEvents = [];
+  }
 
   if (enemy.status.burnUntil > now) {
     enemy.hp -= enemy.status.burnDps * dt;
@@ -355,6 +383,12 @@ export function updateSpecialist(specialist, dt) {
   specialist.cooldown = Math.max(0, specialist.cooldown - dt);
 }
 
+export function isSpecialistDisabled(specialist, now) {
+  return (
+    (specialist.stunnedUntil || 0) > now || (specialist.silencedUntil || 0) > now
+  );
+}
+
 export function isTargetable(enemy, specialist, now) {
   if (!enemy.alive) return false;
   const skill = getJobSkill(specialist.typeId);
@@ -419,13 +453,15 @@ export function applyHit(enemy, projectile, now, buffs = {}, ctx = {}) {
   let dmg =
     projectile.damage * (buffs.damageMult || 1) * stackMult * softDamageMult(enemy, skill, now, buffs);
 
-  // armor with break
-  if (enemy.def.armor) {
+  // armor with break + boss temporary armor
+  {
+    let armor = enemy.def.armor || 0;
+    armor += getBossArmorBonus(enemy, now);
     let breakAmt = buffs.armorBreak || 0;
     if (enemy.status.armorBreakUntil > now) breakAmt += enemy.status.armorBreakAmt || 0;
     if (skill.armorBreakOnHit) breakAmt += skill.armorBreakOnHit;
-    const armor = Math.max(0, enemy.def.armor - breakAmt);
-    dmg *= 1 - armor;
+    armor = Math.max(0, armor - breakAmt);
+    if (armor > 0) dmg *= 1 - Math.min(0.75, armor);
   }
 
   // crit

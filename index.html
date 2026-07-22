@@ -80,23 +80,54 @@
           <canvas id="game" width="960" height="540" aria-label="戰場"></canvas>
           <div id="toast" class="toast" hidden></div>
 
-          <!-- Stage select -->
-          <div id="stage-overlay" class="overlay is-open">
-            <div class="overlay-card stage-card maple-panel">
-              <p class="overlay-kicker">🌍 冒險島 · 關卡</p>
-              <h2>選擇地區</h2>
-              <p class="muted">通關解鎖下一關 · 每關第 5／10 波有 Boss</p>
-              <div class="nick-row">
-                <label for="nick-input">暱稱</label>
-                <input id="nick-input" type="text" maxlength="12" placeholder="冒險者" autocomplete="nickname" />
-                <button type="button" id="btn-save-nick" class="btn">儲存</button>
-              </div>
-              <div id="stage-list" class="stage-list"></div>
-              <div class="arena-block">
-                <h3 class="arena-title">⚔️ 競賽場 · 五大 Boss</h3>
-                <p class="muted arena-hint">3 波速決 · 分數寫入本機排行（多暱稱可互相比拚）</p>
-                <div id="arena-list" class="arena-list"></div>
-              </div>
+          <!-- Home / Stage select -->
+          <div id="stage-overlay" class="overlay is-open home-overlay">
+            <div class="home-shell maple-panel">
+              <header class="home-hero">
+                <div class="home-hero-badge">MAPLE DEFENSE</div>
+                <h1 class="home-title">神木防衛</h1>
+                <p class="home-sub">部署職業 · 場上轉職 · 守護神木</p>
+                <div class="home-player">
+                  <div class="home-avatar" aria-hidden="true">🍁</div>
+                  <div class="home-player-meta">
+                    <label class="home-nick-label" for="nick-input">冒險者暱稱</label>
+                    <div class="nick-row home-nick">
+                      <input id="nick-input" type="text" maxlength="12" placeholder="冒險者" autocomplete="nickname" />
+                      <button type="button" id="btn-save-nick" class="btn primary maple-primary">確認</button>
+                    </div>
+                  </div>
+                  <div class="home-leaves" title="帳號楓葉">
+                    <span>🍁</span>
+                    <strong id="home-leaves">0</strong>
+                  </div>
+                </div>
+                <div class="home-cta-row">
+                  <button type="button" id="btn-continue" class="btn primary maple-primary home-cta" hidden>
+                    繼續冒險
+                  </button>
+                  <button type="button" id="btn-home-rank" class="btn home-cta-sec">🏆 排行榜</button>
+                </div>
+              </header>
+
+              <section class="home-section">
+                <div class="home-section-head">
+                  <h2>地區戰役</h2>
+                  <p class="muted">通關解鎖下一關 · 第 5／10 波有 Boss</p>
+                </div>
+                <div id="stage-list" class="stage-grid"></div>
+              </section>
+
+              <section class="home-section arena-section">
+                <div class="home-section-head">
+                  <h2>⚔️ 競賽場</h2>
+                  <p class="muted">五大 Boss · 3 波速決 · 寫入本機排行</p>
+                </div>
+                <div id="arena-list" class="arena-grid"></div>
+              </section>
+
+              <footer class="home-foot muted">
+                拖曳部署 · 打怪賺楓幣轉職 · 音效可在右上角開關
+              </footer>
             </div>
           </div>
 

@@ -28,7 +28,7 @@ import {
   isSeriesUnlocked,
   markJobLearned,
 } from "./data/job-tree.js";
-import { LOADOUT_PRESETS } from "./data/meta-progress.js";
+import { LOADOUT_PRESETS, loadStars } from "./data/meta-progress.js";
 import { sfx } from "./audio/sfx.js";
 import { STAGES, loadProgress, isStageUnlocked, getStageByIndex } from "./data/stages.js";
 import { getItem } from "./data/items.js";
@@ -85,6 +85,9 @@ const els = {
   arenaList: document.querySelector("#arena-list"),
   nickInput: document.querySelector("#nick-input"),
   btnSaveNick: document.querySelector("#btn-save-nick"),
+  btnContinue: document.querySelector("#btn-continue"),
+  btnHomeRank: document.querySelector("#btn-home-rank"),
+  homeLeaves: document.querySelector("#home-leaves"),
   rankOverlay: document.querySelector("#rank-overlay"),
   rankList: document.querySelector("#rank-list"),
   rankTabs: document.querySelector("#rank-tabs"),
@@ -260,25 +263,58 @@ function refreshWaveIntel() {
   els.briefing.textContent = game.stage.briefing;
 }
 
+/** 地區卡片主色（台服地名感） */
+const STAGE_ACCENTS = {
+  VICTORIA: ["#7eb8e8", "#4a8a40"],
+  PERION: ["#c4a574", "#a84a3c"],
+  ELLINIA: ["#5b8c5a", "#2d5a3d"],
+  ORBIS: ["#a5b4fc", "#6366f1"],
+  SKY: ["#c7d2fe", "#818cf8"],
+  ELNATH: ["#bae6fd", "#38bdf8"],
+  AQUA: ["#22d3ee", "#0369a1"],
+  LUDI: ["#f9a8d4", "#fb923c"],
+  LEAFRE: ["#a3e635", "#3f6212"],
+  TEMPLE: ["#c084fc", "#4c1d95"],
+  ALTAR: ["#fca5a5", "#7f1d1d"],
+};
+
+function getStarsForStage(stageId) {
+  const data = loadStars();
+  return Math.min(3, Number(data?.[stageId] || 0));
+}
+
 function renderStageList() {
   if (!els.stageList) return;
   const progress = loadProgress();
   els.stageList.innerHTML = "";
+  // 下一個可挑戰
+  let nextIdx = STAGES.findIndex((_, i) => isStageUnlocked(i, progress) && !progress.cleared[STAGES[i].id]);
+  if (nextIdx < 0) nextIdx = Math.min(STAGES.length - 1, (progress.unlocked || 1) - 1);
+
   STAGES.forEach((stage, i) => {
     const unlocked = isStageUnlocked(i, progress);
     const cleared = !!progress.cleared[stage.id];
+    const stars = getStarsForStage(stage.id);
+    const isNext = i === nextIdx && unlocked;
+    const colors = STAGE_ACCENTS[stage.code] || STAGE_ACCENTS.VICTORIA;
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "stage-btn";
+    btn.className = `stage-card-btn${isNext ? " is-next" : ""}`;
     btn.disabled = !unlocked;
+    btn.style.setProperty("--sc-a", colors[0]);
+    btn.style.setProperty("--sc-b", colors[1]);
+    const starStr = cleared || stars ? "★".repeat(stars) + "☆".repeat(Math.max(0, 3 - stars)) : "";
     btn.innerHTML = `
-      <span class="idx">${String(i + 1).padStart(2, "0")}</span>
-      <span>
+      <span class="stage-card-accent">${String(i + 1).padStart(2, "0")}</span>
+      <span class="stage-card-body">
         <strong>${stage.name}</strong>
         <small>${stage.briefing}</small>
-      </span>
-      <span class="badge ${!unlocked ? "locked" : cleared ? "cleared" : ""}">
-        ${!unlocked ? "未解鎖" : cleared ? "已通關" : "可挑戰"}
+        <span class="stage-card-meta">
+          <span class="badge ${!unlocked ? "locked" : cleared ? "cleared" : ""}">
+            ${!unlocked ? "🔒 未解鎖" : cleared ? "✓ 已通關" : isNext ? "▶ 下一關" : "可挑戰"}
+          </span>
+          ${starStr ? `<span class="stars">${starStr}</span>` : ""}
+        </span>
       </span>
     `;
     btn.addEventListener("click", () => {
@@ -291,6 +327,27 @@ function renderStageList() {
   });
   renderArenaList();
   syncNickInput();
+  refreshHomeMeta(progress, nextIdx);
+}
+
+function refreshHomeMeta(progress = loadProgress(), nextIdx = 0) {
+  if (els.homeLeaves) {
+    els.homeLeaves.textContent = String(loadCardProgress().leaves || 0);
+  }
+  if (els.btnContinue) {
+    const hasProgress = (progress.unlocked || 1) > 1 || Object.keys(progress.cleared || {}).length > 0;
+    const stage = STAGES[Math.max(0, nextIdx)] || STAGES[0];
+    els.btnContinue.hidden = !hasProgress;
+    if (hasProgress && stage) {
+      els.btnContinue.textContent = `繼續 · ${stage.name}`;
+      els.btnContinue.onclick = () => {
+        void sfx.unlock();
+        sfx.play("uiClick");
+        pendingStageId = stage.id;
+        openCharacterSelect();
+      };
+    }
+  }
 }
 
 function renderArenaList() {
@@ -303,15 +360,14 @@ function renderArenaList() {
     const isToday = bossId === today;
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = `stage-btn arena-btn${isToday ? " is-today" : ""}`;
+    btn.className = `arena-card-btn${isToday ? " is-today" : ""}`;
     btn.innerHTML = `
-      <span class="idx arena-emoji">${meta.emoji || "⚔️"}</span>
-      <span>
-        <strong>${boss.nameZh}${isToday ? " · 今日推薦" : ""} · ${meta.tier || ""}</strong>
-        <small>${meta.regionZh || boss.regionZh || ""} · ${meta.blurb || "競賽 Boss"}</small>
-      </span>
-      <span class="badge">${meta.tier === "SSS" ? "最難" : isToday ? "推薦" : "挑戰"}</span>
+      <span class="arena-card-emoji">${meta.emoji || "⚔️"}</span>
+      <strong>${boss.nameZh}</strong>
+      <small>${meta.regionZh || boss.regionZh || ""}</small>
+      <span class="arena-card-tier${meta.tier === "SSS" ? " sss" : ""}">${meta.tier || "?"}${isToday ? " · 今日" : ""}</span>
     `;
+    btn.title = meta.blurb || boss.nameZh;
     btn.addEventListener("click", () => {
       void sfx.unlock();
       sfx.play("uiClick");
@@ -412,6 +468,7 @@ function openStageSelect() {
   screen = "stage";
   closeCharacterChrome();
   document.body.classList.remove("in-play");
+  document.body.classList.add("home-open");
   hideAllOverlays();
   renderStageList();
   setOverlayOpen(els.stageOverlay, true);
@@ -424,6 +481,7 @@ function openStageSelect() {
 function openCharacterSelect() {
   if (!game) return;
   screen = "char";
+  document.body.classList.remove("home-open");
   hideAllOverlays();
   // Only keep deployable jobs in draft
   const prev = game.loadout?.length ? game.loadout : DEFAULT_LOADOUT;
@@ -862,6 +920,7 @@ function confirmLoadoutAndStart() {
   hideAllOverlays();
   screen = "play";
   document.body.classList.add("in-play");
+  document.body.classList.remove("home-open");
   refreshWaveIntel();
   renderSpecialistCards(game.getPublicState());
   ui.onState(game.getPublicState());
@@ -1325,6 +1384,11 @@ els.btnNextStage?.addEventListener("click", (ev) => {
   });
 });
 els.btnRank?.addEventListener("click", () =>
+  withAudio(() => {
+    openRankOverlay(rankTab || "all");
+  })
+);
+els.btnHomeRank?.addEventListener("click", () =>
   withAudio(() => {
     openRankOverlay(rankTab || "all");
   })

@@ -34,6 +34,7 @@ import {
   isTargetable,
   applyHit,
   scoreTarget,
+  isSpecialistDisabled,
 } from "./entities.js";
 import { drawScene } from "./render.js";
 import {
@@ -69,6 +70,7 @@ import {
 } from "../data/ranking.js";
 import { themeForStage } from "../data/map-themes.js";
 import { BOSSES } from "../data/bosses.js";
+import { applyBossCast } from "./boss-attacks.js";
 
 function defaultBuffs() {
   return {
@@ -761,6 +763,18 @@ export class Game {
           this.ui?.toast?.(e._pendingBanner);
           e._pendingBanner = null;
         }
+        // Boss 攻擊事件
+        if (e.bossEvents?.length) {
+          for (const ev of e.bossEvents) {
+            if (ev.kind === "bossTelegraph") {
+              this.fx.push(createBossBanner(ev.text, e.def.color));
+              this.sfx.play("bossPhase");
+            } else if (ev.kind === "bossCast") {
+              applyBossCast(this, ev);
+            }
+          }
+          e.bossEvents = [];
+        }
       }
       if (e.pendingSpawns?.length) {
         this._flushPendingSpawns(e);
@@ -789,6 +803,8 @@ export class Game {
     for (const s of this.specialists) {
       updateSpecialist(s, dt);
       if (s.cooldown > 0) continue;
+      // Boss 暈眩／沉默：無法出手
+      if (isSpecialistDisabled(s, this.now)) continue;
       const target = this._pickTarget(s);
       if (!target) continue;
       const shots = fireSpecialist(s, target);
