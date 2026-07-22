@@ -225,7 +225,9 @@ const els = {
 let hubState = {
   tab: "home",
   me: null,
+  session: null,
   apiOk: null,
+  oauthOk: null,
   error: "",
 };
 
@@ -304,26 +306,42 @@ async function openArtaleHub() {
   hideAllOverlays();
   setCampaignPanelOpen(false);
   setOverlayOpen(els.stageOverlay, true);
-  // 主選單藏起來、只露 hub（stage overlay 仍當全螢幕殼）
   if (els.titleScreen) els.titleScreen.style.visibility = "hidden";
   setOverlayOpen(els.artaleHubOverlay, true);
-  hubState = { ...hubState, error: "", apiOk: null };
+  hubState = { ...hubState, error: "", apiOk: null, oauthOk: null };
   paintHub();
+
+  // OAuth 回跳 query
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("artale_login") === "ok") {
+    history.replaceState({}, "", window.location.pathname);
+    showToast("Discord 登入成功");
+  } else if (params.get("artale_login") === "error") {
+    const msg = params.get("msg") || "登入失敗";
+    history.replaceState({}, "", window.location.pathname);
+    hubState.error = decodeURIComponent(msg);
+  }
+
   try {
-    await artaleHub.healthCheck();
+    const health = await artaleHub.healthCheck();
     hubState.apiOk = true;
-    const id = artaleHub.getLinkedDiscordId();
-    if (id) {
-      try {
-        hubState.me = await artaleHub.loadMe(id);
-      } catch (e) {
-        hubState.error = e.message;
-        hubState.me = null;
+    hubState.oauthOk = !!health.auth?.oauthConfigured;
+    // 優先讀 session cookie
+    try {
+      const sess = await artaleHub.fetchSessionMe();
+      hubState.session = sess.session;
+      hubState.me = sess.me;
+      if (sess.session?.discordId) {
+        artaleHub.setLinkedDiscordId(sess.session.discordId);
       }
+    } catch {
+      // 無 session — 停在登入頁
+      hubState.me = null;
+      hubState.session = null;
     }
   } catch {
     hubState.apiOk = false;
-    hubState.error = "API 未啟動。請另開終端執行：npm run dev:api";
+    hubState.error = "API 未啟動。請執行：npm run dev:api";
   }
   paintHub();
   sfx.play("uiClick");

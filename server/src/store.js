@@ -157,6 +157,50 @@ export function selectCharacter(discordId, charId) {
   return accountSummary(discordId);
 }
 
+/**
+ * OAuth 首次登入：若 player-data 尚無此 ID，建立空帳號 + 初心者角色
+ */
+export function ensureAccountFromDiscord(discordUser) {
+  const all = loadAll();
+  const id = String(discordUser.id || discordUser.discordId);
+  if (all[id]) {
+    // 更新顯示名稱
+    if (discordUser.username && all[id].username !== discordUser.username) {
+      all[id].username = discordUser.username;
+      all[id].lastActiveAt = Date.now();
+      saveAll(all);
+    }
+    return accountSummary(id);
+  }
+
+  const charId = `char_web_${Date.now().toString(36)}`;
+  const username = discordUser.username || "冒險者";
+  all[id] = {
+    username,
+    activeCharId: charId,
+    characters: {
+      [charId]: {
+        name: username,
+        class: "beginner",
+        level: 1,
+        jobCode: 0,
+        levelStats: { str: 0, dex: 0, int: 0, luk: 0 },
+        totalExp: 0,
+        createdAt: Date.now(),
+        source: "artale-web-oauth",
+      },
+    },
+    items: [],
+    mapleLeaves: 120,
+    equipped: {},
+    createdAt: Date.now(),
+    lastActiveAt: Date.now(),
+    __fromArtaleWeb: true,
+  };
+  saveAll(all);
+  return accountSummary(id);
+}
+
 export function getCharacterDetail(discordId, charId) {
   const p = getAccount(discordId);
   if (!p) return null;

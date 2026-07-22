@@ -4994,3 +4994,60 @@ body.mode-bc .wave-cta {
   line-height: 1.55;
   font-size: 0.85rem;
 }
+
+.hub-discord-btn {
+  width: 100%;
+  min-height: 52px;
+  font-size: 1.05rem;
+  margin-bottom: 10px;
+}
+
+.hub-oauth-hint {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  margin: 0 0 14px;
+  word-break: break-all;
+}
+
+.hub-oauth-hint code {
+  font-size: 0.72rem;
+  background: rgba(0, 0, 0, 0.06);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.hub-dev-details {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px dashed rgba(107, 68, 35, 0.35);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.hub-dev-details summary {
+  cursor: pointer;
+  font-weight: 800;
+  color: #6e4e32;
+  margin-bottom: 8px;
+}
+
+.hub-top-user {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.hub-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  border: 2px solid #8b5a2b;
+  object-fit: cover;
+  background: #efe0c0;
+}
+
+.hub-avatar.placeholder {
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+}
