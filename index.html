@@ -89,6 +89,14 @@
             </button>
             <p class="wave-cta-hint muted" id="wave-cta-hint">部署完成後開始</p>
           </div>
+          <!-- 遠征 BC 底欄出兵 -->
+          <div id="bc-dock" class="bc-dock" hidden>
+            <div class="bc-wallet-pill" title="錢包（自動回復）">
+              <small>錢包</small>
+              <strong id="bc-wallet-val">0</strong>
+            </div>
+            <div id="bc-unit-row" class="bc-unit-row" role="toolbar" aria-label="出兵"></div>
+          </div>
           <!-- 戰鬥 HUD：Boss 血條／蓄力／部署提示 -->
           <div id="combat-hud" class="combat-hud" hidden>
             <div id="boss-hud-list" class="boss-hud-list"></div>
@@ -131,6 +139,7 @@
                   </button>
                   <button type="button" id="btn-home-guide" class="btn title-btn">📜 遊戲說明</button>
                   <button type="button" id="btn-home-rank" class="btn title-btn">🏆 排行榜</button>
+                  <button type="button" id="btn-home-settings" class="btn title-btn title-btn-ghost">⚙ 設定</button>
                 </nav>
                 <p class="title-hint muted">點一下畫面開啟背景音樂 ♪</p>
               </div>
@@ -205,13 +214,20 @@
                   </div>
                 </section>
 
-                <!-- Step 3a: stages -->
+                <!-- Step 3a: world map -->
                 <section class="home-section wizard-pane" id="wizard-step-stages" data-wizard="3" data-mode="campaign" hidden>
                   <div class="home-section-head">
-                    <h2>🌍 地區戰役</h2>
-                    <p class="muted">點選關卡出戰</p>
+                    <h2>🗺️ 世界地圖</h2>
+                    <p class="muted">點節點出戰 · 通關解鎖下一站</p>
                   </div>
-                  <div id="stage-list" class="stage-grid"></div>
+                  <div id="world-map-scroll" class="world-map-scroll">
+                    <div id="stage-list" class="world-map-path" role="list"></div>
+                  </div>
+                  <p class="world-map-legend muted">
+                    <span class="wm-leg next">▶ 下一關</span>
+                    <span class="wm-leg clear">✓ 已通關</span>
+                    <span class="wm-leg lock">🔒 未解鎖</span>
+                  </p>
                 </section>
 
                 <!-- Step 3b: bosses (BC-style cards) -->
@@ -222,6 +238,32 @@
                   </div>
                   <div id="arena-list" class="raid-stage-list"></div>
                 </section>
+              </div>
+            </div>
+          </div>
+
+          <!-- Settings -->
+          <div id="settings-overlay" class="overlay" hidden>
+            <div class="overlay-card settings-card maple-panel maple-ornament">
+              <p class="overlay-kicker">⚙ 設定</p>
+              <h2>遊戲設定</h2>
+              <div class="settings-list">
+                <div class="settings-row">
+                  <span>背景音樂 / 音效</span>
+                  <button type="button" id="btn-settings-mute" class="btn">🔊 開啟中</button>
+                </div>
+                <div class="settings-row">
+                  <span>新手引導</span>
+                  <button type="button" id="btn-settings-reset-coach" class="btn">重設引導</button>
+                </div>
+                <div class="settings-row">
+                  <span>操作說明</span>
+                  <button type="button" id="btn-settings-help" class="btn">開啟</button>
+                </div>
+              </div>
+              <p class="muted settings-credit">楓之谷防衛戰 · 本機遊玩 · 美術 LPC / 音效 Kenney·OGA</p>
+              <div class="overlay-actions">
+                <button type="button" id="btn-settings-close" class="btn primary maple-primary">關閉</button>
               </div>
             </div>
           </div>
@@ -299,6 +341,14 @@
                   </span>
                 </div>
               </header>
+
+              <div class="loadout-presets" id="loadout-presets">
+                <span class="presets-label">推薦編隊</span>
+                <button type="button" class="btn chip-preset" data-preset="starter">🌱 教學</button>
+                <button type="button" class="btn chip-preset" data-preset="balanced">⚖ 均衡</button>
+                <button type="button" class="btn chip-preset" data-preset="anti_stealth">👁 破隱</button>
+                <button type="button" class="btn chip-preset" data-preset="anti_armor">🔨 破甲</button>
+              </div>
 
               <div class="char-filters" role="tablist" aria-label="職業篩選">
                 <div class="filter-row" id="series-tabs"></div>

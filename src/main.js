@@ -150,12 +150,18 @@ const els = {
   wizardDots: document.querySelectorAll(".wizard-dot"),
   btnHomeRank: document.querySelector("#btn-home-rank"),
   btnHomeGuide: document.querySelector("#btn-home-guide"),
+  btnHomeSettings: document.querySelector("#btn-home-settings"),
   homeLeaves: document.querySelector("#home-leaves"),
   saveSlotList: document.querySelector("#save-slot-list"),
   guideOverlay: document.querySelector("#guide-overlay"),
   guideTabs: document.querySelector("#guide-tabs"),
   guideBody: document.querySelector("#guide-body"),
   btnGuideClose: document.querySelector("#btn-guide-close"),
+  settingsOverlay: document.querySelector("#settings-overlay"),
+  btnSettingsClose: document.querySelector("#btn-settings-close"),
+  btnSettingsMute: document.querySelector("#btn-settings-mute"),
+  btnSettingsResetCoach: document.querySelector("#btn-settings-reset-coach"),
+  btnSettingsHelp: document.querySelector("#btn-settings-help"),
   rankOverlay: document.querySelector("#rank-overlay"),
   rankList: document.querySelector("#rank-list"),
   rankTabs: document.querySelector("#rank-tabs"),
@@ -166,6 +172,7 @@ const els = {
   loadoutCount: document.querySelector("#loadout-count"),
   loadoutMaxLabel: document.querySelector("#loadout-max-label"),
   loadoutPreview: document.querySelector("#loadout-preview"),
+  loadoutPresets: document.querySelector("#loadout-presets"),
   btnCharBack: document.querySelector("#btn-char-back"),
   btnCharConfirm: document.querySelector("#btn-char-confirm"),
   leavesBalance: document.querySelector("#leaves-balance"),
@@ -181,6 +188,10 @@ const els = {
   placeHint: document.querySelector("#place-hint"),
   controlStrip: document.querySelector("#control-strip"),
   coreHitFlash: document.querySelector("#core-hit-flash"),
+  bcDock: document.querySelector("#bc-dock"),
+  bcWalletVal: document.querySelector("#bc-wallet-val"),
+  bcUnitRow: document.querySelector("#bc-unit-row"),
+  worldMapScroll: document.querySelector("#world-map-scroll"),
   dialogOverlay: document.querySelector("#dialog-overlay"),
   dialogKicker: document.querySelector("#dialog-kicker"),
   dialogTitle: document.querySelector("#dialog-title"),
@@ -235,6 +246,7 @@ function hideAllOverlays() {
   setOverlayOpen(els.helpOverlay, false);
   setOverlayOpen(els.guideOverlay, false);
   setOverlayOpen(els.dialogOverlay, false);
+  setOverlayOpen(els.settingsOverlay, false);
 }
 
 /**
@@ -500,6 +512,13 @@ function applyModeSkin(state) {
   // 賣出僅塔防
   if (els.btnSell) {
     els.btnSell.hidden = bc;
+  }
+  // 遠征底欄
+  if (els.bcDock) {
+    els.bcDock.hidden = !(bc && screen === "play");
+  }
+  if (els.loadoutHint && bc && screen === "play") {
+    els.loadoutHint.textContent = "使用畫面下方出兵列 · 錢包自動回復";
   }
 }
 
@@ -794,25 +813,41 @@ function renderStageList() {
     const stars = getStarsForStage(stage.id);
     const isNext = i === nextIdx && unlocked;
     const colors = STAGE_ACCENTS[stage.code] || STAGE_ACCENTS.VICTORIA;
+
+    if (i > 0) {
+      const seg = document.createElement("span");
+      seg.className =
+        "world-path-seg" +
+        (!unlocked && !isStageUnlocked(i - 1, progress) ? " is-locked" : "") +
+        (cleared || isStageUnlocked(i, progress) && i <= nextIdx ? " is-done" : "");
+      if (cleared || (i <= nextIdx && unlocked)) seg.classList.add("is-done");
+      if (!isStageUnlocked(i - 1, progress)) {
+        seg.classList.remove("is-done");
+        seg.classList.add("is-locked");
+      }
+      els.stageList.appendChild(seg);
+    }
+
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = `stage-card-btn${isNext ? " is-next" : ""}`;
+    btn.className =
+      "world-node" +
+      (isNext ? " is-next" : "") +
+      (cleared ? " is-cleared" : "") +
+      (!unlocked ? " is-locked" : "");
     btn.disabled = !unlocked;
-    btn.style.setProperty("--sc-a", colors[0]);
-    btn.style.setProperty("--sc-b", colors[1]);
-    const starStr = cleared || stars ? "★".repeat(stars) + "☆".repeat(Math.max(0, 3 - stars)) : "";
+    btn.setAttribute("role", "listitem");
+    btn.style.setProperty("--wn-a", colors[0]);
+    btn.style.setProperty("--wn-b", colors[1]);
+    btn.title = unlocked
+      ? `${stage.name} — ${stage.briefing}`
+      : `未解鎖 · 通關前一關`;
+    const starStr =
+      cleared || stars > 0 ? "★".repeat(stars) + "☆".repeat(Math.max(0, 3 - stars)) : isNext ? "▶" : "";
     btn.innerHTML = `
-      <span class="stage-card-accent">${String(i + 1).padStart(2, "0")}</span>
-      <span class="stage-card-body">
-        <strong>${stage.name}</strong>
-        <small>${stage.briefing}</small>
-        <span class="stage-card-meta">
-          <span class="badge ${!unlocked ? "locked" : cleared ? "cleared" : ""}">
-            ${!unlocked ? "🔒 未解鎖" : cleared ? "✓ 已通關" : isNext ? "▶ 下一關" : "可挑戰"}
-          </span>
-          ${starStr ? `<span class="stars">${starStr}</span>` : ""}
-        </span>
-      </span>
+      <span class="world-node-orb">${!unlocked ? "🔒" : String(i + 1).padStart(2, "0")}</span>
+      <span class="world-node-name">${escapeHtml(stage.name)}</span>
+      <span class="world-node-stars">${starStr}</span>
     `;
     btn.addEventListener("click", () => {
       void sfx.unlock();
@@ -822,8 +857,129 @@ function renderStageList() {
     });
     els.stageList.appendChild(btn);
   });
+
+  // 滾到下一關
+  requestAnimationFrame(() => {
+    const nextEl = els.stageList.querySelector(".world-node.is-next");
+    nextEl?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  });
+
   syncNickInput();
   refreshHomeMeta(progress, nextIdx);
+}
+
+/** 遠征底部出兵列 */
+function renderBcDock(state) {
+  if (!els.bcDock || !els.bcUnitRow) return;
+  if (!state?.bcMode || screen !== "play") {
+    els.bcDock.hidden = true;
+    return;
+  }
+  els.bcDock.hidden = false;
+  if (els.bcWalletVal) {
+    els.bcWalletVal.textContent = String(state.points ?? 0);
+  }
+  const loadout = state.loadout?.length ? state.loadout : game?.loadout || [];
+  const blocked = !!state.result || !!state.pausedForReward;
+  els.bcUnitRow.innerHTML = "";
+  for (const id of loadout) {
+    const d = SPECIALISTS[id];
+    if (!d) continue;
+    const lv = getCardLevel(id);
+    const leveled = buildLeveledDef(id, lv);
+    const cd = state.spawnCd?.[id] || 0;
+    const cantAfford = (state.points ?? 0) < leveled.cost;
+    const teamFull = (state.teamCount ?? 0) >= (state.teamLimit ?? 16);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "bc-unit-btn";
+    btn.disabled = blocked || cantAfford || teamFull || cd > 0;
+    btn.title = cd > 0 ? `冷卻 ${cd.toFixed(1)}s` : `${d.nameZh} · ${leveled.cost}`;
+
+    const portrait = getSpecialistPortrait(id, d);
+    let face;
+    if (portrait instanceof HTMLImageElement && portrait.src) {
+      face = document.createElement("img");
+      face.src = portrait.currentSrc || portrait.src;
+      face.alt = "";
+      face.draggable = false;
+    } else {
+      face = document.createElement("canvas");
+      face.width = portrait?.width || 48;
+      face.height = portrait?.height || 48;
+      try {
+        face.getContext("2d")?.drawImage(portrait, 0, 0);
+      } catch {
+        /* ignore */
+      }
+    }
+    const name = document.createElement("span");
+    name.className = "bc-name";
+    name.textContent = d.nameZh;
+    const cost = document.createElement("span");
+    cost.className = "bc-cost";
+    cost.textContent = cd > 0 ? `${cd.toFixed(1)}s` : `${leveled.cost}`;
+    btn.append(face, name, cost);
+    if (cd > 0) {
+      const ring = document.createElement("span");
+      ring.className = "bc-cd-ring";
+      // approximate: spawn cd default 2.2
+      const pct = Math.min(100, (cd / 2.2) * 100);
+      ring.style.setProperty("--cd", String(pct));
+      btn.appendChild(ring);
+    }
+    btn.addEventListener("click", () => {
+      withAudio(() => game.tryDeployBc(id));
+    });
+    els.bcUnitRow.appendChild(btn);
+  }
+}
+
+/** HTML data-preset → meta-progress preset id */
+const PRESET_HTML_MAP = {
+  starter: "beginner_line",
+  balanced: "fortress",
+  anti_stealth: "reveal",
+  anti_armor: "break",
+};
+
+function applyLoadoutPresetById(presetId) {
+  const p = LOADOUT_PRESETS.find((x) => x.id === presetId);
+  if (!p) return;
+  const ok = p.jobs.filter((id) => canDeployJob(id));
+  if (!ok.length) {
+    // fallback: beginner + any deployable from catalog
+    const fallback = SPECIALIST_ORDER.filter((id) => canDeployJob(id)).slice(0, LOADOUT_MAX);
+    if (!fallback.length) {
+      sfx.play("error");
+      showToast("尚無可編隊職業：" + p.desc);
+      return;
+    }
+    draftLoadout = fallback;
+    focusCardId = draftLoadout[0];
+    renderCharacterGrid();
+    showToast(`「${p.nameZh}」職業未齊，已帶可用單位`);
+    sfx.play("uiOk");
+    return;
+  }
+  draftLoadout = ok.slice(0, LOADOUT_MAX);
+  focusCardId = draftLoadout[0];
+  renderCharacterGrid();
+  showToast(`已套用「${p.nameZh}」：${ok.map((id) => SPECIALISTS[id]?.nameZh).join("、")}`);
+  sfx.play("uiOk");
+}
+
+function openSettingsOverlay() {
+  if (els.btnSettingsMute) {
+    els.btnSettingsMute.textContent = sfx.muted ? "🔇 靜音中" : "🔊 開啟中";
+  }
+  setOverlayOpen(els.settingsOverlay, true);
+  sfx.play("uiClick");
+}
+
+function closeSettingsOverlay() {
+  setOverlayOpen(els.settingsOverlay, false);
+  sfx.play("uiClick");
 }
 
 function getNextStageId(progress = loadProgress()) {
@@ -1299,38 +1455,6 @@ function renderFilterTabs() {
         sfx.play("uiClick");
       });
       els.seriesTabs.appendChild(b);
-    }
-    // presets row
-    let presetRow = document.getElementById("preset-tabs");
-    if (!presetRow && els.seriesTabs.parentElement) {
-      presetRow = document.createElement("div");
-      presetRow.id = "preset-tabs";
-      presetRow.className = "filter-row";
-      els.seriesTabs.parentElement.appendChild(presetRow);
-    }
-    if (presetRow) {
-      presetRow.innerHTML = "";
-      for (const p of LOADOUT_PRESETS) {
-        const b = document.createElement("button");
-        b.type = "button";
-        b.className = "chip chip-preset";
-        b.textContent = `💡 ${p.nameZh}`;
-        b.title = p.desc;
-        b.addEventListener("click", () => {
-          void sfx.unlock();
-          const ok = p.jobs.filter((id) => canDeployJob(id));
-          if (!ok.length) {
-            sfx.play("error");
-            showToast("此推薦需先場上轉職學會職業：" + p.desc);
-            return;
-          }
-          draftLoadout = ok.slice(0, LOADOUT_MAX);
-          sfx.play("deploy");
-          showToast(`已套用「${p.nameZh}」：${ok.map((id) => SPECIALISTS[id]?.nameZh).join("、")}`);
-          renderCharacterGrid();
-        });
-        presetRow.appendChild(b);
-      }
     }
   }
   if (els.familyTabs) {
@@ -1932,6 +2056,7 @@ const ui = {
     applyModeSkin(state);
     updateSlimHud(state);
     updateWaveCta(state);
+    renderBcDock(state);
 
     els.core.textContent = state.bcMode
       ? `${state.coreHp}/${state.coreMax || state.coreHp}`
@@ -2575,6 +2700,53 @@ els.btnHomeGuide?.addEventListener("click", () =>
     openGuideOverlay("play");
   })
 );
+els.btnHomeSettings?.addEventListener("click", () =>
+  withAudio(() => {
+    openSettingsOverlay();
+  })
+);
+els.btnSettingsClose?.addEventListener("click", () =>
+  withAudio(() => {
+    closeSettingsOverlay();
+  })
+);
+els.btnSettingsMute?.addEventListener("click", () =>
+  withAudio(() => {
+    if (game) game.toggleMute();
+    else sfx.toggleMute();
+    if (els.btnSettingsMute) {
+      els.btnSettingsMute.textContent = sfx.muted ? "🔇 靜音中" : "🔊 開啟中";
+    }
+    updateMuteButton(sfx.muted);
+  })
+);
+els.btnSettingsResetCoach?.addEventListener("click", () =>
+  withAudio(() => {
+    try {
+      localStorage.removeItem(COACH_SEEN_KEY);
+      localStorage.removeItem(HELP_SEEN_KEY);
+    } catch {
+      /* ignore */
+    }
+    showToast("已重設新手引導 — 下次進關會再出現");
+    sfx.play("uiOk");
+  })
+);
+els.btnSettingsHelp?.addEventListener("click", () =>
+  withAudio(() => {
+    closeSettingsOverlay();
+    openGuideOverlay("play");
+  })
+);
+els.loadoutPresets?.addEventListener("click", (ev) => {
+  const b = ev.target.closest("[data-preset]");
+  if (!b) return;
+  withAudio(() => {
+    const key = b.getAttribute("data-preset");
+    const id = PRESET_HTML_MAP[key] || key;
+    applyLoadoutPresetById(id);
+  });
+});
 els.btnGuideClose?.addEventListener("click", () =>
   withAudio(() => {
     closeGuideOverlay();
