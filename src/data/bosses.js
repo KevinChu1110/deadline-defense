@@ -98,7 +98,7 @@ export const BOSSES = {
     speed: 24,
     armor: 0.22,
     leakDamage: 10,
-    sprite: "zakum.png", // maplestory.io 8800000 body + arms composite
+    sprite: "zakum.png", // maplestory.io 8800000 stand（完整本體＋雙手持板，不疊手臂零件）
     spriteScale: 0.42,
     tags: ["boss", "armored", "summoner"],
     phaseSpawns: [
@@ -127,7 +127,7 @@ export const BOSSES = {
     speed: 24,
     armor: 0.3,
     leakDamage: 11,
-    sprite: "horntail.png", // maplestory.io GMS83 8810000 head (full iconic head, not wing part)
+    sprite: "horntail.png", // full multi-head body art (not MS part ID wing/head only)
     spriteScale: 0.32,
     tags: ["boss", "armored", "summoner", "dense"],
     // 左頭 → 右頭 → 本體（對齊 bot 多部位）
