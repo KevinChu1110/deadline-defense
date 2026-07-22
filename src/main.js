@@ -436,8 +436,8 @@ async function openArtaleHub() {
     hubState.apiOk = false;
     hubState.oauthOk = false;
     const msg = e?.message || String(e);
-    hubState.error = import.meta.env.VITE_API_BASE
-      ? `連不上 API（ngrok）。請確認 tunnel / artale-web-api 有在跑。${msg ? " · " + msg : ""}`
+    hubState.error = artaleHub.isRemoteApi()
+      ? `連不上 API（ngrok）。請確認 sit-kevin 上 artale-web-api / ngrok 有在跑。${msg ? " · " + msg : ""}`
       : "API 未啟動。本機請執行：npm run dev:api";
   }
   paintHub();

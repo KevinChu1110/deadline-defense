@@ -4,19 +4,37 @@
 
 const SESSION_KEY = "artale-web-discord-id";
 
+/** SIT 預設 API（Netlify 前端 + ngrok）；可被 VITE_API_BASE 覆寫 */
+const DEFAULT_NGROK_API =
+  "https://primary-marmoset-publicly.ngrok-free.app/defense";
+
 /**
  * API 絕對／相對路徑
- * - Netlify 前端 + ngrok API：設 VITE_API_BASE=https://….ngrok-free.app/defense
+ * - Netlify 前端 + ngrok API：VITE_API_BASE 或 runtime 偵測 *.netlify.app
  * - 本機 Vite：不設，走同源 /api（proxy）
- * - 同源 /defense 部署：可用 BASE_URL=/defense/
  */
 export function apiUrl(p) {
   const clean = String(p || "").replace(/^\//, "");
-  const apiBase = String(import.meta.env.VITE_API_BASE || "").replace(/\/$/, "");
+  let apiBase = String(import.meta.env.VITE_API_BASE || "").replace(/\/$/, "");
+  // Netlify 建置若漏塞 env，runtime 仍要打到 ngrok（否則會打到自己網站 /api 失敗）
+  if (!apiBase && typeof location !== "undefined") {
+    const host = location.hostname || "";
+    if (host === "maplestory-defense.netlify.app" || host.endsWith(".netlify.app")) {
+      apiBase = DEFAULT_NGROK_API;
+    }
+  }
   if (apiBase) return `${apiBase}/${clean}`;
   const base = import.meta.env.BASE_URL || "/";
   if (base === "/") return `/${clean}`;
   return `${base.replace(/\/?$/, "/")}${clean}`;
+}
+
+/** 是否跨站 API（用於錯誤文案） */
+export function isRemoteApi() {
+  if (import.meta.env.VITE_API_BASE) return true;
+  if (typeof location === "undefined") return false;
+  const host = location.hostname || "";
+  return host === "maplestory-defense.netlify.app" || host.endsWith(".netlify.app");
 }
 
 export function getLinkedDiscordId() {
@@ -229,8 +247,8 @@ export function renderHubShell(els, state) {
           首次登入會自動建立初心者角色（若 Bot 尚無此 ID）。
         </p>
         <div class="hub-api-status ${apiOk === true ? "ok" : apiOk === false ? "bad" : ""}">
-          API：${apiOk === true ? "已連線" : apiOk === false ? "未啟動 — npm run dev:api" : "檢查中…"}
-          ${oauthOk === true ? " · OAuth 已設定" : oauthOk === false ? " · OAuth 未設定（可用下方開發登入）" : ""}
+          API：${apiOk === true ? "已連線" : apiOk === false ? "連線失敗" : "檢查中…"}
+          ${oauthOk === true ? " · OAuth 已設定" : oauthOk === false ? " · OAuth 未設定／未知" : ""}
         </div>
         ${error ? `<p class="hub-error">${escapeHtml(error)}</p>` : ""}
 
