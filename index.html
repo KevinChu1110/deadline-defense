@@ -68,16 +68,23 @@
           <section class="panel-block maple-frame hide-sm">
             <h2>操作</h2>
             <ol class="controls">
-              <li>選職業組成出戰名單</li>
-              <li>把右側職業卡拖到地圖綠格部署</li>
-              <li>開始波次</li>
-              <li>清波可選道具、升級卡</li>
+              <li>點右側職業（或拖到綠格）部署</li>
+              <li>再點同一張可自動放到空格</li>
+              <li>開始波次 · 打怪賺楓幣轉職</li>
+              <li>Boss 蓄力時看上方血條下一招</li>
             </ol>
           </section>
         </aside>
 
         <section class="canvas-wrap maple-frame">
           <canvas id="game" width="960" height="540" aria-label="戰場"></canvas>
+          <!-- 戰鬥 HUD：Boss 血條／蓄力／部署提示 -->
+          <div id="combat-hud" class="combat-hud" hidden>
+            <div id="boss-hud-list" class="boss-hud-list"></div>
+            <div id="place-hint" class="place-hint" hidden></div>
+            <div id="control-strip" class="control-strip" hidden></div>
+          </div>
+          <div id="core-hit-flash" class="core-hit-flash" hidden aria-hidden="true"></div>
           <div id="toast" class="toast" hidden></div>
 
           <!-- Home / Stage select -->

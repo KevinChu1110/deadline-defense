@@ -108,6 +108,11 @@ const els = {
   charDetail: document.querySelector("#char-detail"),
   rewardOverlay: document.querySelector("#reward-overlay"),
   rewardList: document.querySelector("#reward-list"),
+  combatHud: document.querySelector("#combat-hud"),
+  bossHudList: document.querySelector("#boss-hud-list"),
+  placeHint: document.querySelector("#place-hint"),
+  controlStrip: document.querySelector("#control-strip"),
+  coreHitFlash: document.querySelector("#core-hit-flash"),
 };
 
 /** Currently focused card for upgrade detail */
@@ -964,11 +969,102 @@ function hideRewards() {
 /** Assigned after Game is constructed — onState may run during constructor (reset). */
 let game = null;
 
+function renderCombatHud(state) {
+  const show = screen === "play" && !state.result;
+  if (els.combatHud) {
+    els.combatHud.hidden = !show;
+  }
+  if (!show) return;
+
+  // Boss bars
+  if (els.bossHudList) {
+    const bosses = state.bossHud || [];
+    if (!bosses.length) {
+      els.bossHudList.innerHTML = "";
+    } else {
+      els.bossHudList.innerHTML = bosses
+        .map((b) => {
+          const pct = Math.max(0, Math.min(100, (b.ratio || 0) * 100));
+          const next = b.next;
+          let nextHtml = `<span class="boss-next muted">—</span>`;
+          if (next) {
+            const nt = next.casting
+              ? `施放中 ${next.t.toFixed(1)}s`
+              : `${next.t.toFixed(1)}s 後`;
+            nextHtml = `<span class="boss-next${next.casting ? " is-casting" : ""}" style="--nc:${next.color || b.color}">
+              <strong>${escapeHtml(next.name)}</strong>
+              <em>${nt}</em>
+            </span>`;
+          }
+          const flags = [
+            b.immune ? `<span class="boss-flag immune">無效</span>` : "",
+            b.reflect ? `<span class="boss-flag reflect">反射</span>` : "",
+          ].join("");
+          return `<div class="boss-hud-card" style="--bc:${b.color || "#fca5a5"}">
+            <div class="boss-hud-top">
+              <strong class="boss-hud-name">${escapeHtml(b.name)}</strong>
+              <span class="boss-hud-hp">${Math.ceil(b.hp)} / ${Math.ceil(b.maxHp)}</span>
+              ${flags}
+            </div>
+            <div class="boss-hp-track"><div class="boss-hp-fill" style="width:${pct}%"></div></div>
+            <div class="boss-hud-skill">${nextHtml}</div>
+          </div>`;
+        })
+        .join("");
+    }
+  }
+
+  // Place hint
+  if (els.placeHint) {
+    if (state.placingHint) {
+      els.placeHint.hidden = false;
+      els.placeHint.textContent = state.placingHint;
+    } else {
+      els.placeHint.hidden = true;
+    }
+  }
+
+  // Control strip
+  if (els.controlStrip) {
+    const ctrls = state.controlHud || [];
+    if (!ctrls.length) {
+      els.controlStrip.hidden = true;
+      els.controlStrip.innerHTML = "";
+    } else {
+      els.controlStrip.hidden = false;
+      els.controlStrip.innerHTML = ctrls
+        .map((c) => {
+          const parts = [];
+          if (c.stun > 0) parts.push(`暈 ${c.stun.toFixed(1)}s`);
+          if (c.silence > 0) parts.push(`默 ${c.silence.toFixed(1)}s`);
+          if (c.curse > 0) parts.push(`咒 ${c.curse.toFixed(1)}s`);
+          return `<span class="ctrl-chip"><b>${escapeHtml(c.name)}</b> ${parts.join(" · ")}</span>`;
+        })
+        .join("");
+    }
+  }
+}
+
+function flashCoreHit() {
+  if (!els.coreHitFlash) return;
+  els.coreHitFlash.hidden = false;
+  els.coreHitFlash.classList.remove("is-on");
+  // reflow
+  void els.coreHitFlash.offsetWidth;
+  els.coreHitFlash.classList.add("is-on");
+  clearTimeout(flashCoreHit._t);
+  flashCoreHit._t = setTimeout(() => {
+    els.coreHitFlash.classList.remove("is-on");
+    els.coreHitFlash.hidden = true;
+  }, 420);
+}
+
 const ui = {
   toast: showToast,
   onResult: showResult,
   onRewardOffer: showRewards,
   onRewardClosed: hideRewards,
+  onCoreHit: flashCoreHit,
   onState(state) {
     // Guard: Game constructor calls reset → onState before `game = new Game(...)` returns.
     if (!game) {
@@ -1034,8 +1130,16 @@ const ui = {
     // loadout hint
     const names = (state.loadout || []).map((id) => SPECIALISTS[id]?.nameZh).filter(Boolean);
     els.loadoutHint.textContent = names.length
-      ? `出戰名單：${names.join("、")}（拖到地圖綠格部署）`
+      ? `出戰：${names.join("、")} · 點選或拖到綠格`
       : "請先完成角色選擇";
+
+    renderCombatHud(state);
+    // 神木數字閃紅
+    if (els.core && (state.coreHitFlash || 0) > 0.35) {
+      els.core.classList.add("is-hurt");
+    } else if (els.core) {
+      els.core.classList.remove("is-hurt");
+    }
 
     const selected = game.specialists.find((s) => s.id === state.selectedSpecialistId);
     if (selected) {
@@ -1188,11 +1292,12 @@ function handleSpecialistCardTap(id) {
     return;
   }
   if (state.placingType === id) {
+    // 再點同一張 = 自動放到第一個空格（手機友善）
     game.tryDeployAuto();
     return;
   }
   game.setPlacing(id);
-  showToast(`${d.nameZh}：拖到地圖綠格，或再點一次自動部署`);
+  showToast(`${d.nameZh}：點地圖綠格 · 再點卡自動放 · 點空地取消`);
 }
 
 function beginSpecialistDrag(e, id, d) {

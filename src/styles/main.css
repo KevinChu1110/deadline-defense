@@ -385,6 +385,198 @@ body.is-dragging-job .specialist-card {
   z-index: 5;
 }
 
+/* ===== Combat HUD (readability) ===== */
+.canvas-wrap {
+  position: relative;
+}
+
+.combat-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 8px 10px;
+  gap: 6px;
+}
+
+.boss-hud-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: min(420px, 92%);
+  margin: 0 auto;
+}
+
+.boss-hud-card {
+  --bc: #fca5a5;
+  background: rgba(20, 14, 12, 0.78);
+  border: 1.5px solid color-mix(in srgb, var(--bc) 70%, #fff 10%);
+  border-radius: 12px;
+  padding: 7px 10px 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+  color: #fef3c7;
+  backdrop-filter: blur(4px);
+}
+
+.boss-hud-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 0.82rem;
+}
+
+.boss-hud-name {
+  color: var(--bc);
+  letter-spacing: 0.02em;
+}
+
+.boss-hud-hp {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+.boss-flag {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+.boss-flag.immune {
+  background: rgba(148, 163, 184, 0.35);
+  color: #e2e8f0;
+}
+
+.boss-flag.reflect {
+  background: rgba(196, 181, 253, 0.35);
+  color: #ede9fe;
+}
+
+.boss-hp-track {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.boss-hp-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--bc) 80%, #000), var(--bc));
+  transition: width 0.12s linear;
+}
+
+.boss-hud-skill {
+  margin-top: 5px;
+  font-size: 0.75rem;
+}
+
+.boss-next {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.boss-next strong {
+  color: #fff;
+}
+
+.boss-next em {
+  font-style: normal;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
+
+.boss-next.is-casting strong {
+  color: #fde047;
+  animation: boss-cast-pulse 0.45s ease-in-out infinite alternate;
+}
+
+@keyframes boss-cast-pulse {
+  from {
+    opacity: 0.75;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.place-hint {
+  align-self: center;
+  margin-top: auto;
+  margin-bottom: 52px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(30, 60, 35, 0.88);
+  border: 2px solid rgba(74, 222, 128, 0.85);
+  color: #ecfdf5;
+  font-size: 0.85rem;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  max-width: 92%;
+  text-align: center;
+}
+
+.control-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: auto;
+  margin-bottom: 8px;
+}
+
+.ctrl-chip {
+  background: rgba(40, 20, 20, 0.82);
+  border: 1px solid rgba(251, 191, 36, 0.55);
+  color: #fde68a;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+
+.ctrl-chip b {
+  color: #fff;
+  margin-right: 4px;
+}
+
+.core-hit-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  background: radial-gradient(ellipse at 92% 55%, rgba(239, 68, 68, 0.45), transparent 55%);
+  opacity: 0;
+  transition: opacity 0.08s linear;
+}
+
+.core-hit-flash.is-on {
+  opacity: 1;
+  animation: core-flash-anim 0.4s ease-out forwards;
+}
+
+@keyframes core-flash-anim {
+  0% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+#stat-core.is-hurt {
+  color: #ef4444 !important;
+  text-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+}
+
 .overlay {
   position: absolute;
   inset: 0;
@@ -1644,6 +1836,15 @@ body.char-select-open {
   .specialist-card .portrait {
     width: 44px;
     height: 44px;
+  }
+
+  .place-hint {
+    font-size: 0.78rem;
+    margin-bottom: 64px;
+  }
+
+  .boss-hud-card {
+    padding: 6px 8px 7px;
   }
 
   .actions .btn,

@@ -1091,6 +1091,8 @@ export function applyBossCast(game, event) {
         toast(`${skill.name} 被護盾擋住！`);
       } else {
         game.coreHp = Math.max(0, game.coreHp - dmg);
+        game.coreHitFlash = 0.55;
+        game.ui?.onCoreHit?.(dmg);
         toast(skill.toast || `${skill.name} 命中神木 −${dmg}`);
       }
       break;
@@ -1098,7 +1100,11 @@ export function applyBossCast(game, event) {
     case "drain": {
       const dmg = skill.coreDmg || 1;
       if (game.buffs.coreShield > 0) game.buffs.coreShield -= 1;
-      else game.coreHp = Math.max(0, game.coreHp - dmg);
+      else {
+        game.coreHp = Math.max(0, game.coreHp - dmg);
+        game.coreHitFlash = 0.55;
+        game.ui?.onCoreHit?.(dmg);
+      }
       const heal = Math.round(enemy.maxHp * (skill.healPct || 0.05));
       enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
       toast(skill.toast || `${skill.name}：神木 −${dmg}，Boss +${heal} HP`);

@@ -89,6 +89,16 @@ export function drawScene(ctx, state) {
     drawCoreSlowAura(ctx, core, buffs.coreSlowRadius, state.now);
   }
   drawCore(ctx, core, state.coreHp, state.coreMax, state.now, buffs.coreShield || 0);
+  // 神木受傷紅閃
+  if ((state.coreHitFlash || 0) > 0) {
+    const a = Math.min(0.55, state.coreHitFlash * 1.1);
+    ctx.save();
+    ctx.fillStyle = `rgba(239, 68, 68, ${a})`;
+    ctx.beginPath();
+    ctx.arc(core.x, core.y, 48 + (0.55 - state.coreHitFlash) * 40, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
   drawSpecialists(ctx, specialists, state.selectedSpecialistId, state.now);
   drawEnemies(ctx, enemies, state.now);
   drawBossTelegraphs(ctx, enemies);
@@ -632,12 +642,27 @@ function drawSpecialists(ctx, specialists, selectedId, now) {
     ctx.textAlign = "center";
     ctx.fillText(label, s.x, s.y + 32);
 
-    // Boss 控制狀態
+    // Boss 控制狀態 + 剩餘秒數
     if (stunned || silenced) {
       ctx.globalAlpha = 1;
-      ctx.font = "800 12px 'PingFang TC', system-ui";
+      const stunLeft = Math.max(0, (s.stunnedUntil || 0) - now);
+      const silenceLeft = Math.max(0, (s.silencedUntil || 0) - now);
+      // 色框
+      ctx.strokeStyle = stunned ? "rgba(251, 191, 36, 0.95)" : "rgba(196, 181, 253, 0.95)";
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(Math.round(s.x - 26), Math.round(s.y - 40), 52, 52);
+      ctx.font = "800 11px 'PingFang TC', system-ui";
       ctx.fillStyle = stunned ? "#fbbf24" : "#c4b5fd";
-      ctx.fillText(stunned ? "暈眩" : "沉默", s.x, s.y - 36);
+      const labelCtrl = stunned
+        ? `暈眩 ${stunLeft.toFixed(1)}s`
+        : `沉默 ${silenceLeft.toFixed(1)}s`;
+      ctx.fillText(labelCtrl, s.x, s.y - 44);
+    } else if ((s.cursedUntil || 0) > now) {
+      ctx.globalAlpha = 1;
+      const curseLeft = (s.cursedUntil || 0) - now;
+      ctx.font = "800 10px 'PingFang TC', system-ui";
+      ctx.fillStyle = "#fca5a5";
+      ctx.fillText(`詛咒 ${curseLeft.toFixed(1)}s`, s.x, s.y - 40);
     }
 
     ctx.restore();

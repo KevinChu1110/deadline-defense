@@ -156,6 +156,7 @@ export class Game {
     this.mesosEarned = 0;
     this.waveMesoFromCrit = 0;
     this.leaks = 0;
+    this.coreHitFlash = 0;
     this.usedJobChange = false;
     this.hazardState = createHazardState(this.stage.map);
     this.waveIndex = -1;
@@ -259,7 +260,77 @@ export class Game {
       jobChangeOptions: this.selectedSpecialistId
         ? this.getJobChangeOptions(this.selectedSpecialistId)
         : [],
+      bossHud: this._getBossHud(),
+      controlHud: this._getControlHud(),
+      placingHint: this.placingType
+        ? `部署「${SPECIALISTS[this.placingType]?.nameZh || "職業"}」— 點地圖綠格／再點卡自動放 · Esc 取消`
+        : null,
+      coreHitFlash: this.coreHitFlash || 0,
     };
+  }
+
+  /** 場上 Boss 血條 + 下一招 */
+  _getBossHud() {
+    const out = [];
+    for (const e of this.enemies || []) {
+      if (!e.alive || !e.def?.boss) continue;
+      let next = null;
+      if (e.bossAtk?.casting) {
+        const sk = e.bossAtk.casting.skill;
+        next = {
+          name: sk?.name || "蓄力",
+          t: Math.max(0, e.bossAtk.casting.t),
+          maxT: e.bossAtk.casting.maxT || 1,
+          casting: true,
+          color: sk?.color || e.def.color,
+        };
+      } else if (e.bossAtk?.queue?.length) {
+        const ready = e.bossAtk.queue
+          .filter((s) => !(s.once && s._usedOnce))
+          .slice()
+          .sort((a, b) => a.cd - b.cd)[0];
+        if (ready) {
+          next = {
+            name: ready.name,
+            t: Math.max(0, ready.cd),
+            maxT: ready.interval || 10,
+            casting: false,
+            color: ready.color || e.def.color,
+          };
+        }
+      }
+      out.push({
+        id: e.id,
+        name: e.def.nameZh,
+        color: e.def.color,
+        hp: e.hp,
+        maxHp: e.maxHp,
+        ratio: e.hp / Math.max(1, e.maxHp),
+        next,
+        immune: (e.status?.bossImmuneUntil || 0) > this.now,
+        reflect: (e.status?.bossReflectUntil || 0) > this.now,
+      });
+    }
+    return out;
+  }
+
+  /** 被控職業摘要 */
+  _getControlHud() {
+    const list = [];
+    for (const s of this.specialists || []) {
+      const stunLeft = Math.max(0, (s.stunnedUntil || 0) - this.now);
+      const silenceLeft = Math.max(0, (s.silencedUntil || 0) - this.now);
+      const curseLeft = Math.max(0, (s.cursedUntil || 0) - this.now);
+      if (stunLeft <= 0 && silenceLeft <= 0 && curseLeft <= 0) continue;
+      list.push({
+        id: s.id,
+        name: s.def.nameZh,
+        stun: stunLeft,
+        silence: silenceLeft,
+        curse: curseLeft,
+      });
+    }
+    return list;
   }
 
   /** Deploy cost for current card level */
@@ -696,6 +767,9 @@ export class Game {
 
   update(dt, rawDt = dt) {
     this.fx = updateFx(this.fx, rawDt);
+    if (this.coreHitFlash > 0) {
+      this.coreHitFlash = Math.max(0, this.coreHitFlash - rawDt);
+    }
 
     // Freeze combat on result/reward — do NOT thrash full UI re-renders (breaks clicks).
     if (this.result) return;
@@ -794,11 +868,13 @@ export class Game {
           this.sfx.play("hit");
         } else {
           this.coreHp = Math.max(0, this.coreHp - dmg);
+          this.coreHitFlash = 0.55;
           this.sfx.play("leak");
           this.fx.push(
             ...createParticles(corePos.x, corePos.y, "#fb7185", 14, { speed: 100, life: 0.5 })
           );
           this.fx.push(createFloatText(corePos.x, corePos.y - 30, `-${dmg}`, "#fecdd3"));
+          this.ui?.onCoreHit?.(dmg);
         }
         e.leaked = false;
       }
@@ -1135,7 +1211,7 @@ export class Game {
   /** Deploy selected job on first free pad (mobile-friendly shortcut). */
   tryDeployAuto() {
     if (!this.placingType) {
-      this.ui?.toast?.("先拖職業卡到地圖，或點選後再部署");
+      this.ui?.toast?.("先點右側職業卡，再點綠格或再點一次卡自動放");
       return false;
     }
     const pads = this.stage?.map?.pads || [];
@@ -1168,15 +1244,16 @@ export class Game {
       const { x, y } = this.clientToWorld(evt.clientX, evt.clientY);
 
       if (this.placingType) {
-        let pad = this.findPadAt(x, y, { freeOnly: true, maxDist: 64 });
-        if (pad == null) pad = this.findPadAt(x, y, { freeOnly: false, maxDist: 48 });
+        // 手機／點選模式：加大吸附距離
+        let pad = this.findPadAt(x, y, { freeOnly: true, maxDist: 96 });
+        if (pad == null) pad = this.findPadAt(x, y, { freeOnly: false, maxDist: 72 });
         if (pad != null) {
           this.tryDeployAtPad(pad);
           return;
         }
-        this.sfx.play("error");
-        this.ui?.toast?.("請點綠色「+」格，或從右側拖曳職業卡到地圖");
-        this.ui?.onState?.(this.getPublicState());
+        // 點空地 = 取消部署（比一直 error 更友善）
+        this.setPlacing(null);
+        this.ui?.toast?.("已取消部署");
         return;
       }
 
