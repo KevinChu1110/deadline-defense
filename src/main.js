@@ -1182,28 +1182,49 @@ function closeSettingsOverlay() {
  * API 是直接讀 Bot 的 player-data.json，所以登入狀態下根本不需要玩家去
  * Discord 打 /同步 再複製貼上。
  */
-function openDiscordImport() {
-  if (els.discordImportText) els.discordImportText.value = "";
-  if (els.discordImportPreview) {
-    els.discordImportPreview.hidden = true;
-    els.discordImportPreview.innerHTML = "";
-  }
-
-  const logged = !!hubState.me;
+/** 依登入與否切換視窗的兩種樣貌 */
+function paintDiscordImport(logged) {
   if (els.discordImportLive) els.discordImportLive.hidden = !logged;
   if (els.discordImportManual) els.discordImportManual.hidden = logged;
   if (logged && els.discordImportLiveName) {
-    els.discordImportLiveName.textContent = hubState.me.username || "冒險者";
+    els.discordImportLiveName.textContent = hubState.me?.username || "冒險者";
   }
   // 未登入時「預覽/確認匯入」才有意義（要有貼上的內容）
   if (els.btnDiscordImportPreview) els.btnDiscordImportPreview.hidden = logged;
   if (els.btnDiscordImportConfirm) els.btnDiscordImportConfirm.hidden = logged;
   // 上次可能被展開過手動路徑，每次開窗都要收回去
   if (els.btnDiscordImportManual) els.btnDiscordImportManual.hidden = !logged;
+}
 
+async function openDiscordImport() {
+  if (els.discordImportText) els.discordImportText.value = "";
+  if (els.discordImportPreview) {
+    els.discordImportPreview.hidden = true;
+    els.discordImportPreview.innerHTML = "";
+  }
+
+  // 先用手上的狀態畫一次，避免開窗閃爍
+  paintDiscordImport(!!hubState.me);
   setOverlayOpen(els.discordImportOverlay, true);
   sfx.play("uiClick");
-  if (!logged) setTimeout(() => els.discordImportText?.focus(), 50);
+
+  // ⚠️ hubState.me 只有在開過「主城」之後才有值。玩家直接從存檔頁點匯入時
+  //    它一定是 null，會誤判成未登入 —— 所以這裡要自己補問一次 session。
+  if (!hubState.me) {
+    try {
+      const sess = await artaleHub.fetchSessionMe();
+      if (sess?.me) {
+        hubState.session = sess.session;
+        hubState.me = sess.me;
+        if (sess.session?.discordId) artaleHub.setLinkedDiscordId(sess.session.discordId);
+        paintDiscordImport(true);
+        return;
+      }
+    } catch {
+      // 沒 session 或 API 掛掉 → 留在手動貼碼
+    }
+  }
+  if (!hubState.me) setTimeout(() => els.discordImportText?.focus(), 50);
 }
 
 /** 手動展開貼短碼（已登入但想貼別人的碼 / API 掛掉時的退路） */
