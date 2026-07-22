@@ -709,9 +709,10 @@ body.is-dragging-job .specialist-card {
   pointer-events: none;
 }
 
-/* 說明／排行要蓋過全螢幕主選單 (z-index 80) */
+/* 說明／排行／設定要蓋過全螢幕主選單 (z-index 80) */
 #guide-overlay,
-#rank-overlay {
+#rank-overlay,
+#settings-overlay {
   position: fixed;
   z-index: 90;
 }
@@ -720,6 +721,43 @@ body.is-dragging-job .specialist-card {
 .overlay.is-open {
   display: grid;
   pointer-events: auto;
+  animation: overlay-fade-in 0.28s ease both;
+}
+
+.overlay.is-open > .overlay-card,
+.overlay.is-open > .maple-panel,
+.overlay.is-open > .home-shell,
+.overlay.is-open > .char-shell,
+.overlay.is-open > .dialog-card,
+.overlay.is-open > .guide-card,
+.overlay.is-open > .rank-card,
+.overlay.is-open > .settings-card,
+.overlay.is-open > .pause-card,
+.overlay.is-open > .result-card,
+.overlay.is-open > .reward-card {
+  animation: panel-pop-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes overlay-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes panel-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.92);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
 }
 
 .overlay-card {
@@ -763,19 +801,19 @@ body.is-dragging-job .specialist-card {
   justify-content: center;
 }
 
-/* ===== Title screen (clean main menu) ===== */
+/* ===== Title screen (showcase + flashy menu) ===== */
 .home-overlay {
   align-items: stretch;
   justify-content: stretch;
   padding: 0;
   background: #1a140c;
-  /* cover entire viewport — no game chrome peeking through */
   position: fixed !important;
   inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
   max-width: none !important;
   z-index: 80;
+  animation: overlay-fade-in 0.45s ease both;
 }
 
 .title-screen {
@@ -791,16 +829,17 @@ body.is-dragging-job .specialist-card {
   inset: 0;
   background:
     url("/maps/bg_home.jpg") center 35% / cover no-repeat;
-  transform: scale(1.04);
+  transform: scale(1.06);
   animation: title-bg-drift 28s ease-in-out infinite alternate;
+  filter: saturate(1.08) brightness(0.95);
 }
 
 @keyframes title-bg-drift {
   0% {
-    transform: scale(1.04) translate(0, 0);
+    transform: scale(1.06) translate(0, 0);
   }
   100% {
-    transform: scale(1.08) translate(-1.5%, -1%);
+    transform: scale(1.12) translate(-1.5%, -1%);
   }
 }
 
@@ -808,26 +847,331 @@ body.is-dragging-job .specialist-card {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 70% 60% at 50% 42%, rgba(20, 14, 8, 0.15) 0%, rgba(20, 14, 8, 0.55) 70%, rgba(12, 8, 4, 0.82) 100%),
-    linear-gradient(180deg, rgba(30, 22, 12, 0.35) 0%, transparent 30%, transparent 55%, rgba(20, 14, 8, 0.75) 100%);
+    radial-gradient(ellipse 42% 55% at 50% 45%, rgba(20, 14, 8, 0.08) 0%, transparent 55%),
+    linear-gradient(90deg, rgba(12, 8, 4, 0.55) 0%, transparent 28%, transparent 72%, rgba(12, 8, 4, 0.55) 100%),
+    linear-gradient(180deg, rgba(30, 22, 12, 0.4) 0%, transparent 28%, transparent 58%, rgba(12, 8, 4, 0.78) 100%);
   pointer-events: none;
+  z-index: 1;
+}
+
+/* 飄落楓葉 */
+.title-float-leaves {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.title-float-leaves span {
+  position: absolute;
+  top: -10%;
+  font-size: 1.1rem;
+  opacity: 0.55;
+  animation: leaf-fall linear infinite;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25));
+}
+
+.title-float-leaves span::before {
+  content: "🍁";
+}
+
+.title-float-leaves span:nth-child(1) {
+  left: 8%;
+  animation-duration: 11s;
+  animation-delay: 0s;
+  font-size: 1.3rem;
+}
+.title-float-leaves span:nth-child(2) {
+  left: 22%;
+  animation-duration: 14s;
+  animation-delay: -3s;
+}
+.title-float-leaves span:nth-child(3) {
+  left: 48%;
+  animation-duration: 12s;
+  animation-delay: -6s;
+  font-size: 0.9rem;
+}
+.title-float-leaves span:nth-child(4) {
+  left: 68%;
+  animation-duration: 15s;
+  animation-delay: -2s;
+}
+.title-float-leaves span:nth-child(5) {
+  left: 82%;
+  animation-duration: 13s;
+  animation-delay: -8s;
+  font-size: 1.4rem;
+}
+.title-float-leaves span:nth-child(6) {
+  left: 92%;
+  animation-duration: 16s;
+  animation-delay: -4s;
+}
+
+@keyframes leaf-fall {
+  0% {
+    transform: translateY(0) rotate(0deg) translateX(0);
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.65;
+  }
+  100% {
+    transform: translateY(110vh) rotate(360deg) translateX(40px);
+    opacity: 0.15;
+  }
+}
+
+/* 左右角色 / Boss 展示 */
+.title-showcase {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  width: min(28vw, 280px);
+  transform: translateY(-50%);
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.title-showcase-left {
+  left: max(2%, 12px);
+  animation: showcase-in-left 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+
+.title-showcase-right {
+  right: max(2%, 12px);
+  animation: showcase-in-right 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.22s both;
+}
+
+@keyframes showcase-in-left {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-48px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0) scale(1);
+  }
+}
+
+@keyframes showcase-in-right {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(48px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0) scale(1);
+  }
+}
+
+.showcase-label {
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: #fff4d8;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(20, 12, 8, 0.45);
+  border: 1px solid rgba(255, 220, 140, 0.35);
+}
+
+.showcase-stack {
+  position: relative;
+  width: 100%;
+  height: min(52vh, 380px);
+}
+
+.showcase-fig {
+  position: absolute;
+  width: 42%;
+  aspect-ratio: 1;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 3px solid rgba(255, 240, 200, 0.55);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(90, 58, 24, 0.5);
+  background: linear-gradient(160deg, #fff8e8, #d8c8a0);
+  animation: showcase-bob 3.2s ease-in-out infinite;
+}
+
+.showcase-fig img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+  image-rendering: auto;
+}
+
+.showcase-fig.boss {
+  background: linear-gradient(160deg, #2a1820, #1a1018);
+  border-color: rgba(255, 120, 100, 0.45);
+}
+
+.showcase-fig.boss img {
+  object-fit: contain;
+  object-position: center;
+  padding: 4px;
+  background: radial-gradient(circle at 50% 40%, rgba(80, 40, 40, 0.5), transparent 70%);
+}
+
+.showcase-stack.heroes .f1 {
+  left: 8%;
+  top: 8%;
+  width: 52%;
+  z-index: 3;
+  animation-delay: 0s;
+}
+.showcase-stack.heroes .f2 {
+  right: 4%;
+  top: 28%;
+  width: 44%;
+  z-index: 2;
+  animation-delay: -0.6s;
+}
+.showcase-stack.heroes .f3 {
+  left: 14%;
+  bottom: 12%;
+  width: 40%;
+  z-index: 4;
+  animation-delay: -1.2s;
+}
+.showcase-stack.heroes .f4 {
+  right: 10%;
+  bottom: 4%;
+  width: 38%;
+  z-index: 1;
+  animation-delay: -1.8s;
+  opacity: 0.95;
+}
+
+.showcase-stack.bosses .b1 {
+  right: 6%;
+  top: 4%;
+  width: 56%;
+  z-index: 4;
+  animation-delay: -0.3s;
+}
+.showcase-stack.bosses .b2 {
+  left: 2%;
+  top: 26%;
+  width: 48%;
+  z-index: 2;
+  animation-delay: -0.9s;
+}
+.showcase-stack.bosses .b3 {
+  right: 8%;
+  bottom: 18%;
+  width: 46%;
+  z-index: 3;
+  animation-delay: -1.5s;
+}
+.showcase-stack.bosses .b4 {
+  left: 12%;
+  bottom: 2%;
+  width: 40%;
+  z-index: 1;
+  animation-delay: -2.1s;
+}
+
+@keyframes showcase-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.showcase-glow {
+  position: absolute;
+  width: 70%;
+  height: 40%;
+  bottom: 8%;
+  border-radius: 50%;
+  filter: blur(28px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hero-glow {
+  background: rgba(100, 180, 80, 0.35);
+}
+
+.boss-glow {
+  background: rgba(200, 60, 40, 0.35);
 }
 
 .title-menu {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   text-align: center;
   padding: 28px 24px 32px;
-  width: min(92vw, 420px);
-  border-radius: 20px;
+  width: min(92vw, 400px);
+  border-radius: 22px;
   background:
-    linear-gradient(180deg, rgba(255, 248, 230, 0.88) 0%, rgba(244, 228, 188, 0.82) 55%, rgba(220, 200, 150, 0.78) 100%);
+    linear-gradient(180deg, rgba(255, 250, 236, 0.94) 0%, rgba(244, 228, 188, 0.9) 55%, rgba(220, 200, 150, 0.88) 100%);
   border: 3px solid #5a3a18;
   box-shadow:
-    0 0 0 2px rgba(196, 160, 90, 0.55),
-    0 18px 48px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(6px);
+    0 0 0 2px rgba(196, 160, 90, 0.65),
+    0 0 40px rgba(255, 200, 80, 0.15),
+    0 22px 50px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+  animation: menu-pop-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+}
+
+.title-menu-shine {
+  position: absolute;
+  top: -40%;
+  left: -30%;
+  width: 40%;
+  height: 180%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.35),
+    transparent
+  );
+  transform: rotate(18deg);
+  animation: menu-shine 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes menu-shine {
+  0%,
+  40% {
+    transform: translateX(0) rotate(18deg);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(420%) rotate(18deg);
+    opacity: 0;
+  }
+}
+
+@keyframes menu-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .home-hero-badge {
@@ -842,6 +1186,17 @@ body.is-dragging-job .specialist-card {
   padding: 4px 14px;
   margin-bottom: 10px;
   box-shadow: 0 2px 0 rgba(107, 68, 35, 0.2);
+  animation: badge-float 2.8s ease-in-out infinite;
+}
+
+@keyframes badge-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
 }
 
 .home-title {
@@ -856,6 +1211,22 @@ body.is-dragging-job .specialist-card {
 .home-title .leaf-deco {
   font-size: 0.85em;
   opacity: 0.9;
+  display: inline-block;
+  animation: leaf-wiggle 2.4s ease-in-out infinite;
+}
+
+.home-title .leaf-deco:last-child {
+  animation-delay: 0.4s;
+}
+
+@keyframes leaf-wiggle {
+  0%,
+  100% {
+    transform: rotate(-8deg);
+  }
+  50% {
+    transform: rotate(10deg);
+  }
 }
 
 .home-sub {
@@ -872,7 +1243,40 @@ body.is-dragging-job .specialist-card {
   width: 100%;
 }
 
+.title-menu-btns .title-btn {
+  animation: btn-stagger-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.title-menu-btns .title-btn:nth-child(1) {
+  animation-delay: 0.28s;
+}
+.title-menu-btns .title-btn:nth-child(2) {
+  animation-delay: 0.36s;
+}
+.title-menu-btns .title-btn:nth-child(3) {
+  animation-delay: 0.44s;
+}
+.title-menu-btns .title-btn:nth-child(4) {
+  animation-delay: 0.52s;
+}
+.title-menu-btns .title-btn:nth-child(5) {
+  animation-delay: 0.6s;
+}
+
+@keyframes btn-stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .title-btn {
+  position: relative;
+  overflow: hidden;
   width: 100%;
   min-height: 52px;
   font-size: 1.05rem;
@@ -904,10 +1308,40 @@ body.is-dragging-job .specialist-card {
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
   font-size: 1.12rem;
   min-height: 56px;
+  box-shadow:
+    0 4px 0 #1e3d1a,
+    0 0 20px rgba(80, 180, 60, 0.35);
+}
+
+.title-btn-primary .btn-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 60%
+  );
+  transform: translateX(-120%);
+  animation: primary-btn-shine 2.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes primary-btn-shine {
+  0%,
+  55% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
 }
 
 .title-btn-primary:hover {
   background: linear-gradient(180deg, #78b858, #468a3a);
+  box-shadow:
+    0 5px 0 #1e3d1a,
+    0 0 28px rgba(100, 220, 80, 0.45);
 }
 
 .title-btn-continue {
@@ -923,6 +1357,7 @@ body.is-dragging-job .specialist-card {
 .title-hint {
   margin: 16px 0 0;
   font-size: 0.78rem;
+  animation: btn-stagger-in 0.45s ease 0.7s both;
 }
 
 /* Campaign panel (after 開始遊戲) */
@@ -938,6 +1373,34 @@ body.is-dragging-job .specialist-card {
     radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255, 230, 160, 0.12), transparent 55%),
     rgba(18, 12, 8, 0.72);
   -webkit-overflow-scrolling: touch;
+  animation: overlay-fade-in 0.3s ease both;
+}
+
+.campaign-panel .campaign-shell {
+  animation: panel-pop-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* 窄螢幕隱藏左右展示，避免擠壓 */
+@media (max-width: 900px) {
+  .title-showcase {
+    display: none;
+  }
+
+  .title-screen-vignette {
+    background:
+      radial-gradient(ellipse 70% 60% at 50% 42%, rgba(20, 14, 8, 0.15) 0%, rgba(20, 14, 8, 0.55) 70%, rgba(12, 8, 4, 0.82) 100%),
+      linear-gradient(180deg, rgba(30, 22, 12, 0.35) 0%, transparent 30%, transparent 55%, rgba(20, 14, 8, 0.75) 100%);
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1100px) {
+  .title-showcase {
+    width: min(24vw, 220px);
+  }
+
+  .showcase-stack {
+    height: min(46vh, 320px);
+  }
 }
 
 .campaign-panel[hidden] {
@@ -1246,13 +1709,21 @@ body.is-dragging-job .specialist-card {
   position: fixed !important;
   z-index: 100 !important;
   background: rgba(18, 12, 8, 0.72) !important;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
+}
+
+.dialog-overlay.is-open {
+  animation: overlay-fade-in 0.25s ease both;
 }
 
 .dialog-card {
   width: min(92vw, 380px);
   padding: 20px 22px 18px;
   text-align: center;
+  box-shadow:
+    0 0 0 2px rgba(196, 160, 90, 0.5),
+    0 20px 48px rgba(0, 0, 0, 0.4),
+    0 0 32px rgba(255, 200, 100, 0.12);
 }
 
 .dialog-card h2 {

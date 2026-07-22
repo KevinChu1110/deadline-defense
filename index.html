@@ -124,7 +124,36 @@
             <div class="title-screen" id="title-screen">
               <div class="title-screen-bg" aria-hidden="true"></div>
               <div class="title-screen-vignette" aria-hidden="true"></div>
+              <div class="title-float-leaves" aria-hidden="true">
+                <span></span><span></span><span></span><span></span><span></span><span></span>
+              </div>
+
+              <!-- 左側：冒險家角色 -->
+              <aside class="title-showcase title-showcase-left" aria-hidden="true">
+                <div class="showcase-label">⚔ 冒險家</div>
+                <div class="showcase-stack heroes">
+                  <div class="showcase-fig f1"><img src="/portraits/hero.png" alt="" draggable="false" /></div>
+                  <div class="showcase-fig f2"><img src="/portraits/bowmaster.png" alt="" draggable="false" /></div>
+                  <div class="showcase-fig f3"><img src="/portraits/fire_mage.png" alt="" draggable="false" /></div>
+                  <div class="showcase-fig f4"><img src="/portraits/night_envoy.png" alt="" draggable="false" /></div>
+                </div>
+                <div class="showcase-glow hero-glow"></div>
+              </aside>
+
+              <!-- 右側：遠征 Boss -->
+              <aside class="title-showcase title-showcase-right" aria-hidden="true">
+                <div class="showcase-label">🐉 遠征 Boss</div>
+                <div class="showcase-stack bosses">
+                  <div class="showcase-fig boss b1"><img src="/mobs/pinkbean.gif" alt="" draggable="false" onerror="this.src='/mobs/pinkbean.png'" /></div>
+                  <div class="showcase-fig boss b2"><img src="/mobs/zakum.gif" alt="" draggable="false" onerror="this.src='/mobs/zakum.png'" /></div>
+                  <div class="showcase-fig boss b3"><img src="/mobs/horntail.gif" alt="" draggable="false" onerror="this.src='/mobs/horntail.png'" /></div>
+                  <div class="showcase-fig boss b4"><img src="/mobs/papulatus.gif" alt="" draggable="false" onerror="this.src='/mobs/papulatus.png'" /></div>
+                </div>
+                <div class="showcase-glow boss-glow"></div>
+              </aside>
+
               <div class="title-menu">
+                <div class="title-menu-shine" aria-hidden="true"></div>
                 <div class="home-hero-badge">✦ MAPLE DEFENSE ✦</div>
                 <h1 class="home-title title-main">
                   <span class="leaf-deco">🍁</span> 楓之谷防衛戰 <span class="leaf-deco">🍁</span>
@@ -132,6 +161,7 @@
                 <p class="home-sub title-sub">多地區戰役 · 冒險家轉職 · 遠征 Boss</p>
                 <nav class="title-menu-btns" aria-label="主選單">
                   <button type="button" id="btn-start-game" class="btn title-btn title-btn-primary">
+                    <span class="btn-shine" aria-hidden="true"></span>
                     ▶ 開始遊戲
                   </button>
                   <button type="button" id="btn-continue" class="btn title-btn title-btn-continue" hidden>
