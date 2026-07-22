@@ -67,19 +67,28 @@ const els = {
   lblPoints: document.querySelector("#lbl-points"),
   lblMesos: document.querySelector("#lbl-mesos"),
   lblTeam: document.querySelector("#lbl-team"),
+  fillCore: document.querySelector("#fill-core"),
+  fillWave: document.querySelector("#fill-wave"),
+  modeBadge: document.querySelector("#mode-badge"),
   mesosHud: document.querySelector("#stat-mesos"),
   team: document.querySelector("#stat-team"),
   leavesHud: document.querySelector("#stat-leaves"),
   briefing: document.querySelector("#briefing-text"),
+  briefingHeading: document.querySelector("#briefing-heading"),
   waveIntel: document.querySelector("#wave-intel"),
   specialistList: document.querySelector("#specialist-list"),
   selectedInfo: document.querySelector("#selected-info"),
+  selectedHeading: document.querySelector("#selected-heading"),
+  deployHeading: document.querySelector("#deploy-heading"),
   status: document.querySelector("#status-line"),
   stageTitle: document.querySelector("#stage-title"),
   footerStage: document.querySelector("#footer-stage"),
   buffList: document.querySelector("#buff-list"),
   loadoutHint: document.querySelector("#loadout-hint"),
   btnStart: document.querySelector("#btn-start"),
+  waveCta: document.querySelector("#wave-cta"),
+  btnWaveCta: document.querySelector("#btn-wave-cta"),
+  waveCtaHint: document.querySelector("#wave-cta-hint"),
   btnSpeed: document.querySelector("#btn-speed"),
   btnSell: document.querySelector("#btn-sell"),
   btnMute: document.querySelector("#btn-mute"),
@@ -88,10 +97,15 @@ const els = {
   btnPauseSide: document.querySelector("#btn-pause-side"),
   btnHelpSide: document.querySelector("#btn-help-side"),
   pauseOverlay: document.querySelector("#pause-overlay"),
+  pauseTitle: document.querySelector("#pause-title"),
+  pauseSub: document.querySelector("#pause-sub"),
   helpOverlay: document.querySelector("#help-overlay"),
   btnResume: document.querySelector("#btn-resume"),
   btnPauseHelp: document.querySelector("#btn-pause-help"),
   btnPauseStages: document.querySelector("#btn-pause-stages"),
+  btnPauseChars: document.querySelector("#btn-pause-chars"),
+  btnPauseHome: document.querySelector("#btn-pause-home"),
+  btnPauseMute: document.querySelector("#btn-pause-mute"),
   btnHelpClose: document.querySelector("#btn-help-close"),
   btnStages: document.querySelector("#btn-stages"),
   btnChars: document.querySelector("#btn-chars"),
@@ -101,10 +115,19 @@ const els = {
   overlayKicker: document.querySelector("#overlay-kicker"),
   overlayTitle: document.querySelector("#overlay-title"),
   overlayCopy: document.querySelector("#overlay-copy"),
+  resultBanner: document.querySelector("#result-banner"),
+  resultStars: document.querySelector("#result-stars"),
+  resultStats: document.querySelector("#result-stats"),
   btnRestart: document.querySelector("#btn-restart"),
   btnNextStage: document.querySelector("#btn-next-stage"),
   btnToStages: document.querySelector("#btn-to-stages"),
   btnRepickChars: document.querySelector("#btn-repick-chars"),
+  coachOverlay: document.querySelector("#coach-overlay"),
+  coachKicker: document.querySelector("#coach-kicker"),
+  coachTitle: document.querySelector("#coach-title"),
+  coachBody: document.querySelector("#coach-body"),
+  btnCoachNext: document.querySelector("#btn-coach-next"),
+  btnCoachSkip: document.querySelector("#btn-coach-skip"),
   stageOverlay: document.querySelector("#stage-overlay"),
   stageList: document.querySelector("#stage-list"),
   arenaList: document.querySelector("#arena-list"),
@@ -305,6 +328,7 @@ function confirmDialog(title, message, { okText = "確定", danger = false } = {
 }
 
 const HELP_SEEN_KEY = "deadline-defense-help-seen-v1";
+const COACH_SEEN_KEY = "deadline-defense-coach-v1";
 
 function hasSeenHelp() {
   try {
@@ -319,6 +343,202 @@ function markHelpSeen() {
     localStorage.setItem(HELP_SEEN_KEY, "1");
   } catch {
     /* ignore */
+  }
+}
+
+function hasSeenCoach() {
+  try {
+    return localStorage.getItem(COACH_SEEN_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markCoachSeen() {
+  try {
+    localStorage.setItem(COACH_SEEN_KEY, "1");
+  } catch {
+    /* ignore */
+  }
+}
+
+/** @type {null | { steps: object[], index: number }} */
+let coachState = null;
+
+function getCoachSteps(bcMode) {
+  if (bcMode) {
+    return [
+      {
+        title: "點卡出兵",
+        body: "遠征是推線模式：點右側職業卡就會從左方基地出兵，單位自動往右走。",
+        highlight: "deploy",
+      },
+      {
+        title: "開始遠征",
+        body: "出幾隻兵後，點畫面中央「開始遠征」。錢包會自動回復，可繼續出兵。",
+        highlight: "wave",
+      },
+      {
+        title: "守住我方基地",
+        body: "敵人從右邊攻來。漏怪會扣我方基地血量——看上方紅色血條。",
+        highlight: "core",
+      },
+      {
+        title: "推倒敵方基地",
+        body: "打完 Boss 波後進入總攻，拆掉敵方基地即勝利。暫停選單可隨時離開。",
+        highlight: null,
+      },
+    ];
+  }
+  return [
+    {
+      title: "部署職業",
+      body: "點右側職業卡，再點地圖上的綠色「+」格放置。也可以拖曳到綠格鬆手。",
+      highlight: "deploy",
+    },
+    {
+      title: "開始波次",
+      body: "佈陣完成後，點畫面中央大按鈕「開始防禦」。怪物會沿路線攻向神木。",
+      highlight: "wave",
+    },
+    {
+      title: "守護神木",
+      body: "上方血條是神木／基地。漏怪會扣血，歸零就失敗。Boss 出現時看畫面上方技能提示。",
+      highlight: "core",
+    },
+    {
+      title: "轉職與勝利",
+      body: "打怪賺楓幣，點場上角色可轉職。清完所有波次即過關。暫停裡可回主選單。",
+      highlight: null,
+    },
+  ];
+}
+
+function clearCoachHighlight() {
+  document.body.classList.remove(
+    "coach-highlight-deploy",
+    "coach-highlight-wave",
+    "coach-highlight-core",
+    "coach-highlight-start"
+  );
+}
+
+function renderCoachStep() {
+  if (!coachState || !els.coachOverlay) return;
+  const step = coachState.steps[coachState.index];
+  if (!step) {
+    closeCoach({ mark: true });
+    return;
+  }
+  const n = coachState.index + 1;
+  const total = coachState.steps.length;
+  if (els.coachKicker) els.coachKicker.textContent = `新手引導 · ${n}／${total}`;
+  if (els.coachTitle) els.coachTitle.textContent = step.title;
+  if (els.coachBody) els.coachBody.textContent = step.body;
+  if (els.btnCoachNext) {
+    els.btnCoachNext.textContent = n >= total ? "開始遊玩" : "下一步";
+  }
+  clearCoachHighlight();
+  if (step.highlight === "deploy") document.body.classList.add("coach-highlight-deploy");
+  if (step.highlight === "wave") document.body.classList.add("coach-highlight-wave");
+  if (step.highlight === "core") document.body.classList.add("coach-highlight-core");
+}
+
+function openCoachIfNeeded(bcMode) {
+  if (hasSeenCoach()) return;
+  if (screen !== "play") return;
+  coachState = { steps: getCoachSteps(bcMode), index: 0 };
+  if (els.coachOverlay) {
+    els.coachOverlay.hidden = false;
+  }
+  renderCoachStep();
+  // 輕暫停，避免教學中波次跑掉
+  if (game && !game.waveActive && !game.result) {
+    game.setPaused(true);
+  }
+}
+
+function closeCoach({ mark = true } = {}) {
+  if (mark) markCoachSeen();
+  coachState = null;
+  clearCoachHighlight();
+  if (els.coachOverlay) els.coachOverlay.hidden = true;
+  if (game && game.paused && screen === "play" && !els.pauseOverlay?.classList.contains("is-open")) {
+    game.setPaused(false);
+  }
+}
+
+function coachNext() {
+  if (!coachState) return;
+  if (coachState.index >= coachState.steps.length - 1) {
+    closeCoach({ mark: true });
+    sfx.play("uiOk");
+    showToast("祝你好運，冒險者！");
+    return;
+  }
+  coachState.index += 1;
+  renderCoachStep();
+  sfx.play("uiClick");
+}
+
+function applyModeSkin(state) {
+  const bc = !!state?.bcMode;
+  document.body.classList.toggle("mode-bc", bc && screen === "play");
+  document.body.classList.toggle("mode-td", !bc && screen === "play");
+  if (els.modeBadge) {
+    els.modeBadge.textContent = bc ? "EXPEDITION · 遠征" : "CAMPAIGN · 戰役";
+  }
+  if (els.deployHeading) {
+    els.deployHeading.textContent = bc ? "出兵卡組" : "部署單位";
+  }
+  if (els.selectedHeading) {
+    els.selectedHeading.textContent = bc ? "遠征提示" : "目前選取";
+  }
+  if (els.briefingHeading) {
+    els.briefingHeading.textContent = bc ? "遠征目標" : "任務說明";
+  }
+  // 賣出僅塔防
+  if (els.btnSell) {
+    els.btnSell.hidden = bc;
+  }
+}
+
+function updateWaveCta(state) {
+  if (!els.waveCta) return;
+  // 引導中即使暫停也顯示「開始」鈕，方便對照說明
+  const pausedOk = !state.paused || !!coachState;
+  const show =
+    screen === "play" &&
+    state &&
+    !state.result &&
+    !state.pausedForReward &&
+    pausedOk &&
+    (state.canStartWave || (!!coachState && !state.waveActive));
+  els.waveCta.hidden = !show;
+  if (!show) return;
+  const bc = !!state.bcMode;
+  if (els.btnWaveCta) {
+    els.btnWaveCta.textContent = bc ? "▶ 開始遠征" : "▶ 開始防禦";
+  }
+  if (els.waveCtaHint) {
+    const next = (state.waveIndex ?? -1) + 1;
+    if (next <= 0) {
+      els.waveCtaHint.textContent = bc ? "先出兵，再開始第一波" : "先部署，再開始第一波";
+    } else {
+      els.waveCtaHint.textContent = `下一波 ${next + 1}／${state.waveTotal}`;
+    }
+  }
+}
+
+function updateSlimHud(state) {
+  if (els.fillCore && state.coreMax > 0) {
+    const pct = Math.max(0, Math.min(100, (state.coreHp / state.coreMax) * 100));
+    els.fillCore.style.width = `${pct}%`;
+  }
+  if (els.fillWave && state.waveTotal > 0) {
+    const done = Math.max(0, state.waveIndex + 1);
+    const pct = state.waveIndex < 0 ? 0 : Math.min(100, (done / state.waveTotal) * 100);
+    els.fillWave.style.width = `${pct}%`;
   }
 }
 
@@ -344,6 +564,16 @@ function closeHelpOverlay() {
 function openPauseOverlay() {
   if (!game || screen !== "play" || game.result) return;
   game.setPaused(true);
+  const bc = !!game.bcMode;
+  if (els.pauseTitle) els.pauseTitle.textContent = "戰鬥暫停中";
+  if (els.pauseSub) {
+    els.pauseSub.textContent = bc
+      ? "遠征時間已凍結 · 可調整出兵或離開"
+      : "波次時間已凍結 · 可看說明或離開";
+  }
+  if (els.btnPauseMute) {
+    els.btnPauseMute.textContent = sfx.muted ? "🔇 開音樂" : "🔊 音樂";
+  }
   setOverlayOpen(els.pauseOverlay, true);
 }
 
@@ -370,59 +600,117 @@ function showResult(kind) {
     screen = "result";
     flushActiveSlot();
     hideAllOverlays();
+    closeCoach({ mark: false });
+    document.body.classList.remove("mode-bc", "mode-td");
 
-    // Write copy first so UI never shows empty/default if something throws later
-    if (kind === "win") {
-      if (els.overlayKicker) els.overlayKicker.textContent = "任務完成";
-      if (els.overlayTitle) els.overlayTitle.textContent = "勝利";
-      const stage = game?.stage;
-      const stageName = stage?.name || "本關";
-      const nextIndex = (stage?.index ?? 0) + 1;
-      const refreshed = loadProgress();
-      const canNext = nextIndex < STAGES.length && isStageUnlocked(nextIndex, refreshed);
-      const starInfo = game?.lastStars;
-      const starLine = starInfo
-        ? `評價 ${"★".repeat(starInfo.count)}${"☆".repeat(3 - starInfo.count)}（${starInfo.stars
-            .filter((s) => s.ok)
-            .map((s) => s.label)
-            .join(" · ")}）`
-        : "";
-      const scoreLine = game?.lastScore ? `分數 ${game.lastScore}` : "";
-      const isArena = !!game?.stage?.arena;
-      if (els.overlayCopy) {
-        if (isArena) {
-          els.overlayCopy.textContent = `${stageName} 勝利！${scoreLine} 已寫入競賽排行。`;
-        } else {
-          els.overlayCopy.textContent =
-            nextIndex < STAGES.length
-              ? `${stageName} 守護成功！${starLine} ${scoreLine} ${canNext ? "下一關已解鎖。" : ""}`
-              : `${stageName} 完成！${starLine} ${scoreLine} 你已通關全部關卡。`;
-        }
+    const isWin = kind === "win";
+    const stage = game?.stage;
+    const stageName = stage?.name || "本關";
+    const isArena = !!stage?.arena || !!game?.bcMode;
+    const nextIndex = (stage?.index ?? 0) + 1;
+    const refreshed = loadProgress();
+    const canNext = nextIndex < STAGES.length && isStageUnlocked(nextIndex, refreshed);
+    const starInfo = game?.lastStars;
+    const score = game?.lastScore || 0;
+
+    if (els.resultBanner) {
+      els.resultBanner.dataset.kind = isWin ? "win" : "lose";
+    }
+    if (els.overlayKicker) {
+      els.overlayKicker.textContent = isWin
+        ? isArena
+          ? "遠征勝利"
+          : "任務完成"
+        : isArena
+          ? "遠征失敗"
+          : "任務失敗";
+    }
+    if (els.overlayTitle) {
+      els.overlayTitle.textContent = isWin ? "勝利！" : "再試一次";
+    }
+
+    // stars
+    if (els.resultStars) {
+      if (isWin && starInfo && !isArena) {
+        els.resultStars.hidden = false;
+        const n = Math.min(3, Math.max(0, starInfo.count || 0));
+        els.resultStars.innerHTML =
+          `<span class="star-on">★</span>`.repeat(n) +
+          `<span class="star-off">★</span>`.repeat(3 - n);
+      } else if (isWin && isArena) {
+        els.resultStars.hidden = false;
+        els.resultStars.innerHTML = `<span class="star-on">🏆</span>`;
+      } else {
+        els.resultStars.hidden = true;
+        els.resultStars.innerHTML = "";
       }
-      if (els.btnNextStage) {
+    }
+
+    // stats chips
+    if (els.resultStats) {
+      const chips = [];
+      if (isWin && score) chips.push({ k: "分數", v: String(score) });
+      if (isWin && starInfo && !isArena) chips.push({ k: "評價", v: `${starInfo.count} 星` });
+      chips.push({ k: isArena ? "我方基地" : "神木", v: `${game?.coreHp ?? 0}` });
+      chips.push({ k: "漏怪", v: String(game?.leaks ?? 0) });
+      if (isWin) chips.push({ k: "楓葉", v: "已入帳" });
+      els.resultStats.hidden = chips.length === 0;
+      els.resultStats.innerHTML = chips
+        .map(
+          (c) =>
+            `<div class="result-stat"><small>${escapeHtml(c.k)}</small><strong>${escapeHtml(c.v)}</strong></div>`
+        )
+        .join("");
+    }
+
+    if (els.overlayCopy) {
+      if (isWin) {
+        if (isArena) {
+          els.overlayCopy.textContent = `${stageName} 通關！分數已寫入本機排行榜。`;
+        } else if (nextIndex < STAGES.length) {
+          els.overlayCopy.textContent = canNext
+            ? `${stageName} 守護成功！下一關已解鎖。`
+            : `${stageName} 守護成功！`;
+        } else {
+          els.overlayCopy.textContent = `${stageName} 完成！你已走完全部地區戰役。`;
+        }
+      } else {
+        els.overlayCopy.textContent = isArena
+          ? "我方基地陷落…調整出兵節奏與職業再挑戰！"
+          : "神木被攻陷…換個職業或佈陣再試一次！";
+      }
+    }
+
+    // primary CTA ordering
+    if (els.btnRestart) {
+      els.btnRestart.textContent = isWin ? "再打一次" : "重新挑戰";
+      els.btnRestart.classList.toggle("primary", !isWin);
+      els.btnRestart.classList.toggle("maple-primary", !isWin);
+    }
+    if (els.btnNextStage) {
+      if (isWin) {
         if (isArena) {
           els.btnNextStage.hidden = false;
           els.btnNextStage.disabled = false;
-          els.btnNextStage.textContent = "再挑戰今日 Boss";
+          els.btnNextStage.textContent = "再戰遠征 Boss";
+          els.btnNextStage.classList.add("primary", "maple-primary");
         } else {
           els.btnNextStage.hidden = nextIndex >= STAGES.length;
           els.btnNextStage.disabled = !canNext;
           els.btnNextStage.textContent = canNext
-            ? `下一關：${getStageByIndex(nextIndex).name}`
+            ? `下一關：${getStageByIndex(nextIndex)?.name || ""}`
             : "下一關（未解鎖）";
+          els.btnNextStage.classList.add("primary", "maple-primary");
         }
+      } else {
+        els.btnNextStage.hidden = true;
       }
-    } else {
-      if (els.overlayKicker) els.overlayKicker.textContent = "任務失敗";
-      if (els.overlayTitle) els.overlayTitle.textContent = "失敗";
-      if (els.overlayCopy) els.overlayCopy.textContent = "神木被攻陷…換個職業或佈陣再試一次！";
-      if (els.btnNextStage) els.btnNextStage.hidden = true;
     }
+    if (els.btnToStages) els.btnToStages.textContent = "回主選單";
 
     setOverlayOpen(els.overlay, true);
   } catch (err) {
     console.error("[showResult]", err);
-    // Last resort: still show dialog
     setOverlayOpen(els.overlay, true);
   }
 }
@@ -891,7 +1179,8 @@ function setCampaignPanelOpen(open) {
 function openTitleScreen() {
   screen = "stage";
   closeCharacterChrome();
-  document.body.classList.remove("in-play");
+  closeCoach({ mark: false });
+  document.body.classList.remove("in-play", "mode-bc", "mode-td");
   document.body.classList.add("home-open");
   hideAllOverlays();
   flushActiveSlot();
@@ -1453,17 +1742,22 @@ function confirmLoadoutAndStart() {
   document.body.classList.add("in-play");
   document.body.classList.remove("home-open");
   refreshWaveIntel();
-  renderSpecialistCards(game.getPublicState());
-  ui.onState(game.getPublicState());
+  const st = game.getPublicState();
+  applyModeSkin(st);
+  renderSpecialistCards(st);
+  ui.onState(st);
   const names = draftLoadout.map((id) => SPECIALISTS[id].nameZh).join("、");
-  showToast(`出戰：${names} — 打怪賺楓幣，點角色付幣轉職`);
+  const bc = !!st.bcMode;
+  showToast(
+    bc
+      ? `遠征：${names} — 點卡出兵，推倒敵方基地`
+      : `出戰：${names} — 部署後開始防禦`
+  );
   sfx.play("waveStart");
-  // 首次進戰鬥：自動開說明
-  if (!hasSeenHelp()) {
-    setTimeout(() => {
-      if (screen === "play" && game && !game.result) openHelpOverlay();
-    }, 400);
-  }
+  // 首次：互動引導（取代硬塞說明浮層）
+  setTimeout(() => {
+    if (screen === "play" && game && !game.result) openCoachIfNeeded(bc);
+  }, 350);
 }
 
 function showRewards(items) {
@@ -1635,7 +1929,13 @@ const ui = {
       return;
     }
 
-    els.core.textContent = `${state.coreHp}`;
+    applyModeSkin(state);
+    updateSlimHud(state);
+    updateWaveCta(state);
+
+    els.core.textContent = state.bcMode
+      ? `${state.coreHp}/${state.coreMax || state.coreHp}`
+      : `${state.coreHp}`;
     els.wave.textContent =
       state.waveIndex < 0 ? `0 / ${state.waveTotal}` : `${state.waveIndex + 1} / ${state.waveTotal}`;
     els.points.textContent = state.bcMode
@@ -1650,6 +1950,10 @@ const ui = {
       els.mesosHud.textContent = state.bcMode
         ? `${Math.ceil(state.enemyCastleHp || 0)}`
         : String(state.mesos ?? 0);
+    }
+    // 遠征：敵方基地也畫一條進度（用 wave fill 旁的 mesos chip 即可）
+    if (state.bcMode && els.fillCore && state.coreMax > 0) {
+      /* already via updateSlimHud */
     }
     if (els.leavesHud) {
       els.leavesHud.textContent = String(state.leaves ?? loadCardProgress().leaves);
@@ -2021,7 +2325,15 @@ function withAudio(fn) {
   fn();
 }
 
-els.btnStart?.addEventListener("click", () => withAudio(() => game.startNextWave()));
+function startWaveFromUi() {
+  if (!game) return;
+  if (coachState) closeCoach({ mark: true });
+  game.startNextWave();
+  updateWaveCta(game.getPublicState());
+}
+
+els.btnStart?.addEventListener("click", () => withAudio(startWaveFromUi));
+els.btnWaveCta?.addEventListener("click", () => withAudio(startWaveFromUi));
 els.btnSpeed?.addEventListener("click", () => withAudio(() => game.toggleSpeed()));
 els.btnSell?.addEventListener("click", () => withAudio(() => game.sellSelected()));
 els.btnMute?.addEventListener("click", () => withAudio(() => game.toggleMute()));
@@ -2058,7 +2370,51 @@ els.btnPauseStages?.addEventListener("click", () =>
     }
     clearRunState();
     closePauseOverlay({ resume: false });
+    closeCoach({ mark: false });
+    openCampaignPanel(1);
+  })
+);
+els.btnPauseChars?.addEventListener("click", () =>
+  withAudio(() => {
+    sfx.play("uiClick");
+    if (game) {
+      game.setPaused(false);
+      game.result = null;
+    }
+    clearRunState();
+    closePauseOverlay({ resume: false });
+    closeCoach({ mark: false });
+    pendingStageId = game?.stageId || STAGES[0]?.id || "s01-victoria";
+    openCharacterSelect();
+  })
+);
+els.btnPauseHome?.addEventListener("click", () =>
+  withAudio(() => {
+    sfx.play("uiClick");
+    if (game) {
+      game.setPaused(false);
+      game.result = null;
+    }
+    clearRunState();
+    closePauseOverlay({ resume: false });
+    closeCoach({ mark: false });
     openTitleScreen();
+  })
+);
+els.btnPauseMute?.addEventListener("click", () =>
+  withAudio(() => {
+    game?.toggleMute?.() || sfx.toggleMute();
+    if (els.btnPauseMute) {
+      els.btnPauseMute.textContent = sfx.muted ? "🔇 開音樂" : "🔊 音樂";
+    }
+    updateMuteButton(sfx.muted);
+  })
+);
+els.btnCoachNext?.addEventListener("click", () => withAudio(coachNext));
+els.btnCoachSkip?.addEventListener("click", () =>
+  withAudio(() => {
+    closeCoach({ mark: true });
+    sfx.play("uiClick");
   })
 );
 els.btnHelpClose?.addEventListener("click", () =>
@@ -2344,7 +2700,13 @@ window.addEventListener("keydown", (e) => {
   // Enter = 開始波次
   if (e.key === "Enter") {
     e.preventDefault();
-    if (!game.paused && !game.pausedForReward) game.startNextWave();
+    if (!game.paused && !game.pausedForReward) startWaveFromUi();
+    return;
+  }
+  // 引導中 Esc 略過
+  if (coachState && e.key === "Escape") {
+    e.preventDefault();
+    closeCoach({ mark: true });
     return;
   }
   if (game.paused || game.pausedForReward) {
@@ -2384,7 +2746,7 @@ const unlockOnce = () => {
     } else {
       sfx.startBgm("menu");
     }
-    showToast("♪ 背景音樂已開啟");
+    hideAudioBanner();
   }
   window.removeEventListener("pointerdown", unlockOnce);
   window.removeEventListener("keydown", unlockOnce);
@@ -2392,15 +2754,46 @@ const unlockOnce = () => {
 window.addEventListener("pointerdown", unlockOnce, { capture: true });
 window.addEventListener("keydown", unlockOnce, { capture: true });
 
+function ensureAudioBanner() {
+  let el = document.querySelector("#audio-banner");
+  if (el) return el;
+  el = document.createElement("button");
+  el.type = "button";
+  el.id = "audio-banner";
+  el.className = "audio-banner";
+  el.hidden = true;
+  el.textContent = "♪ 點一下開啟背景音樂";
+  el.addEventListener("click", () => {
+    void sfx.unlock();
+    void sfx.preload();
+    if (!sfx.muted) sfx.startBgm(screen === "play" && game?.waveActive ? "battle" : "menu");
+    hideAudioBanner();
+    updateMuteButton(sfx.muted);
+  });
+  document.body.appendChild(el);
+  return el;
+}
+
+function hideAudioBanner() {
+  const el = document.querySelector("#audio-banner");
+  if (el) el.hidden = true;
+}
+
+function showAudioBanner(msg) {
+  const el = ensureAudioBanner();
+  el.textContent = msg;
+  el.hidden = false;
+}
+
 // Preload LPC chibi portraits early
 void preloadLpcPortraits(SPECIALIST_ORDER);
 
 // If previously muted in localStorage, show it clearly
 updateMuteButton(sfx.muted);
 if (sfx.muted) {
-  setTimeout(() => showToast("目前為靜音，點 🔊 開啟音樂"), 600);
+  setTimeout(() => showAudioBanner("🔇 目前靜音 — 點此開啟音樂"), 500);
 } else {
-  setTimeout(() => showToast("點一下畫面開啟背景音樂 ♪"), 500);
+  setTimeout(() => showAudioBanner("♪ 點一下開啟背景音樂"), 400);
 }
 refreshWaveIntel();
 renderSpecialistCards(game.getPublicState());

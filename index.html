@@ -14,52 +14,63 @@
   </head>
   <body>
     <div id="app" class="maple-app">
-      <header class="top-bar maple-frame">
-        <div class="brand">
+      <header class="top-bar maple-frame combat-topbar">
+        <div class="brand brand-compact">
           <span class="maple-leaf" aria-hidden="true">🍁</span>
           <div>
-            <small>MAPLE DEFENSE</small>
+            <small id="mode-badge">MAPLE DEFENSE</small>
             <strong id="stage-title">楓之谷防衛戰</strong>
           </div>
         </div>
-        <div class="hud-stats" id="hud-stats">
-          <div class="stat">
-            <small id="lbl-core">神木</small>
-            <strong id="stat-core">20</strong>
+        <div class="hud-slim" id="hud-stats">
+          <div class="hud-meter" id="meter-core">
+            <div class="hud-meter-label">
+              <span id="lbl-core">神木</span>
+              <strong id="stat-core">20</strong>
+            </div>
+            <div class="hud-meter-track" aria-hidden="true">
+              <div class="hud-meter-fill core-fill" id="fill-core" style="width:100%"></div>
+            </div>
           </div>
-          <div class="stat">
-            <small>波次</small>
-            <strong id="stat-wave">0 / 0</strong>
+          <div class="hud-meter" id="meter-wave">
+            <div class="hud-meter-label">
+              <span>波次</span>
+              <strong id="stat-wave">0 / 0</strong>
+            </div>
+            <div class="hud-meter-track" aria-hidden="true">
+              <div class="hud-meter-fill wave-fill" id="fill-wave" style="width:0%"></div>
+            </div>
           </div>
-          <div class="stat">
+          <div class="hud-chip" id="chip-points">
             <small id="lbl-points">點數</small>
             <strong id="stat-points">0</strong>
           </div>
-          <div class="stat">
+          <div class="hud-chip hide-xs" id="chip-mesos">
             <small id="lbl-mesos">楓幣</small>
             <strong id="stat-mesos">0</strong>
           </div>
-          <div class="stat hide-sm">
+          <div class="hud-chip hide-sm" id="chip-team">
             <small id="lbl-team">場上</small>
             <strong id="stat-team">0 / 0</strong>
           </div>
-          <div class="stat hide-sm">
-            <small>楓葉</small>
-            <strong id="stat-leaves">0</strong>
-          </div>
-          <button type="button" id="btn-help" class="btn maple-btn" title="操作說明">？</button>
-          <button type="button" id="btn-pause" class="btn maple-btn" title="暫停 (Space)" hidden>⏸</button>
-          <button type="button" id="btn-chars" class="btn maple-btn" title="重選職業">職業</button>
-          <button type="button" id="btn-stages" class="btn maple-btn" title="選擇關卡">關卡</button>
-          <button type="button" id="btn-rank" class="btn maple-btn" title="排行榜">排行</button>
+          <!-- legacy ids for JS -->
+          <strong id="stat-leaves" hidden>0</strong>
+        </div>
+        <div class="hud-actions">
           <button type="button" id="btn-mute" class="btn maple-btn" aria-pressed="false" title="音效">🔊</button>
+          <button type="button" id="btn-pause" class="btn maple-btn" title="暫停 (Space)" hidden>⏸</button>
+          <!-- kept for API / pause menu wiring -->
+          <button type="button" id="btn-help" class="btn maple-btn" hidden title="操作說明">？</button>
+          <button type="button" id="btn-chars" class="btn maple-btn" hidden title="重選職業">職業</button>
+          <button type="button" id="btn-stages" class="btn maple-btn" hidden title="選擇關卡">關卡</button>
+          <button type="button" id="btn-rank" class="btn maple-btn" hidden title="排行榜">排行</button>
         </div>
       </header>
 
       <main class="stage">
-        <aside class="panel panel-left hide-mobile-play">
+        <aside class="panel panel-left hide-mobile-play play-secondary-panel">
           <section class="panel-block maple-frame">
-            <h2>任務說明</h2>
+            <h2 id="briefing-heading">任務說明</h2>
             <p id="briefing-text">選擇職業出戰，守護神木！</p>
             <ul id="wave-intel" class="wave-intel"></ul>
           </section>
@@ -67,19 +78,17 @@
             <h2>增益 / 道具</h2>
             <div id="buff-list" class="buff-list muted">尚未獲得道具</div>
           </section>
-          <section class="panel-block maple-frame hide-sm">
-            <h2>操作</h2>
-            <ol class="controls">
-              <li>點右側職業（或拖到綠格）部署</li>
-              <li>再點同一張可自動放到空格</li>
-              <li>開始波次 · 打怪賺楓幣轉職</li>
-              <li>Boss 蓄力時看上方血條下一招</li>
-            </ol>
-          </section>
         </aside>
 
         <section class="canvas-wrap maple-frame">
           <canvas id="game" width="960" height="540" aria-label="戰場"></canvas>
+          <!-- 中央主 CTA：開始波次 -->
+          <div id="wave-cta" class="wave-cta" hidden>
+            <button type="button" id="btn-wave-cta" class="btn primary maple-primary wave-cta-btn">
+              ▶ 開始波次
+            </button>
+            <p class="wave-cta-hint muted" id="wave-cta-hint">部署完成後開始</p>
+          </div>
           <!-- 戰鬥 HUD：Boss 血條／蓄力／部署提示 -->
           <div id="combat-hud" class="combat-hud" hidden>
             <div id="boss-hud-list" class="boss-hud-list"></div>
@@ -88,6 +97,19 @@
           </div>
           <div id="core-hit-flash" class="core-hit-flash" hidden aria-hidden="true"></div>
           <div id="toast" class="toast" hidden></div>
+
+          <!-- 新手引導 -->
+          <div id="coach-overlay" class="coach-overlay" hidden>
+            <div class="coach-card maple-panel">
+              <p class="overlay-kicker" id="coach-kicker">新手引導 · 1／4</p>
+              <h2 id="coach-title">部署職業</h2>
+              <p class="muted" id="coach-body">點右側職業卡，再點地圖綠格放置。</p>
+              <div class="overlay-actions">
+                <button type="button" id="btn-coach-skip" class="btn">略過</button>
+                <button type="button" id="btn-coach-next" class="btn primary maple-primary">下一步</button>
+              </div>
+            </div>
+          </div>
 
           <!-- Title screen + campaign select -->
           <div id="stage-overlay" class="overlay is-open home-overlay">
@@ -321,31 +343,42 @@
             </div>
           </div>
 
-          <!-- Win / Lose -->
-          <div id="overlay" class="overlay" hidden>
-            <div class="overlay-card maple-panel">
-              <p class="overlay-kicker" id="overlay-kicker">結果</p>
-              <h2 id="overlay-title">勝利</h2>
-              <p id="overlay-copy">神木平安無事！</p>
-              <div class="overlay-actions">
+          <!-- Win / Lose — product result card -->
+          <div id="overlay" class="overlay result-overlay" hidden>
+            <div class="overlay-card result-card maple-panel maple-ornament">
+              <div class="result-banner" id="result-banner" data-kind="win">
+                <p class="overlay-kicker" id="overlay-kicker">任務完成</p>
+                <h2 id="overlay-title">勝利</h2>
+              </div>
+              <div class="result-stars" id="result-stars" hidden aria-label="星等評價"></div>
+              <p id="overlay-copy" class="result-copy">神木平安無事！</p>
+              <div class="result-stats" id="result-stats" hidden></div>
+              <div class="overlay-actions result-actions">
+                <button type="button" id="btn-next-stage" class="btn primary maple-primary" hidden>下一關</button>
                 <button type="button" id="btn-restart" class="btn primary maple-primary">再打一次</button>
-                <button type="button" id="btn-next-stage" class="btn" hidden>下一關</button>
-                <button type="button" id="btn-to-stages" class="btn">關卡選擇</button>
                 <button type="button" id="btn-repick-chars" class="btn">重選職業</button>
+                <button type="button" id="btn-to-stages" class="btn">回主選單</button>
               </div>
             </div>
           </div>
 
-          <!-- Pause -->
+          <!-- Pause — full product menu -->
           <div id="pause-overlay" class="overlay" hidden>
-            <div class="overlay-card pause-card maple-panel">
+            <div class="overlay-card pause-card maple-panel maple-ornament">
               <p class="overlay-kicker">⏸ 暫停</p>
-              <h2>戰鬥暫停中</h2>
-              <p class="muted">波次時間已凍結 · 可看說明或回關卡</p>
-              <div class="overlay-actions">
-                <button type="button" id="btn-resume" class="btn primary maple-primary">繼續 (Space)</button>
-                <button type="button" id="btn-pause-help" class="btn">操作說明</button>
-                <button type="button" id="btn-pause-stages" class="btn">關卡選擇</button>
+              <h2 id="pause-title">戰鬥暫停中</h2>
+              <p class="muted" id="pause-sub">時間已凍結</p>
+              <div class="pause-menu">
+                <button type="button" id="btn-resume" class="btn primary maple-primary pause-main">
+                  ▶ 繼續 (Space)
+                </button>
+                <button type="button" id="btn-pause-chars" class="btn">重選職業</button>
+                <button type="button" id="btn-pause-stages" class="btn">選擇戰役</button>
+                <button type="button" id="btn-pause-home" class="btn">回主選單</button>
+                <div class="pause-row">
+                  <button type="button" id="btn-pause-help" class="btn">？ 說明</button>
+                  <button type="button" id="btn-pause-mute" class="btn">🔊 音樂</button>
+                </div>
               </div>
             </div>
           </div>
@@ -420,25 +453,25 @@
           </div>
         </section>
 
-        <aside class="panel panel-right">
-          <section class="panel-block maple-frame">
-            <h2>部署 · 拖曳 / 轉職</h2>
-            <p class="hint muted" id="loadout-hint">初心者上場後可點選轉職</p>
+        <aside class="panel panel-right" id="panel-right">
+          <section class="panel-block maple-frame" id="deploy-panel">
+            <h2 id="deploy-heading">出戰單位</h2>
+            <p class="hint muted" id="loadout-hint">點卡部署</p>
             <div id="specialist-list" class="specialist-list"></div>
           </section>
-          <section class="panel-block actions maple-frame">
-            <button type="button" id="btn-start" class="btn primary maple-primary">開始波次</button>
+          <section class="panel-block actions maple-frame actions-compact">
+            <button type="button" id="btn-start" class="btn primary maple-primary" hidden>開始波次</button>
             <div class="action-row">
               <button type="button" id="btn-speed" class="btn">速度 ×1</button>
               <button type="button" id="btn-pause-side" class="btn">⏸ 暫停</button>
             </div>
-            <div class="action-row">
+            <div class="action-row td-only">
               <button type="button" id="btn-help-side" class="btn">？ 說明</button>
               <button type="button" id="btn-sell" class="btn danger" disabled>賣出</button>
             </div>
           </section>
-          <section class="panel-block maple-frame hide-sm">
-            <h2>目前選取</h2>
+          <section class="panel-block maple-frame hide-sm" id="selected-panel">
+            <h2 id="selected-heading">提示</h2>
             <p id="selected-info" class="muted">尚未選擇職業</p>
           </section>
         </aside>
@@ -448,7 +481,7 @@
         <span id="footer-stage">STAGE 01</span>
         <span id="status-line">Ready</span>
         <span class="credits-mini muted" title="LPC CC-BY-SA / Kenney CC0 / OGA CC0">
-          美術 LPC · 音效 Kenney/OGA
+          楓之谷防衛戰
         </span>
       </footer>
     </div>
