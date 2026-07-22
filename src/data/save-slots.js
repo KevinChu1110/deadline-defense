@@ -64,40 +64,77 @@ function slotBlobKey(index) {
   return `deadline-defense-slot-blob-${index}`;
 }
 
-function readBlob(index) {
+/**
+ * 讀存檔 blob。
+ * ⚠️ 一定要區分「空槽」與「資料毀損」：原本兩者都回 null，於是只要 blob 有任何
+ * 損壞（例如上次寫入時容量不足寫了半截），玩家點一次「讀取」就會走「空槽 → 清空
+ * live → flush 回該槽」的路徑，把還可能救得回來的原始字串永久蓋掉。
+ * @returns {{ ok: true, blob: object|null } | { ok: false, raw: string }}
+ */
+function readBlobSafe(index) {
+  let raw = null;
   try {
-    const raw = localStorage.getItem(slotBlobKey(index));
-    if (!raw) return null;
-    return JSON.parse(raw);
+    raw = localStorage.getItem(slotBlobKey(index));
   } catch {
-    return null;
+    return { ok: true, blob: null };
+  }
+  if (!raw) return { ok: true, blob: null };
+  try {
+    return { ok: true, blob: JSON.parse(raw) };
+  } catch {
+    return { ok: false, raw };
   }
 }
 
+function readBlob(index) {
+  const r = readBlobSafe(index);
+  return r.ok ? r.blob : null;
+}
+
+/**
+ * 寫存檔 blob。
+ * ⚠️ 回傳成功與否：原本靜默吞掉例外，但呼叫端照樣更新 meta —— 容量滿時列表會顯示
+ * 「剛剛更新、通關 N 關」，實際 blob 還停在幾小時前，下次切槽進度就這樣不見了。
+ */
 function writeBlob(index, blob) {
   try {
     localStorage.setItem(slotBlobKey(index), JSON.stringify(blob));
-  } catch {
-    /* ignore */
+    return true;
+  } catch (e) {
+    console.error("[save-slots] 寫入存檔失敗（容量不足？）", e);
+    return false;
   }
 }
 
 function snapshotLiveKeys() {
   const data = {};
   for (const k of SLOT_DATA_KEYS) {
-    data[k] = localStorage.getItem(k);
+    // ⚠️ 這支原本沒有 try/catch，而它會被模組頂層的 flushActiveSlot() 呼叫 ——
+    //    Safari 私密模式等 localStorage 完全不可用的環境會直接白畫面、遊戲開不起來。
+    try {
+      data[k] = localStorage.getItem(k);
+    } catch {
+      data[k] = null;
+    }
   }
   return data;
 }
 
+/** @returns {boolean} 是否整組套用成功（失敗時呼叫端不可再 flush，否則會污染原槽） */
 function applyBlobToLive(blob) {
   for (const k of SLOT_DATA_KEYS) {
-    if (blob && blob[k] != null && blob[k] !== "") {
-      localStorage.setItem(k, blob[k]);
-    } else {
-      localStorage.removeItem(k);
+    try {
+      if (blob && blob[k] != null && blob[k] !== "") {
+        localStorage.setItem(k, blob[k]);
+      } else {
+        localStorage.removeItem(k);
+      }
+    } catch (e) {
+      console.error("[save-slots] 套用存檔失敗", e);
+      return false;
     }
   }
+  return true;
 }
 
 function summarizeLive() {
@@ -200,12 +237,13 @@ export function flushActiveSlot() {
   const i = getActiveSlotIndex();
   const blob = snapshotLiveKeys();
   const sum = summarizeLive();
-  const empty =
-    sum.clearedCount === 0 &&
-    sum.unlocked <= 1 &&
-    sum.leaves <= 120 &&
-    !sum.name;
-  writeBlob(i, blob);
+  // ⚠️ 原本還加了 `sum.leaves <= 120`（START_LEAVES 就是 120）——
+  //    玩家把楓葉花光升卡、還沒過第一關、又沒設暱稱時會被誤判成「空存檔」，
+  //    列表顯示「點開新局開始冒險」，等於誘導他覆寫自己的存檔。
+  const empty = sum.clearedCount === 0 && sum.unlocked <= 1 && !sum.name;
+  // ⚠️ 寫入失敗（容量滿）時絕不能更新 meta：那會讓列表顯示「剛剛更新」但 blob 還是
+  //    幾小時前的，玩家下次切槽進度就無聲消失。
+  if (!writeBlob(i, blob)) return loadMeta().slots[i];
   const meta = loadMeta();
   meta.slots[i] = {
     index: i,
@@ -239,12 +277,29 @@ export function switchToSlot(index, opts = {}) {
   ensureSaveSlotsMigrated();
   const i = Math.max(0, Math.min(SLOT_COUNT - 1, Number(index) || 0));
   if (opts.saveCurrent !== false) flushActiveSlot();
-  const blob = readBlob(i);
-  if (blob) {
-    applyBlobToLive(blob);
+
+  const r = readBlobSafe(i);
+  if (!r.ok) {
+    // 資料毀損：先把原始字串留一份備份，然後中止 —— 絕不能往下走成「當空槽處理
+    // → 清空 live → flush 回該槽」，那會把可能還救得回來的東西永久蓋掉。
+    try {
+      localStorage.setItem(`${slotBlobKey(i)}-corrupt-${Date.now()}`, r.raw);
+    } catch {
+      /* ignore */
+    }
+    throw new Error(`存檔 ${i + 1} 的資料已毀損，已保留備份，請改用其他存檔`);
+  }
+
+  if (r.blob) {
+    if (!applyBlobToLive(r.blob)) {
+      // 套用到一半失敗：live 現在是半套資料，此時 flush 會污染「原本的」槽
+      throw new Error("讀取存檔失敗（本機空間不足？），請釋放空間後再試");
+    }
   } else {
     // 空槽：清掉 live 進度（新遊戲）
-    for (const k of SLOT_DATA_KEYS) localStorage.removeItem(k);
+    for (const k of SLOT_DATA_KEYS) {
+      try { localStorage.removeItem(k); } catch { /* ignore */ }
+    }
   }
   setActiveSlotIndex(i);
   flushActiveSlot();
@@ -297,8 +352,20 @@ export function deleteSlot(index) {
   meta.slots[i] = emptySlotMeta(i);
   saveMeta(meta);
   if (getActiveSlotIndex() === i) {
-    for (const k of SLOT_DATA_KEYS) localStorage.removeItem(k);
-    flushActiveSlot();
+    // ⚠️ 刪掉「使用中」的槽之後，active 一定要移走。原本只清 live 再 flush，
+    //    active 仍指向 i：玩家接著開始遊戲，進度會全部累積回這個「已刪除」的槽，
+    //    而 flush 一旦讓 unlocked>1 又把它標回非空，看起來像「刪不掉」。
+    for (const k of SLOT_DATA_KEYS) {
+      try { localStorage.removeItem(k); } catch { /* ignore */ }
+    }
+    const m2 = loadMeta();
+    const next = m2.slots.findIndex((sl, idx) => idx !== i && sl && !sl.empty);
+    if (next >= 0) {
+      switchToSlot(next, { saveCurrent: false });
+    } else {
+      setActiveSlotIndex(0);
+      flushActiveSlot();
+    }
   }
   return listSaveSlots();
 }

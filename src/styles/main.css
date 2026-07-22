@@ -6146,3 +6146,27 @@ body.mode-bc .wave-cta {
     padding-inline: 12px;
   }
 }
+
+/* 手機橫向的首頁選單：實測 844×390 時卡片高 518px、底部超出視窗 67px。
+   橫向手機的垂直空間本來就少，選單改成可捲動並壓縮間距。 */
+@media (orientation: landscape) and (max-height: 620px) {
+  .title-menu {
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    padding-block: 12px;
+  }
+
+  .title-menu-btns {
+    gap: 6px;
+  }
+
+  .title-menu-btns .title-btn {
+    padding-block: 8px;
+    font-size: 0.86rem;
+  }
+
+  /* 首頁兩側的角色/Boss 展示在橫向手機會擠掉選單，直接收起來 */
+  .title-showcase {
+    display: none;
+  }
+}

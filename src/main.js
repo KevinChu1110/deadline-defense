@@ -1253,9 +1253,13 @@ async function doLiveSync() {
     refreshHomeMeta();
     renderSaveSlots();
     closeDiscordImport();
+    // 超過 3 個角色會被靜默丟棄（只有 3 個存檔槽），要講出來
+    const total = (me.characters || []).length;
+    const dropped = Math.max(0, total - written.length);
     showToast(
       `已同步 ${written.length} 個角色：` +
-        written.map((w) => `${w.name}(槽${w.slot + 1})`).join("、")
+        written.map((w) => `${w.name}(槽${w.slot + 1})`).join("、") +
+        (dropped ? `（另有 ${dropped} 個角色因為只有 3 個存檔槽未帶入）` : "")
     );
     sfx.play("waveClear");
   } catch (e) {
@@ -1481,7 +1485,8 @@ function renderSaveSlots() {
         const idx = Number(btn.getAttribute("data-i"));
         withAudio(async () => {
           if (act === "open") {
-            await openOrCreateSlot(idx, slot);
+            // 用當下的 meta，不用渲染當時的閉包快照（期間可能已同步/匯入過）
+            await openOrCreateSlot(idx, listSaveSlots()[idx] || slot);
           } else if (act === "del") {
             const ok = await confirmDialog(
               `刪除存檔 ${idx + 1}？`,
@@ -1502,7 +1507,7 @@ function renderSaveSlots() {
     row.addEventListener("click", (ev) => {
       if (ev.target.closest("button")) return;
       withAudio(async () => {
-        await openOrCreateSlot(i, slot);
+        await openOrCreateSlot(i, listSaveSlots()[i] || slot);
       });
     });
     els.saveSlotList.appendChild(row);

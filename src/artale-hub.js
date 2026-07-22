@@ -489,9 +489,15 @@ function pct(x) {
   return `${p.toFixed(p < 10 && p > 0 ? 1 : 0)}%`;
 }
 
+/**
+ * 星力條。⚠️ 原本的 `"☆".repeat(Math.min(5, Math.max(0, max - s > 20 ? 0 : 0)))`
+ * 三元的兩個分支都是 0，空星永遠不會出現，玩家看不出「還能衝幾星」。
+ * 25 顆全畫太長，改成每 5 顆一組、只顯示到目前所在那一組的上限。
+ */
 function starBar(n, max = 25) {
   const s = Math.max(0, Math.min(max, n | 0));
-  return "★".repeat(s) + "☆".repeat(Math.min(5, Math.max(0, max - s > 20 ? 0 : 0)));
+  const groupTop = Math.min(max, Math.max(5, Math.ceil((s + 1) / 5) * 5));
+  return "★".repeat(s) + "☆".repeat(Math.max(0, groupTop - s));
 }
 
 function renderStarforce(sf, me, active, starPick, starFlash, safeguard) {
