@@ -577,6 +577,68 @@ body.is-dragging-job .specialist-card {
   text-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
 }
 
+/* Pause / Help overlays */
+.pause-card,
+.help-card {
+  width: min(94%, 480px);
+  text-align: left;
+}
+
+.pause-card h2,
+.help-card h2 {
+  text-align: center;
+}
+
+.help-grid {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 16px;
+  max-height: min(52vh, 420px);
+  overflow-y: auto;
+}
+
+.help-item {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.48);
+  border: 1px solid rgba(122, 98, 72, 0.28);
+}
+
+.help-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 1.15rem;
+  background: linear-gradient(180deg, #f7f0de, #e8dcc0);
+  border: 1px solid var(--panel-border);
+}
+
+.help-item strong {
+  display: block;
+  font-size: 0.92rem;
+  color: #3a2a18;
+  margin-bottom: 2px;
+}
+
+.help-item small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+#btn-pause,
+#btn-help {
+  min-width: 40px;
+  font-weight: 800;
+}
+
 .overlay {
   position: absolute;
   inset: 0;

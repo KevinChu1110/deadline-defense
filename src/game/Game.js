@@ -174,6 +174,7 @@ export class Game {
     this.now = 0;
     this.elapsed = 0;
     this.result = null;
+    this.paused = false;
     this.pausedForReward = false;
     this.pendingRewardChoices = null;
     this.buffs = defaultBuffs();
@@ -199,8 +200,8 @@ export class Game {
     const loop = (t) => {
       const rawDt = Math.min(0.05, (t - this._last) / 1000);
       this._last = t;
-      // freeze combat while reward modal open, still allow tiny fx
-      const dt = this.pausedForReward ? 0 : rawDt * this.speed;
+      // freeze combat while reward / pause, still allow tiny fx
+      const dt = this.pausedForReward || this.paused ? 0 : rawDt * this.speed;
       this.update(dt, rawDt);
       this.render();
       this._raf = requestAnimationFrame(loop);
@@ -234,9 +235,11 @@ export class Game {
       status: this.status,
       result: this.result,
       waveActive: this.waveActive,
+      paused: !!this.paused,
       canStartWave:
         !this.waveActive &&
         !this.pausedForReward &&
+        !this.paused &&
         this.result == null &&
         hasMoreWaves,
       muted: this.sfx.muted,
@@ -340,7 +343,7 @@ export class Game {
   }
 
   setPlacing(typeId) {
-    if (this.result || this.pausedForReward) return;
+    if (this.result || this.pausedForReward || this.paused) return;
     if (typeId && !this.loadout.includes(typeId)) {
       this.sfx.play("error");
       this.ui?.toast?.("此職業不在出戰名單");
@@ -363,9 +366,39 @@ export class Game {
   }
 
   toggleSpeed() {
+    if (this.paused) return;
     this.speed = this.speed === 1 ? 2 : this.speed === 2 ? 3 : 1;
     this.sfx.play("uiClick");
     this.ui?.onState?.(this.getPublicState());
+  }
+
+  /** 手動暫停／繼續（與選道具暫停分開） */
+  setPaused(on) {
+    if (this.result) return false;
+    if (this.pausedForReward && on) return false; // 選道具時不要疊手動暫停
+    const next = !!on;
+    if (this.paused === next) return this.paused;
+    this.paused = next;
+    if (this.paused) {
+      this.setPlacing(null);
+      this.status = "⏸ 暫停中 — 按 Space 或「繼續」";
+    } else {
+      this.status = this.waveActive
+        ? `第 ${this.waveIndex + 1} 波進行中`
+        : "Ready — 可繼續部署後 Start Wave";
+      if (!this.sfx.muted) {
+        this.sfx.startBgm(this.waveActive ? "battle" : "menu");
+      }
+    }
+    this.sfx.play("uiClick");
+    this.ui?.onState?.(this.getPublicState());
+    this.ui?.onPauseChange?.(this.paused);
+    return this.paused;
+  }
+
+  togglePause() {
+    if (this.result || this.pausedForReward) return this.paused;
+    return this.setPaused(!this.paused);
   }
 
   toggleMute() {
@@ -380,7 +413,7 @@ export class Game {
   }
 
   startNextWave() {
-    if (this.waveActive || this.result || this.pausedForReward) return;
+    if (this.waveActive || this.result || this.pausedForReward || this.paused) return;
     const next = this.waveIndex + 1;
     if (next >= this.stage.waves.length) return;
 
@@ -1240,7 +1273,7 @@ export class Game {
 
     this.canvas.addEventListener("pointerdown", (evt) => {
       void this.sfx.unlock();
-      if (this.pausedForReward || this.result) return;
+      if (this.pausedForReward || this.result || this.paused) return;
       const { x, y } = this.clientToWorld(evt.clientX, evt.clientY);
 
       if (this.placingType) {

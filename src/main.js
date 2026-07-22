@@ -68,6 +68,16 @@ const els = {
   btnSpeed: document.querySelector("#btn-speed"),
   btnSell: document.querySelector("#btn-sell"),
   btnMute: document.querySelector("#btn-mute"),
+  btnHelp: document.querySelector("#btn-help"),
+  btnPause: document.querySelector("#btn-pause"),
+  btnPauseSide: document.querySelector("#btn-pause-side"),
+  btnHelpSide: document.querySelector("#btn-help-side"),
+  pauseOverlay: document.querySelector("#pause-overlay"),
+  helpOverlay: document.querySelector("#help-overlay"),
+  btnResume: document.querySelector("#btn-resume"),
+  btnPauseHelp: document.querySelector("#btn-pause-help"),
+  btnPauseStages: document.querySelector("#btn-pause-stages"),
+  btnHelpClose: document.querySelector("#btn-help-close"),
   btnStages: document.querySelector("#btn-stages"),
   btnChars: document.querySelector("#btn-chars"),
   btnRank: document.querySelector("#btn-rank"),
@@ -150,6 +160,57 @@ function hideAllOverlays() {
   setOverlayOpen(els.rewardOverlay, false);
   setOverlayOpen(els.overlay, false);
   setOverlayOpen(els.rankOverlay, false);
+  setOverlayOpen(els.pauseOverlay, false);
+  setOverlayOpen(els.helpOverlay, false);
+}
+
+const HELP_SEEN_KEY = "deadline-defense-help-seen-v1";
+
+function hasSeenHelp() {
+  try {
+    return localStorage.getItem(HELP_SEEN_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markHelpSeen() {
+  try {
+    localStorage.setItem(HELP_SEEN_KEY, "1");
+  } catch {
+    /* ignore */
+  }
+}
+
+function openHelpOverlay({ fromPause = false } = {}) {
+  // 從暫停開啟時不要關 pause 底下的凍結，只疊 help
+  setOverlayOpen(els.helpOverlay, true);
+  if (!fromPause) {
+    // 戰鬥中開說明 → 自動暫停
+    if (game && screen === "play" && !game.result && !game.pausedForReward) {
+      game.setPaused(true);
+      setOverlayOpen(els.pauseOverlay, true);
+    }
+  }
+  sfx.play("uiClick");
+}
+
+function closeHelpOverlay() {
+  markHelpSeen();
+  setOverlayOpen(els.helpOverlay, false);
+  sfx.play("uiClick");
+}
+
+function openPauseOverlay() {
+  if (!game || screen !== "play" || game.result) return;
+  game.setPaused(true);
+  setOverlayOpen(els.pauseOverlay, true);
+}
+
+function closePauseOverlay({ resume = true } = {}) {
+  setOverlayOpen(els.pauseOverlay, false);
+  setOverlayOpen(els.helpOverlay, false);
+  if (resume && game) game.setPaused(false);
 }
 
 let rankTab = "all";
@@ -159,6 +220,7 @@ function clearRunState() {
   if (!game) return;
   game.result = null;
   game.waveActive = false;
+  game.paused = false;
   game.pausedForReward = false;
   game.pendingRewardChoices = null;
 }
@@ -932,6 +994,12 @@ function confirmLoadoutAndStart() {
   const names = draftLoadout.map((id) => SPECIALISTS[id].nameZh).join("、");
   showToast(`出戰：${names} — 打怪賺楓幣，點角色付幣轉職`);
   sfx.play("waveStart");
+  // 首次進戰鬥：自動開說明
+  if (!hasSeenHelp()) {
+    setTimeout(() => {
+      if (screen === "play" && game && !game.result) openHelpOverlay();
+    }, 400);
+  }
 }
 
 function showRewards(items) {
@@ -1065,6 +1133,21 @@ const ui = {
   onRewardOffer: showRewards,
   onRewardClosed: hideRewards,
   onCoreHit: flashCoreHit,
+  onPauseChange(paused) {
+    if (els.btnPause) {
+      els.btnPause.textContent = paused ? "▶" : "⏸";
+      els.btnPause.title = paused ? "繼續 (Space)" : "暫停 (Space)";
+    }
+    if (els.btnPauseSide) {
+      els.btnPauseSide.textContent = paused ? "▶ 繼續" : "⏸ 暫停";
+    }
+    if (!paused) {
+      setOverlayOpen(els.pauseOverlay, false);
+      // help 可手動關
+    } else if (screen === "play") {
+      setOverlayOpen(els.pauseOverlay, true);
+    }
+  },
   onState(state) {
     // Guard: Game constructor calls reset → onState before `game = new Game(...)` returns.
     if (!game) {
@@ -1104,20 +1187,36 @@ const ui = {
     els.btnSpeed.textContent = `速度 ×${state.speed}`;
 
     const blocked = screen !== "play";
-    els.btnStart.disabled = !state.canStartWave || blocked;
+    const paused = !!state.paused;
+    els.btnStart.disabled = !state.canStartWave || blocked || paused;
     els.btnStart.textContent =
       state.waveIndex < 0
         ? "開始第 1 波"
         : state.canStartWave
           ? `開始第 ${state.waveIndex + 2} 波`
           : state.waveActive
-            ? `第 ${state.waveIndex + 1} 波進行中`
+            ? paused
+              ? "⏸ 暫停中"
+              : `第 ${state.waveIndex + 1} 波進行中`
             : state.pausedForReward
               ? "請選擇道具…"
               : "波次結束";
 
     els.btnSell.disabled =
-      !state.selectedSpecialistId || state.result != null || state.pausedForReward || blocked;
+      !state.selectedSpecialistId ||
+      state.result != null ||
+      state.pausedForReward ||
+      paused ||
+      blocked;
+    if (els.btnSpeed) els.btnSpeed.disabled = blocked || paused;
+    if (els.btnPause) {
+      els.btnPause.hidden = blocked || !!state.result;
+      els.btnPause.textContent = paused ? "▶" : "⏸";
+    }
+    if (els.btnPauseSide) {
+      els.btnPauseSide.disabled = blocked || !!state.result;
+      els.btnPauseSide.textContent = paused ? "▶ 繼續" : "⏸ 暫停";
+    }
     updateMuteButton(state.muted);
     renderBuffs(state);
 
@@ -1425,6 +1524,47 @@ els.btnStart?.addEventListener("click", () => withAudio(() => game.startNextWave
 els.btnSpeed?.addEventListener("click", () => withAudio(() => game.toggleSpeed()));
 els.btnSell?.addEventListener("click", () => withAudio(() => game.sellSelected()));
 els.btnMute?.addEventListener("click", () => withAudio(() => game.toggleMute()));
+els.btnPause?.addEventListener("click", () =>
+  withAudio(() => {
+    if (game?.paused) closePauseOverlay({ resume: true });
+    else openPauseOverlay();
+  })
+);
+els.btnPauseSide?.addEventListener("click", () =>
+  withAudio(() => {
+    if (game?.paused) closePauseOverlay({ resume: true });
+    else openPauseOverlay();
+  })
+);
+els.btnHelp?.addEventListener("click", () => withAudio(() => openHelpOverlay()));
+els.btnHelpSide?.addEventListener("click", () => withAudio(() => openHelpOverlay()));
+els.btnResume?.addEventListener("click", () =>
+  withAudio(() => {
+    closePauseOverlay({ resume: true });
+  })
+);
+els.btnPauseHelp?.addEventListener("click", () =>
+  withAudio(() => {
+    openHelpOverlay({ fromPause: true });
+  })
+);
+els.btnPauseStages?.addEventListener("click", () =>
+  withAudio(() => {
+    sfx.play("uiClick");
+    if (game) {
+      game.setPaused(false);
+      game.result = null;
+    }
+    clearRunState();
+    closePauseOverlay({ resume: false });
+    openStageSelect();
+  })
+);
+els.btnHelpClose?.addEventListener("click", () =>
+  withAudio(() => {
+    closeHelpOverlay();
+  })
+);
 els.btnStages?.addEventListener("click", () =>
   withAudio(() => {
     sfx.play("uiClick");
@@ -1570,6 +1710,14 @@ els.btnRepickChars?.addEventListener("click", (ev) => {
 
 window.addEventListener("keydown", (e) => {
   sfx.unlock();
+  // 說明浮層開著：Esc / Enter 關閉
+  if (els.helpOverlay?.classList.contains("is-open")) {
+    if (e.key === "Escape" || e.key === "Enter") {
+      e.preventDefault();
+      closeHelpOverlay();
+    }
+    return;
+  }
   if (screen === "char") {
     // 1-9 對應目前 draft 可快速切換預設前幾個職業
     if (e.key >= "1" && e.key <= "9") {
@@ -1582,19 +1730,39 @@ window.addEventListener("keydown", (e) => {
       return;
     }
   }
-  if (screen !== "play") return;
+  if (screen !== "play" || !game) return;
+
+  // Space = 暫停／繼續
+  if (e.key === " " || e.code === "Space") {
+    e.preventDefault();
+    if (game.pausedForReward || game.result) return;
+    if (game.paused) closePauseOverlay({ resume: true });
+    else openPauseOverlay();
+    return;
+  }
+  // Enter = 開始波次
+  if (e.key === "Enter") {
+    e.preventDefault();
+    if (!game.paused && !game.pausedForReward) game.startNextWave();
+    return;
+  }
+  if (game.paused || game.pausedForReward) {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      closePauseOverlay({ resume: true });
+    }
+    return;
+  }
+
   const loadout = game.loadout || [];
-  if (e.key >= "1" && e.key <= "9") {
+  if (e.key >= "1" && e.key <= "4") {
     const i = Number(e.key) - 1;
     if (loadout[i]) game.setPlacing(loadout[i]);
-  }
-  if (e.key === " ") {
-    e.preventDefault();
-    game.startNextWave();
   }
   if (e.key === "Escape") game.setPlacing(null);
   if (e.key === "Delete" || e.key === "Backspace") game.sellSelected();
   if (e.key === "m" || e.key === "M") game.toggleMute();
+  if (e.key === "?" || e.key === "h" || e.key === "H") openHelpOverlay();
 });
 
 /** First gesture: unlock audio + start menu BGM (must stay sync for autoplay). */

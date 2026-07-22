@@ -47,6 +47,8 @@
             <small>楓葉</small>
             <strong id="stat-leaves">0</strong>
           </div>
+          <button type="button" id="btn-help" class="btn maple-btn" title="操作說明">？</button>
+          <button type="button" id="btn-pause" class="btn maple-btn" title="暫停 (Space)" hidden>⏸</button>
           <button type="button" id="btn-chars" class="btn maple-btn" title="重選職業">職業</button>
           <button type="button" id="btn-stages" class="btn maple-btn" title="選擇關卡">關卡</button>
           <button type="button" id="btn-rank" class="btn maple-btn" title="排行榜">排行</button>
@@ -226,6 +228,89 @@
               </div>
             </div>
           </div>
+
+          <!-- Pause -->
+          <div id="pause-overlay" class="overlay" hidden>
+            <div class="overlay-card pause-card maple-panel">
+              <p class="overlay-kicker">⏸ 暫停</p>
+              <h2>戰鬥暫停中</h2>
+              <p class="muted">波次時間已凍結 · 可看說明或回關卡</p>
+              <div class="overlay-actions">
+                <button type="button" id="btn-resume" class="btn primary maple-primary">繼續 (Space)</button>
+                <button type="button" id="btn-pause-help" class="btn">操作說明</button>
+                <button type="button" id="btn-pause-stages" class="btn">關卡選擇</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Help / gestures -->
+          <div id="help-overlay" class="overlay" hidden>
+            <div class="overlay-card help-card maple-panel">
+              <p class="overlay-kicker">📖 操作說明</p>
+              <h2>手勢與按鍵</h2>
+              <div class="help-grid">
+                <div class="help-item">
+                  <span class="help-icon">👆</span>
+                  <div>
+                    <strong>部署職業</strong>
+                    <small>點右側職業卡 → 點地圖綠格；或拖曳到綠格鬆手</small>
+                  </div>
+                </div>
+                <div class="help-item">
+                  <span class="help-icon">🔄</span>
+                  <div>
+                    <strong>自動部署</strong>
+                    <small>選中職業後再點同一張卡 → 放到第一個空格</small>
+                  </div>
+                </div>
+                <div class="help-item">
+                  <span class="help-icon">✕</span>
+                  <div>
+                    <strong>取消部署</strong>
+                    <small>點地圖空地，或按 Esc</small>
+                  </div>
+                </div>
+                <div class="help-item">
+                  <span class="help-icon">🌱</span>
+                  <div>
+                    <strong>場上轉職</strong>
+                    <small>點地圖上的角色 → 右側選下一轉（花局內楓幣）</small>
+                  </div>
+                </div>
+                <div class="help-item">
+                  <span class="help-icon">⚔</span>
+                  <div>
+                    <strong>開始波次</strong>
+                    <small>部署好後按「開始波次」；波間可繼續佈陣</small>
+                  </div>
+                </div>
+                <div class="help-item">
+                  <span class="help-icon">👁</span>
+                  <div>
+                    <strong>Boss 血條</strong>
+                    <small>上方顯示血量與「下一招／施放中」倒數</small>
+                  </div>
+                </div>
+                <div class="help-item">
+                  <span class="help-icon">⏸</span>
+                  <div>
+                    <strong>暫停</strong>
+                    <small>Space 或 ⏸ 按鈕；選道具時也會暫停</small>
+                  </div>
+                </div>
+                <div class="help-item">
+                  <span class="help-icon">⌨</span>
+                  <div>
+                    <strong>快捷鍵</strong>
+                    <small>Space 暫停 · Esc 取消部署 · 1–4 選出戰卡 · M 靜音</small>
+                  </div>
+                </div>
+              </div>
+              <div class="overlay-actions">
+                <button type="button" id="btn-help-close" class="btn primary maple-primary">知道了</button>
+              </div>
+            </div>
+          </div>
         </section>
 
         <aside class="panel panel-right">
@@ -238,6 +323,10 @@
             <button type="button" id="btn-start" class="btn primary maple-primary">開始波次</button>
             <div class="action-row">
               <button type="button" id="btn-speed" class="btn">速度 ×1</button>
+              <button type="button" id="btn-pause-side" class="btn">⏸ 暫停</button>
+            </div>
+            <div class="action-row">
+              <button type="button" id="btn-help-side" class="btn">？ 說明</button>
               <button type="button" id="btn-sell" class="btn danger" disabled>賣出</button>
             </div>
           </section>
