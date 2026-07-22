@@ -160,12 +160,15 @@
                 </h1>
                 <p class="home-sub title-sub">多地區戰役 · 冒險家轉職 · 遠征 Boss</p>
                 <nav class="title-menu-btns" aria-label="主選單">
-                  <button type="button" id="btn-start-game" class="btn title-btn title-btn-primary">
+                  <button type="button" id="btn-enter-hub" class="btn title-btn title-btn-primary">
                     <span class="btn-shine" aria-hidden="true"></span>
-                    ▶ 開始遊戲
+                    🏛 進入主城
                   </button>
-                  <button type="button" id="btn-continue" class="btn title-btn title-btn-continue" hidden>
-                    ↻ 繼續遊戲
+                  <button type="button" id="btn-start-game" class="btn title-btn title-btn-continue">
+                    🛡 神木防衛戰
+                  </button>
+                  <button type="button" id="btn-continue" class="btn title-btn" hidden>
+                    ↻ 繼續防衛戰
                   </button>
                   <button type="button" id="btn-home-guide" class="btn title-btn">📜 遊戲說明</button>
                   <button type="button" id="btn-home-rank" class="btn title-btn">🏆 排行榜</button>
@@ -281,6 +284,11 @@
                 </section>
               </div>
             </div>
+          </div>
+
+          <!-- Artale Hub (主城 / 養成) -->
+          <div id="artale-hub-overlay" class="overlay hub-overlay" hidden>
+            <div id="artale-hub" class="artale-hub-root"></div>
           </div>
 
           <!-- Discord import -->

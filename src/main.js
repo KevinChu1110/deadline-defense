@@ -53,6 +53,7 @@ import {
   encodeBridgeCode,
   previewImport,
 } from "./data/discord-bridge.js";
+import * as artaleHub from "./artale-hub.js";
 import {
   listSaveSlots,
   switchToSlot,
@@ -215,6 +216,17 @@ const els = {
   btnDiscordImportCancel: document.querySelector("#btn-discord-import-cancel"),
   btnDiscordImportPreview: document.querySelector("#btn-discord-import-preview"),
   btnDiscordImportConfirm: document.querySelector("#btn-discord-import-confirm"),
+  artaleHubOverlay: document.querySelector("#artale-hub-overlay"),
+  artaleHub: document.querySelector("#artale-hub"),
+  btnEnterHub: document.querySelector("#btn-enter-hub"),
+};
+
+/** Artale 主城狀態 */
+let hubState = {
+  tab: "home",
+  me: null,
+  apiOk: null,
+  error: "",
 };
 
 /** Campaign wizard: 1 save → 2 mode → 3 stages|raid */
@@ -263,6 +275,58 @@ function hideAllOverlays() {
   setOverlayOpen(els.dialogOverlay, false);
   setOverlayOpen(els.settingsOverlay, false);
   setOverlayOpen(els.discordImportOverlay, false);
+  setOverlayOpen(els.artaleHubOverlay, false);
+}
+
+function paintHub() {
+  artaleHub.renderHubShell(els, hubState);
+  artaleHub.bindHubEvents(els, {
+    getState: () => hubState,
+    onState: (next) => {
+      hubState = { ...hubState, ...next };
+      paintHub();
+    },
+    onBackTitle: () => {
+      setOverlayOpen(els.artaleHubOverlay, false);
+      openTitleScreen();
+    },
+    onOpenDefense: () => {
+      setOverlayOpen(els.artaleHubOverlay, false);
+      openCampaignPanel(1);
+    },
+  });
+}
+
+async function openArtaleHub() {
+  screen = "hub";
+  document.body.classList.add("home-open");
+  document.body.classList.remove("in-play", "mode-bc", "mode-td");
+  hideAllOverlays();
+  setCampaignPanelOpen(false);
+  setOverlayOpen(els.stageOverlay, true);
+  // 主選單藏起來、只露 hub（stage overlay 仍當全螢幕殼）
+  if (els.titleScreen) els.titleScreen.style.visibility = "hidden";
+  setOverlayOpen(els.artaleHubOverlay, true);
+  hubState = { ...hubState, error: "", apiOk: null };
+  paintHub();
+  try {
+    await artaleHub.healthCheck();
+    hubState.apiOk = true;
+    const id = artaleHub.getLinkedDiscordId();
+    if (id) {
+      try {
+        hubState.me = await artaleHub.loadMe(id);
+      } catch (e) {
+        hubState.error = e.message;
+        hubState.me = null;
+      }
+    }
+  } catch {
+    hubState.apiOk = false;
+    hubState.error = "API 未啟動。請另開終端執行：npm run dev:api";
+  }
+  paintHub();
+  sfx.play("uiClick");
 }
 
 /**
@@ -1438,6 +1502,7 @@ function openTitleScreen() {
   hideAllOverlays();
   flushActiveSlot();
   setCampaignPanelOpen(false);
+  if (els.titleScreen) els.titleScreen.style.visibility = "visible";
   // 只刷新繼續按鈕／楓葉，不把關卡列表塞進主畫面
   const progress = loadProgress();
   let nextIdx = STAGES.findIndex((_, i) => isStageUnlocked(i, progress) && !progress.cleared[STAGES[i].id]);
@@ -2715,6 +2780,7 @@ els.btnRank?.addEventListener("click", () =>
     openRankOverlay(rankTab || "all");
   })
 );
+els.btnEnterHub?.addEventListener("click", () => withAudio(() => openArtaleHub()));
 els.btnStartGame?.addEventListener("click", () =>
   withAudio(() => {
     openCampaignPanel(1);

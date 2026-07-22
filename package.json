@@ -2,10 +2,12 @@
   "name": "deadline-defense",
   "version": "0.1.0",
   "private": true,
-  "description": "Office-themed tower defense web mini-game MVP",
+  "description": "Artale Web — Maple 養成/突襲 + 神木防衛戰",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:api": "npm --prefix server run dev",
+    "dev:all": "node server/src/index.js & vite",
     "build": "vite build",
     "preview": "vite preview"
   },
