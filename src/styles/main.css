@@ -222,6 +222,8 @@ body {
   min-height: 0;
   padding: 8px;
   overflow: hidden;
+  /* 讓 #game 能用 cqw/cqh 讀到這個容器的實際寬高 */
+  container-type: size;
 }
 
 #game {
@@ -230,12 +232,17 @@ body {
      - 手機：只看寬度，390px 手機上高度只剩約 190px（螢幕高度的 23%），
        上下卻還空著 —— 縮放應該同時受限於「可用高度」才對
      改成用 aspect-ratio 鎖比例，寬高兩邊都不超出容器，取較小者。 */
+  /* 畫布要「填滿容器但維持 16:9，且不能變形」。
+     踩過的兩個坑：
+       width:auto + height:auto → 用 canvas 原生 960×540，桌機再寬也長不大
+       height:100% + max-width  → max-width 夾住寬度但高度不跟著收，變成
+                                  1086×698（比例 1.56）畫面被垂直拉伸
+     解法是用容器查詢直接取容器的寬與高算出「兩者都放得下」的寬度。
+     不用 object-fit:contain 是因為那會讓元素框大於實際畫面（含黑邊），
+     而 Game.js 的滑鼠座標換算是拿 getBoundingClientRect 算的，會整個偏掉。 */
   aspect-ratio: 16 / 9;
-  /* 用高度驅動、寬度由比例導出，再用 max-width 夾住。
-     若寫成 width:auto + height:auto，瀏覽器會直接用 canvas 的原生 960×540，
-     桌機容器再寬也長不大（實測 1440 螢幕上畫布只有 966px）。 */
-  height: 100%;
-  width: auto;
+  width: min(100cqw, calc(100cqh * 16 / 9));
+  height: auto;
   max-width: 100%;
   display: block;
   border-radius: 10px;
