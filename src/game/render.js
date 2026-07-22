@@ -11,7 +11,7 @@ import { sampleGifFrame, getCachedMob } from "./assets.js";
 import { drawFx } from "./fx.js";
 import { drawHazards } from "./hazards.js";
 import { MAP_THEMES } from "../data/map-themes.js";
-import { drawBossTelegraphs } from "./boss-attacks.js";
+import { drawBossTelegraphs, drawBossStatusAuras } from "./boss-attacks.js";
 
 /** @type {Map<string, HTMLImageElement>} */
 const bgCache = new Map();
@@ -92,6 +92,7 @@ export function drawScene(ctx, state) {
   drawSpecialists(ctx, specialists, state.selectedSpecialistId, state.now);
   drawEnemies(ctx, enemies, state.now);
   drawBossTelegraphs(ctx, enemies);
+  drawBossStatusAuras(ctx, enemies, state.now || 0);
   drawProjectiles(ctx, projectiles, state.now);
   drawFx(ctx, fx);
   drawRangePreview(ctx, state);

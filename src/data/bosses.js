@@ -47,9 +47,9 @@ export const BOSSES = {
       { at: 0.2, units: [["octopus", 2], ["croco", 3], ["slime", 6]], path: "both" },
     ],
     phaseBanner: [
-      { at: 0.7, text: "海怒斯 · 深海潮湧" },
-      { at: 0.4, text: "海怒斯 · 觸手狂舞" },
-      { at: 0.2, text: "海怒斯 · 深淵壓制" },
+      { at: 0.7, text: "海怒斯 · 召喚小怪" },
+      { at: 0.4, text: "海怒斯 · 物理無效循環" },
+      { at: 0.2, text: "海怒斯 · 千斤墜＋火柱" },
     ],
   }),
 
@@ -78,9 +78,9 @@ export const BOSSES = {
       { at: 0.25, units: [["jr_wraith", 6], ["iron_hog", 2]], path: "both" },
     ],
     phaseBanner: [
-      { at: 0.75, text: "拉圖斯 · 時鐘加速" },
-      { at: 0.5, text: "拉圖斯 · 次元裂縫" },
-      { at: 0.25, text: "拉圖斯 · 時間暴走" },
+      { at: 0.75, text: "拉圖斯 · 時鐘機甲" },
+      { at: 0.5, text: "拉圖斯 · 本體彈出（加速）" },
+      { at: 0.25, text: "拉圖斯 · 時空暫停＋反射" },
     ],
   }),
 
@@ -107,9 +107,9 @@ export const BOSSES = {
       { at: 0.2, units: [["hellhound", 4], ["iron_hog", 3], ["fire_boar", 6]], path: "both" },
     ],
     phaseBanner: [
-      { at: 0.7, text: "炎魔 · 手臂甦醒" },
-      { at: 0.45, text: "炎魔 · 煉獄" },
-      { at: 0.2, text: "炎魔 · 最終審判" },
+      { at: 0.7, text: "炎魔 · 八臂揮擊" },
+      { at: 0.45, text: "炎魔 · 火柱／魔方" },
+      { at: 0.2, text: "炎魔 · 暗黑詛咒" },
     ],
   }),
 
@@ -137,9 +137,9 @@ export const BOSSES = {
       { at: 0.25, units: [["drake", 4], ["red_drake", 3], ["iron_hog", 2]], path: "both" },
     ],
     phaseBanner: [
-      { at: 0.75, text: "暗黑龍王 · 左頭甦醒" },
-      { at: 0.5, text: "暗黑龍王 · 右頭怒吼" },
-      { at: 0.25, text: "暗黑龍王 · 本體全力" },
+      { at: 0.75, text: "暗黑龍王 · 左頭劇毒" },
+      { at: 0.5, text: "暗黑龍王 · 右頭雷電" },
+      { at: 0.25, text: "暗黑龍王 · 本體龍息" },
     ],
   }),
 
@@ -172,10 +172,10 @@ export const BOSSES = {
     ],
     splitOnDeath: { type: "slime", count: 8 },
     phaseBanner: [
-      { at: 0.8, text: "皮卡啾 · 石像甦醒" },
-      { at: 0.55, text: "皮卡啾 · 女神試煉" },
-      { at: 0.35, text: "皮卡啾 · 本體登場" },
-      { at: 0.15, text: "皮卡啾 · 狂暴（最難）" },
+      { at: 0.8, text: "皮卡啾 · 石像群" },
+      { at: 0.55, text: "皮卡啾 · 封印／落石" },
+      { at: 0.35, text: "皮卡啾 · 爆裂花瓣" },
+      { at: 0.15, text: "皮卡啾 · 狂暴" },
     ],
   }),
 };
@@ -198,31 +198,31 @@ export const ARENA_BOSS_ROTATION = [
 export const ARENA_BOSS_META = {
   boss_hainurs: {
     emoji: "🦑",
-    blurb: "水世界 · S · 深海潮湧",
+    blurb: "物理無效 · 嘴炮 · 火柱 · 千斤墜",
     regionZh: "水世界",
     tier: "S",
   },
   boss_papulatus: {
     emoji: "⏰",
-    blurb: "玩具城 · S · 時鐘相位",
+    blurb: "時空暫停 · 反射 · 吸取血魔 · 黑球",
     regionZh: "玩具城",
     tier: "S",
   },
   boss_zakum: {
     emoji: "🔥",
-    blurb: "冰原雪域 · S+ · 八臂煉獄",
+    blurb: "八臂封印 · 火柱 · 魔方回血 · 詛咒",
     regionZh: "冰原雪域",
     tier: "S+",
   },
   boss_dark_dragon: {
     emoji: "🐉",
-    blurb: "神木村 · SS · 三頭龍王",
+    blurb: "劇毒吐息 · 連鎖閃電 · 龍息 · 龍鱗反射",
     regionZh: "神木村",
     tier: "SS",
   },
   boss_pink_bean: {
     emoji: "🌸",
-    blurb: "時間神殿 · SSS · 最終王（最難）",
+    blurb: "封印 · 落石 · 反盾 · 爆裂花瓣 · 狂暴",
     regionZh: "時間神殿",
     tier: "SSS",
   },

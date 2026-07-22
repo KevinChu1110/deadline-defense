@@ -7,6 +7,8 @@ import {
   tickBossAttacks,
   getBossArmorBonus,
   getBossHasteBonus,
+  isBossImmune,
+  getBossReflectStun,
 } from "./boss-attacks.js";
 
 let nextId = 1;
@@ -109,6 +111,8 @@ export function createSpecialist(typeId, padIndex, pad, leveledDef = null) {
     cardLevel: def.cardLevel || 1,
     stunnedUntil: 0,
     silencedUntil: 0,
+    cursedUntil: 0,
+    curseDmgMul: 1,
   };
 }
 
@@ -424,6 +428,14 @@ export function softDamageMult(enemy, skill, now, buffs = {}) {
 export function applyHit(enemy, projectile, now, buffs = {}, ctx = {}) {
   if (!enemy.alive) return false;
 
+  // Boss 物理／縮頭無效
+  if (isBossImmune(enemy, now)) {
+    projectile._lastDmg = 0;
+    projectile._wasCrit = false;
+    enemy.hitFlash = 0.06;
+    return false;
+  }
+
   const skill = projectile.skill || {};
   const ownerId = projectile.ownerId;
 
@@ -453,6 +465,12 @@ export function applyHit(enemy, projectile, now, buffs = {}, ctx = {}) {
   let dmg =
     projectile.damage * (buffs.damageMult || 1) * stackMult * softDamageMult(enemy, skill, now, buffs);
 
+  // 職業被詛咒時輸出下降
+  const owner = ctx.allies?.find?.((s) => s.id === ownerId) || ctx.owner;
+  if (owner && (owner.cursedUntil || 0) > now) {
+    dmg *= owner.curseDmgMul || 0.75;
+  }
+
   // armor with break + boss temporary armor
   {
     let armor = enemy.def.armor || 0;
@@ -475,6 +493,12 @@ export function applyHit(enemy, projectile, now, buffs = {}, ctx = {}) {
   enemy.hitFlash = 0.12;
   projectile._lastDmg = dmg;
   projectile._wasCrit = wasCrit;
+
+  // Boss 反射：反震攻擊者
+  const refStun = getBossReflectStun(enemy, now);
+  if (refStun > 0 && owner) {
+    owner.stunnedUntil = Math.max(owner.stunnedUntil || 0, now + refStun);
+  }
 
   // base effects
   if (projectile.effect === "slow" || skill.slowChain) {

@@ -837,6 +837,7 @@ export class Game {
           };
           const killed = applyHit(target, p, this.now, hitBuffs, {
             allies: this.specialists,
+            owner,
           });
           this.sfx.playHit({
             heavy: wasBoss || p._wasCrit,
