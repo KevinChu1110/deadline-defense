@@ -1,10 +1,35 @@
 /**
- * Load maple mob GIFs and decode frames for canvas animation.
+ * Load maple mob GIFs (and static PNG fallback) for canvas.
+ * Many files are named .png but are actually GIF bytes.
  */
 import { parseGIF, decompressFrames } from "gifuct-js";
 
 const cache = new Map();
 const loading = new Map();
+
+function isGifBytes(buf) {
+  if (!buf || buf.byteLength < 6) return false;
+  const u = new Uint8Array(buf, 0, 6);
+  // GIF87a / GIF89a
+  return (
+    u[0] === 0x47 &&
+    u[1] === 0x49 &&
+    u[2] === 0x46 &&
+    u[3] === 0x38 &&
+    (u[4] === 0x37 || u[4] === 0x39) &&
+    u[5] === 0x61
+  );
+}
+
+function loadStaticImage(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.decoding = "async";
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`img fail ${url}`));
+    img.src = url;
+  });
+}
 
 /**
  * @returns {Promise<{ frames: Array<{ canvas: HTMLCanvasElement, delay: number }>, width: number, height: number }>}
@@ -19,6 +44,27 @@ export async function loadMobGif(filename) {
       if (!r.ok) throw new Error(`Failed to load ${url}`);
       return r.arrayBuffer();
     });
+
+    // Static PNG/JPEG path
+    if (!isGifBytes(buf)) {
+      const img = await loadStaticImage(url);
+      const out = document.createElement("canvas");
+      out.width = img.naturalWidth || img.width;
+      out.height = img.naturalHeight || img.height;
+      const octx = out.getContext("2d");
+      octx.imageSmoothingEnabled = false;
+      octx.drawImage(img, 0, 0);
+      const result = {
+        frames: [{ canvas: out, delay: 1 }],
+        width: out.width,
+        height: out.height,
+        filename,
+      };
+      cache.set(filename, result);
+      loading.delete(filename);
+      return result;
+    }
+
     const gif = parseGIF(buf);
     const rawFrames = decompressFrames(gif, true);
     if (!rawFrames.length) throw new Error(`No frames: ${filename}`);

@@ -38,8 +38,8 @@ export const BOSSES = {
     speed: 26,
     armor: 0.12,
     leakDamage: 9,
-    sprite: "pianus.png",
-    spriteScale: 1.65,
+    sprite: "pianus.png", // maplestory.io GMS83 8510000 stand (GIF bytes)
+    spriteScale: 0.42,
     tags: ["boss", "summoner", "dense"],
     phaseSpawns: [
       { at: 0.7, units: [["bubbling", 8], ["octopus", 1]], path: "both" },
@@ -67,8 +67,8 @@ export const BOSSES = {
     speed: 28,
     armor: 0.15,
     leakDamage: 9,
-    sprite: "papulatus.png",
-    spriteScale: 1.55,
+    sprite: "papulatus.png", // maplestory.io GMS83 8500001 stand
+    spriteScale: 0.55,
     tags: ["boss", "summoner"],
     speedBurstAt: 0.5,
     speedBurstMult: 1.45,
@@ -98,8 +98,8 @@ export const BOSSES = {
     speed: 24,
     armor: 0.22,
     leakDamage: 10,
-    sprite: "zakum.png",
-    spriteScale: 1.5,
+    sprite: "zakum.png", // maplestory.io GMS83 8800002 stand
+    spriteScale: 0.42,
     tags: ["boss", "armored", "summoner"],
     phaseSpawns: [
       { at: 0.7, units: [["fire_boar", 6], ["hellhound", 2]], path: "both" },
@@ -127,8 +127,8 @@ export const BOSSES = {
     speed: 24,
     armor: 0.3,
     leakDamage: 11,
-    sprite: "horntail.png",
-    spriteScale: 1.75,
+    sprite: "horntail.png", // maplestory.io GMS83 8810007 stand
+    spriteScale: 0.32,
     tags: ["boss", "armored", "summoner", "dense"],
     // 左頭 → 右頭 → 本體（對齊 bot 多部位）
     phaseSpawns: [
@@ -157,8 +157,8 @@ export const BOSSES = {
     speed: 32,
     armor: 0.18,
     leakDamage: 14,
-    sprite: "pepe.png",
-    spriteScale: 2.4,
+    sprite: "pinkbean.png", // maplestory.io GMS83 8820001 stand
+    spriteScale: 1.85,
     tags: ["boss", "summoner", "swift"],
     hasteAura: 0.22,
     hasteRadius: 140,

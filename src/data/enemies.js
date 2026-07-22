@@ -450,16 +450,16 @@ export const ENEMIES = {
     armor: 0.12,
     tags: ["boss", "summoner", "dense"],
     sprite: "pianus.png",
-    spriteScale: 1.65,
+    spriteScale: 0.42,
     phaseSpawns: [
       { at: 0.7, units: [["bubbling", 8], ["octopus", 1]], path: "both" },
       { at: 0.4, units: [["croco", 4], ["bubbling", 6]], path: "alt" },
       { at: 0.2, units: [["octopus", 2], ["croco", 3], ["slime", 6]], path: "both" },
     ],
     phaseBanner: [
-      { at: 0.7, text: "海怒斯 · 深海潮湧" },
-      { at: 0.4, text: "海怒斯 · 觸手狂舞" },
-      { at: 0.2, text: "海怒斯 · 深淵壓制" },
+      { at: 0.7, text: "海怒斯 · 召喚小怪" },
+      { at: 0.4, text: "海怒斯 · 物理無效循環" },
+      { at: 0.2, text: "海怒斯 · 千斤墜＋火柱" },
     ],
   },
   // 舊 id 相容（曾誤標）
@@ -475,7 +475,7 @@ export const ENEMIES = {
     armor: 0.12,
     tags: ["boss", "summoner", "dense"],
     sprite: "pianus.png",
-    spriteScale: 1.65,
+    spriteScale: 0.42,
     phaseSpawns: [
       { at: 0.7, units: [["bubbling", 8], ["octopus", 1]], path: "both" },
       { at: 0.4, units: [["croco", 4], ["bubbling", 6]], path: "alt" },
@@ -499,7 +499,7 @@ export const ENEMIES = {
     armor: 0.15,
     tags: ["boss", "summoner"],
     sprite: "papulatus.png",
-    spriteScale: 1.55,
+    spriteScale: 0.55,
     speedBurstAt: 0.5,
     speedBurstMult: 1.45,
     phaseSpawns: [
@@ -525,7 +525,7 @@ export const ENEMIES = {
     armor: 0.22,
     tags: ["boss", "armored", "summoner"],
     sprite: "zakum.png",
-    spriteScale: 1.5,
+    spriteScale: 0.42,
     phaseSpawns: [
       { at: 0.7, units: [["fire_boar", 6], ["hellhound", 2]], path: "both" },
       { at: 0.45, units: [["jr_wraith", 6], ["red_drake", 2]], path: "both" },
@@ -549,16 +549,16 @@ export const ENEMIES = {
     armor: 0.3,
     tags: ["boss", "armored", "summoner", "dense"],
     sprite: "horntail.png",
-    spriteScale: 1.75,
+    spriteScale: 0.32,
     phaseSpawns: [
       { at: 0.75, units: [["drake", 3], ["jr_wraith", 4]], path: "both" },
       { at: 0.5, units: [["red_drake", 3], ["hellhound", 3]], path: "alt" },
       { at: 0.25, units: [["drake", 4], ["red_drake", 3], ["iron_hog", 2]], path: "both" },
     ],
     phaseBanner: [
-      { at: 0.75, text: "暗黑龍王 · 左頭甦醒" },
-      { at: 0.5, text: "暗黑龍王 · 右頭怒吼" },
-      { at: 0.25, text: "暗黑龍王 · 本體全力" },
+      { at: 0.75, text: "暗黑龍王 · 左頭劇毒" },
+      { at: 0.5, text: "暗黑龍王 · 右頭雷電" },
+      { at: 0.25, text: "暗黑龍王 · 本體龍息" },
     ],
   },
   boss_pink_bean: {
@@ -576,8 +576,8 @@ export const ENEMIES = {
     hasteRadius: 140,
     speedBurstAt: 0.4,
     speedBurstMult: 1.35,
-    sprite: "pepe.png",
-    spriteScale: 2.4,
+    sprite: "pinkbean.png",
+    spriteScale: 1.85,
     phaseSpawns: [
       { at: 0.8, units: [["slime", 10], ["pig", 5]], path: "both" },
       { at: 0.55, units: [["jr_wraith", 6], ["ribbon_pig", 5], ["bubbling", 4]], path: "both" },
