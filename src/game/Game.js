@@ -759,7 +759,7 @@ export class Game {
         });
         if (e._pendingBanner) {
           this.fx.push(createBossBanner(e._pendingBanner, e.def.color));
-          this.sfx.play("bossPhase");
+          this.sfx.playBoss("phase", { bossId: e.def.id || e.typeId });
           this.ui?.toast?.(e._pendingBanner);
           e._pendingBanner = null;
         }
@@ -768,7 +768,12 @@ export class Game {
           for (const ev of e.bossEvents) {
             if (ev.kind === "bossTelegraph") {
               this.fx.push(createBossBanner(ev.text, e.def.color));
-              this.sfx.play("bossPhase");
+              this.sfx.playBoss("telegraph", {
+                bossId: e.def.id || e.typeId,
+                skillId: ev.skill?.id,
+                skillType: ev.skill?.type,
+                skillName: ev.skill?.name,
+              });
             } else if (ev.kind === "bossCast") {
               applyBossCast(this, ev);
             }
@@ -894,7 +899,7 @@ export class Game {
             this.sfx.play("kill", { boss: wasBoss, family: owner?.def?.family });
             if (wasBoss) {
               this.fx.push(createBossBanner(`${target.def.nameZh} 擊破！`, target.def.color));
-              this.sfx.play("bossPhase");
+              this.sfx.playBoss("kill", { bossId: target.def.id || target.typeId });
             }
             let mesoGain = mesosForKill(target.def);
             if (p._mesoBonus) {

@@ -1012,7 +1012,6 @@ export function applyBossCast(game, event) {
   const { enemy, skill } = event;
   if (!skill || !enemy) return;
   const now = game.now;
-  let sfxName = "bossPhase";
   let hitTargets = [];
 
   const toast = (msg) => {
@@ -1086,7 +1085,6 @@ export function applyBossCast(game, event) {
       break;
     }
     case "coreStrike": {
-      sfxName = "leak";
       const dmg = skill.coreDmg || 1;
       if (game.buffs.coreShield > 0) {
         game.buffs.coreShield -= 1;
@@ -1098,7 +1096,6 @@ export function applyBossCast(game, event) {
       break;
     }
     case "drain": {
-      sfxName = "leak";
       const dmg = skill.coreDmg || 1;
       if (game.buffs.coreShield > 0) game.buffs.coreShield -= 1;
       else game.coreHp = Math.max(0, game.coreHp - dmg);
@@ -1191,7 +1188,12 @@ export function applyBossCast(game, event) {
   }
 
   game.fx.push(...buildBossCastVfx(enemy, skill, game, hitTargets));
-  game.sfx?.play?.(sfxName);
+  game.sfx?.playBoss?.("cast", {
+    bossId: enemy.def?.id || enemy.typeId,
+    skillId: skill.id,
+    skillType: skill.type,
+    skillName: skill.name,
+  });
 }
 
 export function getBossArmorBonus(enemy, now) {

@@ -641,6 +641,50 @@ class SfxEngine {
     this.play("hit", opts);
   }
 
+  /**
+   * Boss 專用音效（預示 / 施放）
+   * @param {'telegraph'|'cast'|'phase'|'kill'} phase
+   * @param {{ bossId?: string, skillId?: string, skillType?: string, skillName?: string }} meta
+   */
+  playBoss(phase, meta = {}) {
+    if (this.muted) return;
+    this.ensure();
+    if (!this.ctx) return;
+    if (this.ctx.state !== "running") {
+      try {
+        void this.ctx.resume();
+      } catch {
+        /* ignore */
+      }
+    }
+    const key = `boss_${phase}_${meta.bossId || "x"}_${meta.skillId || meta.skillType || "y"}`;
+    if (!this._throttle(key, phase === "telegraph" ? 80 : 50)) return;
+
+    const dest = this.sfxBus || this.master;
+    const bossId = meta.bossId || "";
+    const skillId = meta.skillId || "";
+    const skillType = meta.skillType || "";
+
+    if (phase === "telegraph") {
+      playBossTelegraph(this.ctx, dest, bossId, skillId, skillType);
+      return;
+    }
+    if (phase === "cast") {
+      playBossCast(this.ctx, dest, bossId, skillId, skillType);
+      return;
+    }
+    if (phase === "phase") {
+      playBossPhaseSting(this.ctx, dest, bossId);
+      return;
+    }
+    if (phase === "kill") {
+      playBossKill(this.ctx, dest, bossId);
+      return;
+    }
+    // fallback
+    this.play("bossPhase");
+  }
+
   _playBuffer(buf, name, opts = {}) {
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
@@ -806,6 +850,259 @@ const FALLBACK = {
     tone(ctx, master, t, { type: "triangle", freq: 200, duration: 0.08, peak: 0.07 });
     tone(ctx, master, t + 0.09, { type: "triangle", freq: 150, duration: 0.1, peak: 0.07 });
   },
+  bossPhase(ctx, master) {
+    const t = ctx.currentTime;
+    tone(ctx, master, t, { type: "sine", freq: 220, freqEnd: 180, duration: 0.2, peak: 0.1 });
+    tone(ctx, master, t + 0.08, { type: "triangle", freq: 330, duration: 0.18, peak: 0.08 });
+  },
 };
+
+/* ═══════════════════════════════════════════
+ * Boss 專屬音色（程序合成，每王不同性格）
+ * 海怒斯：深海濕潤／氣泡
+ * 拉圖斯：時鐘／水晶／次元
+ * 炎魔：熔岩／金屬重擊
+ * 暗黑龍王：龍吼／毒／雷
+ * 皮卡啾：俏皮高頻／花瓣／狂暴轉暗
+ * ═══════════════════════════════════════════ */
+
+function bossBase(bossId) {
+  // 各 Boss 主頻、波形、噪音色
+  const map = {
+    boss_hainurs: { f: 110, wave: "sine", noise: 600, wet: true },
+    boss_papulatus: { f: 440, wave: "triangle", noise: 2400, wet: false },
+    boss_zakum: { f: 90, wave: "sawtooth", noise: 400, wet: false },
+    boss_dark_dragon: { f: 70, wave: "sawtooth", noise: 900, wet: true },
+    boss_pink_bean: { f: 520, wave: "square", noise: 3200, wet: false },
+    boss_horntail: { f: 110, wave: "sine", noise: 600, wet: true },
+  };
+  return map[bossId] || { f: 200, wave: "triangle", noise: 1200, wet: false };
+}
+
+function playBossTelegraph(ctx, dest, bossId, skillId, skillType) {
+  const t = ctx.currentTime;
+  const b = bossBase(bossId);
+  // 預示：短促上升音 + 輕噪音
+  tone(ctx, dest, t, {
+    type: b.wave === "sawtooth" ? "triangle" : b.wave,
+    freq: b.f * 1.5,
+    freqEnd: b.f * 2.2,
+    duration: 0.18,
+    peak: 0.09,
+  });
+  noiseBurst(ctx, dest, t, { duration: 0.1, peak: 0.04, filterFreq: b.noise });
+  // 拉圖斯預示多一聲時鐘
+  if (bossId === "boss_papulatus") {
+    tone(ctx, dest, t + 0.12, { type: "sine", freq: 880, duration: 0.06, peak: 0.07 });
+    tone(ctx, dest, t + 0.2, { type: "sine", freq: 880, duration: 0.06, peak: 0.05 });
+  }
+  // 皮卡啾俏皮
+  if (bossId === "boss_pink_bean") {
+    tone(ctx, dest, t + 0.1, { type: "square", freq: 660, freqEnd: 990, duration: 0.08, peak: 0.05 });
+  }
+  // 全場招預示更長
+  if (skillType === "silence" || skillId === "time_stop" || skillId === "seal" || skillId === "mouth") {
+    tone(ctx, dest, t + 0.15, { type: "sine", freq: b.f, freqEnd: b.f * 0.7, duration: 0.25, peak: 0.08 });
+  }
+}
+
+function playBossCast(ctx, dest, bossId, skillId, skillType) {
+  const t = ctx.currentTime;
+  const b = bossBase(bossId);
+  const id = skillId || "";
+  const typ = skillType || "";
+
+  // ── 依 skill id 專屬 ──
+  if (id === "phys_immune" || id === "turtleneck" || typ === "immune") {
+    // 金屬盾
+    tone(ctx, dest, t, { type: "triangle", freq: 600, freqEnd: 200, duration: 0.2, peak: 0.1 });
+    tone(ctx, dest, t + 0.05, { type: "sine", freq: 900, freqEnd: 400, duration: 0.25, peak: 0.07 });
+    noiseBurst(ctx, dest, t, { duration: 0.12, peak: 0.05, filterFreq: 3000 });
+    return;
+  }
+  if (id === "mouth") {
+    // 嘴炮：低頻嗡 + 噪音爆破
+    tone(ctx, dest, t, { type: "sawtooth", freq: 80, freqEnd: 40, duration: 0.35, peak: 0.11 });
+    noiseBurst(ctx, dest, t, { duration: 0.2, peak: 0.1, filterFreq: 900 });
+    noiseBurst(ctx, dest, t + 0.1, { duration: 0.15, peak: 0.06, filterFreq: 400 });
+    return;
+  }
+  if (id === "fire_pillar" || id === "pillar" || id === "breath" || id === "petal" || id === "tide") {
+    // 柱／息／潮：上升焰 + 衝擊
+    noiseBurst(ctx, dest, t, { duration: 0.25, peak: 0.1, filterFreq: id === "tide" ? 500 : 1200 });
+    tone(ctx, dest, t, { type: "sawtooth", freq: b.f, freqEnd: b.f * 3, duration: 0.28, peak: 0.1 });
+    tone(ctx, dest, t + 0.15, { type: "triangle", freq: 200, freqEnd: 80, duration: 0.2, peak: 0.09 });
+    return;
+  }
+  if (id === "crush" || (id === "slam" && bossId === "boss_hainurs")) {
+    // 千斤墜：超重落地
+    tone(ctx, dest, t, { type: "sine", freq: 60, freqEnd: 30, duration: 0.35, peak: 0.16 });
+    noiseBurst(ctx, dest, t, { duration: 0.2, peak: 0.12, filterFreq: 200 });
+    noiseBurst(ctx, dest, t + 0.05, { duration: 0.15, peak: 0.08, filterFreq: 80 });
+    return;
+  }
+  if (id === "dispel") {
+    tone(ctx, dest, t, { type: "sine", freq: 800, freqEnd: 200, duration: 0.3, peak: 0.08 });
+    tone(ctx, dest, t + 0.08, { type: "triangle", freq: 600, freqEnd: 100, duration: 0.25, peak: 0.06 });
+    return;
+  }
+  if (id === "summon" || id === "black_ball" || id === "statue" || typ === "summonPulse") {
+    [b.f, b.f * 1.25, b.f * 1.5].forEach((f, i) => {
+      tone(ctx, dest, t + i * 0.06, { type: "triangle", freq: f, freqEnd: f * 1.4, duration: 0.12, peak: 0.07 });
+    });
+    noiseBurst(ctx, dest, t + 0.1, { duration: 0.1, peak: 0.05, filterFreq: b.noise });
+    return;
+  }
+  if (id === "time_magic" || id === "time_stop" || id.includes("time")) {
+    // 時鐘：滴答 + 次元掃頻
+    tone(ctx, dest, t, { type: "sine", freq: 1200, duration: 0.05, peak: 0.08 });
+    tone(ctx, dest, t + 0.1, { type: "sine", freq: 1200, duration: 0.05, peak: 0.07 });
+    tone(ctx, dest, t + 0.15, { type: "triangle", freq: 400, freqEnd: 80, duration: 0.4, peak: 0.12 });
+    noiseBurst(ctx, dest, t + 0.2, { duration: 0.2, peak: 0.06, filterFreq: 2000 });
+    return;
+  }
+  if (id === "reflect" || id === "scale" || typ === "reflect") {
+    tone(ctx, dest, t, { type: "sine", freq: 1000, freqEnd: 1400, duration: 0.12, peak: 0.09 });
+    tone(ctx, dest, t + 0.06, { type: "triangle", freq: 1400, freqEnd: 600, duration: 0.18, peak: 0.08 });
+    noiseBurst(ctx, dest, t, { duration: 0.08, peak: 0.05, filterFreq: 4000 });
+    return;
+  }
+  if (id === "drain") {
+    tone(ctx, dest, t, { type: "sine", freq: 300, freqEnd: 120, duration: 0.35, peak: 0.1 });
+    tone(ctx, dest, t + 0.1, { type: "triangle", freq: 180, freqEnd: 90, duration: 0.3, peak: 0.08 });
+    return;
+  }
+  if (id === "arm" || id === "slam") {
+    // 手臂／揮掌
+    tone(ctx, dest, t, { type: "sawtooth", freq: 120, freqEnd: 45, duration: 0.22, peak: 0.13 });
+    noiseBurst(ctx, dest, t, { duration: 0.12, peak: 0.09, filterFreq: 500 });
+    return;
+  }
+  if (id === "lava") {
+    noiseBurst(ctx, dest, t, { duration: 0.28, peak: 0.11, filterFreq: 700 });
+    tone(ctx, dest, t, { type: "sawtooth", freq: 90, freqEnd: 50, duration: 0.3, peak: 0.1 });
+    return;
+  }
+  if (id === "seal" || typ === "silence") {
+    // 封印／沉默：壓制低鳴
+    tone(ctx, dest, t, { type: "sine", freq: 180, freqEnd: 90, duration: 0.3, peak: 0.11 });
+    tone(ctx, dest, t + 0.05, { type: "triangle", freq: 240, freqEnd: 100, duration: 0.28, peak: 0.08 });
+    return;
+  }
+  if (id === "cube" || typ === "healCube") {
+    [523, 659, 784].forEach((f, i) => {
+      tone(ctx, dest, t + i * 0.05, { type: "sine", freq: f, duration: 0.15, peak: 0.08 });
+    });
+    return;
+  }
+  if (id === "curse" || typ === "curse") {
+    tone(ctx, dest, t, { type: "sawtooth", freq: 150, freqEnd: 60, duration: 0.4, peak: 0.1 });
+    tone(ctx, dest, t + 0.1, { type: "triangle", freq: 100, freqEnd: 40, duration: 0.35, peak: 0.08 });
+    return;
+  }
+  if (id === "poison" || typ === "poisonBreath") {
+    noiseBurst(ctx, dest, t, { duration: 0.3, peak: 0.09, filterFreq: 500 });
+    tone(ctx, dest, t, { type: "sine", freq: 140, freqEnd: 70, duration: 0.35, peak: 0.08 });
+    tone(ctx, dest, t + 0.12, { type: "triangle", freq: 200, freqEnd: 80, duration: 0.25, peak: 0.06 });
+    return;
+  }
+  if (id === "tail") {
+    tone(ctx, dest, t, { type: "sawtooth", freq: 100, freqEnd: 40, duration: 0.2, peak: 0.12 });
+    noiseBurst(ctx, dest, t, { duration: 0.1, peak: 0.08, filterFreq: 600 });
+    return;
+  }
+  if (id === "chain" || typ === "chainLightning") {
+    // 連鎖閃電：連續高頻
+    [0, 0.07, 0.14].forEach((off, i) => {
+      noiseBurst(ctx, dest, t + off, { duration: 0.06, peak: 0.1, filterFreq: 3500 - i * 400 });
+      tone(ctx, dest, t + off, { type: "square", freq: 800 - i * 100, freqEnd: 400, duration: 0.08, peak: 0.07 });
+    });
+    return;
+  }
+  if (id === "rock") {
+    noiseBurst(ctx, dest, t, { duration: 0.08, peak: 0.06, filterFreq: 1500 });
+    tone(ctx, dest, t + 0.08, { type: "triangle", freq: 90, freqEnd: 40, duration: 0.18, peak: 0.12 });
+    noiseBurst(ctx, dest, t + 0.1, { duration: 0.12, peak: 0.1, filterFreq: 300 });
+    return;
+  }
+  if (id === "feather" || typ === "multiSilence") {
+    [660, 770, 880].forEach((f, i) => {
+      tone(ctx, dest, t + i * 0.05, { type: "sine", freq: f, freqEnd: f * 1.2, duration: 0.1, peak: 0.06 });
+    });
+    noiseBurst(ctx, dest, t, { duration: 0.12, peak: 0.04, filterFreq: 4000 });
+    return;
+  }
+  if (id === "rage" || typ === "enrage" || typ === "hastePulse") {
+    tone(ctx, dest, t, { type: "sawtooth", freq: 80, freqEnd: 200, duration: 0.35, peak: 0.14 });
+    tone(ctx, dest, t + 0.1, { type: "square", freq: 200, freqEnd: 400, duration: 0.25, peak: 0.1 });
+    noiseBurst(ctx, dest, t, { duration: 0.25, peak: 0.1, filterFreq: 800 });
+    return;
+  }
+  if (typ === "coreStrike") {
+    tone(ctx, dest, t, { type: "triangle", freq: b.f * 1.2, freqEnd: b.f * 0.4, duration: 0.28, peak: 0.12 });
+    noiseBurst(ctx, dest, t, { duration: 0.15, peak: 0.08, filterFreq: b.noise });
+    return;
+  }
+  if (typ === "shockwave") {
+    tone(ctx, dest, t, { type: "sine", freq: b.f, freqEnd: b.f * 0.4, duration: 0.25, peak: 0.12 });
+    noiseBurst(ctx, dest, t, { duration: 0.14, peak: 0.09, filterFreq: b.noise * 0.5 });
+    return;
+  }
+
+  // ── Boss 性格預設施放音 ──
+  if (bossId === "boss_hainurs") {
+    tone(ctx, dest, t, { type: "sine", freq: 100, freqEnd: 50, duration: 0.3, peak: 0.11 });
+    noiseBurst(ctx, dest, t, { duration: 0.18, peak: 0.07, filterFreq: 500 });
+    // 氣泡
+    tone(ctx, dest, t + 0.1, { type: "sine", freq: 400, freqEnd: 700, duration: 0.08, peak: 0.04 });
+    tone(ctx, dest, t + 0.16, { type: "sine", freq: 500, freqEnd: 800, duration: 0.07, peak: 0.03 });
+  } else if (bossId === "boss_papulatus") {
+    tone(ctx, dest, t, { type: "sine", freq: 880, duration: 0.05, peak: 0.08 });
+    tone(ctx, dest, t + 0.08, { type: "triangle", freq: 440, freqEnd: 110, duration: 0.3, peak: 0.1 });
+  } else if (bossId === "boss_zakum") {
+    tone(ctx, dest, t, { type: "sawtooth", freq: 70, freqEnd: 35, duration: 0.3, peak: 0.13 });
+    noiseBurst(ctx, dest, t, { duration: 0.2, peak: 0.1, filterFreq: 450 });
+  } else if (bossId === "boss_dark_dragon") {
+    tone(ctx, dest, t, { type: "sawtooth", freq: 55, freqEnd: 30, duration: 0.4, peak: 0.14 });
+    tone(ctx, dest, t + 0.1, { type: "triangle", freq: 90, freqEnd: 40, duration: 0.3, peak: 0.09 });
+    noiseBurst(ctx, dest, t, { duration: 0.22, peak: 0.08, filterFreq: 350 });
+  } else if (bossId === "boss_pink_bean") {
+    tone(ctx, dest, t, { type: "square", freq: 520, freqEnd: 780, duration: 0.12, peak: 0.08 });
+    tone(ctx, dest, t + 0.1, { type: "sine", freq: 660, freqEnd: 330, duration: 0.2, peak: 0.09 });
+  } else {
+    tone(ctx, dest, t, { type: "triangle", freq: b.f, freqEnd: b.f * 0.5, duration: 0.25, peak: 0.1 });
+  }
+}
+
+function playBossPhaseSting(ctx, dest, bossId) {
+  const t = ctx.currentTime;
+  const b = bossBase(bossId);
+  // 相位轉換：三連音，每王音階不同
+  const chords = {
+    boss_hainurs: [110, 147, 165],
+    boss_papulatus: [440, 554, 659],
+    boss_zakum: [82, 110, 131],
+    boss_dark_dragon: [65, 82, 98],
+    boss_pink_bean: [523, 659, 784],
+  };
+  const notes = chords[bossId] || [b.f, b.f * 1.25, b.f * 1.5];
+  notes.forEach((f, i) => {
+    tone(ctx, dest, t + i * 0.1, {
+      type: bossId === "boss_zakum" || bossId === "boss_dark_dragon" ? "sawtooth" : "sine",
+      freq: f,
+      duration: 0.22,
+      peak: 0.1,
+    });
+  });
+  noiseBurst(ctx, dest, t, { duration: 0.15, peak: 0.06, filterFreq: b.noise });
+}
+
+function playBossKill(ctx, dest, bossId) {
+  const t = ctx.currentTime;
+  const b = bossBase(bossId);
+  playBossPhaseSting(ctx, dest, bossId);
+  tone(ctx, dest, t + 0.35, { type: "sine", freq: b.f * 2, freqEnd: b.f * 4, duration: 0.35, peak: 0.1 });
+  noiseBurst(ctx, dest, t + 0.3, { duration: 0.25, peak: 0.08, filterFreq: b.noise });
+}
 
 export const sfx = new SfxEngine();
