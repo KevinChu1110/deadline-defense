@@ -381,23 +381,23 @@ function getCoachSteps(bcMode) {
   if (bcMode) {
     return [
       {
-        title: "點卡出兵",
-        body: "遠征是推線模式：點右側職業卡就會從左方基地出兵，單位自動往右走。",
+        title: "點下方卡出兵",
+        body: "遠征是推線模式：點畫面下方職業頭像出兵。單位會自動往右走。",
         highlight: "deploy",
       },
       {
-        title: "開始遠征",
-        body: "出幾隻兵後，點畫面中央「開始遠征」。錢包會自動回復，可繼續出兵。",
+        title: "敵軍自動來襲",
+        body: "第一隻兵出陣後會自動開波，敵人從右邊湧來。也可按「開始遠征」。錢包會自動回復。",
         highlight: "wave",
       },
       {
         title: "守住我方基地",
-        body: "敵人從右邊攻來。漏怪會扣我方基地血量——看上方紅色血條。",
+        body: "敵人碰到左邊基地會扣血——看上方血條。用出兵節奏擋住推線。",
         highlight: "core",
       },
       {
         title: "推倒敵方基地",
-        body: "打完 Boss 波後進入總攻，拆掉敵方基地即勝利。暫停選單可隨時離開。",
+        body: "清完波次後總攻右側基地；打倒 Boss 也會重創敵方基地。拆掉即勝利！",
         highlight: null,
       },
     ];
@@ -464,10 +464,7 @@ function openCoachIfNeeded(bcMode) {
     els.coachOverlay.hidden = false;
   }
   renderCoachStep();
-  // 輕暫停，避免教學中波次跑掉
-  if (game && !game.waveActive && !game.result) {
-    game.setPaused(true);
-  }
+  // 不凍結戰鬥：遠征出兵／移動必須能動，教學只當浮層
 }
 
 function closeCoach({ mark = true } = {}) {
@@ -475,9 +472,6 @@ function closeCoach({ mark = true } = {}) {
   coachState = null;
   clearCoachHighlight();
   if (els.coachOverlay) els.coachOverlay.hidden = true;
-  if (game && game.paused && screen === "play" && !els.pauseOverlay?.classList.contains("is-open")) {
-    game.setPaused(false);
-  }
 }
 
 function coachNext() {

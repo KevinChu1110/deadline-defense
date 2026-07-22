@@ -70,7 +70,7 @@ import {
 } from "../data/ranking.js";
 import { themeForStage } from "../data/map-themes.js";
 import { BOSSES } from "../data/bosses.js";
-import { applyBossCast } from "./boss-attacks.js";
+import { applyBossCast, tickBossAttacks } from "./boss-attacks.js";
 import {
   initBcState,
   tickBcWallet,
@@ -78,6 +78,7 @@ import {
   bcSpawnReady,
   markBcSpawned,
   updateBcSpecialist,
+  updateBcEnemy,
   placeEnemyOnBcLane,
   damageEnemyCastle,
 } from "./battle-cats-mode.js";
@@ -303,7 +304,12 @@ export class Game {
    */
   tryDeployBc(typeId) {
     if (!this.bcMode || !this.bc) return false;
-    if (this.result || this.pausedForReward || this.paused) return false;
+    if (this.result || this.pausedForReward) return false;
+    // 暫停時出兵 = 自動解除暫停（避免教學／誤觸卡住）
+    if (this.paused) {
+      this.paused = false;
+      this.ui?.onPauseChange?.(false);
+    }
     if (!typeId || !this.loadout.includes(typeId)) {
       this.sfx.play("error");
       this.ui?.toast?.("此職業不在出戰名單");
@@ -319,7 +325,8 @@ export class Game {
       this.ui?.toast?.("出兵冷卻中…");
       return false;
     }
-    const alive = this.specialists.length;
+    // 只計存活單位
+    const alive = this.specialists.filter((s) => s.alive !== false && !s._bcDead).length;
     if (alive >= (this.bc.maxUnits || this.teamLimit)) {
       this.sfx.play("error");
       this.ui?.toast?.("戰場人數已滿");
@@ -334,11 +341,14 @@ export class Game {
     }
     const base = this.bc.playerBase;
     const yOff = ((this.specialists.length % 5) - 2) * 7;
-    const pad = { x: base.x + 28 + Math.random() * 12, y: this.bc.laneY + yOff };
+    const pad = { x: base.x + 36 + Math.random() * 16, y: this.bc.laneY + yOff };
     const unit = createSpecialist(typeId, -1, pad, def);
     unit.bcMode = true;
     unit.bcYOff = yOff;
     unit.facing = 1;
+    unit.alive = true;
+    unit.hp = 32 + (def.damage || 8) * 2.2;
+    unit.maxHp = unit.hp;
     this.specialists.push(unit);
     this.points -= def.cost;
     markBcSpawned(this.bc, typeId);
@@ -348,6 +358,10 @@ export class Game {
     this.sfx.play("deploy");
     this.fx.push(...createParticles(pad.x, pad.y, def.color, 10, { speed: 80, life: 0.35 }));
     this.fx.push(createRing(pad.x, pad.y, def.color, { maxR: 36, life: 0.28 }));
+    // 遠征：第一隻兵出陣後自動開第一波（更像貓咪大戰爭）
+    if (this.waveIndex < 0 && !this.waveActive) {
+      this.startNextWave();
+    }
     this.ui?.onState?.(this.getPublicState());
     this.ui?.toast?.(`${def.nameZh} −${def.cost} 出兵`);
     return true;
@@ -543,7 +557,12 @@ export class Game {
   }
 
   startNextWave() {
-    if (this.waveActive || this.result || this.pausedForReward || this.paused) return;
+    if (this.waveActive || this.result || this.pausedForReward) return;
+    // 遠征／一般：暫停中開波 = 自動繼續
+    if (this.paused) {
+      this.paused = false;
+      this.ui?.onPauseChange?.(false);
+    }
     const next = this.waveIndex + 1;
     if (next >= this.stage.waves.length) return;
 
@@ -553,11 +572,15 @@ export class Game {
     this.spawnQueue = [];
     this.elapsed = 0;
 
-    const isBossWave = next === 4 || next === 9 || /Boss|BOSS|boss/.test(wave.name);
-    for (const group of wave.groups) {
-      let t = group.at;
+    const isBossWave =
+      next === 4 || next === 9 || /Boss|BOSS|boss|競賽|遠征/.test(wave.name || "");
+    for (const group of wave.groups || []) {
+      let t = Number(group.at) || 0;
       const pathKey = group.path || "workflow";
-      for (const [typeId, count] of group.units) {
+      for (const unit of group.units || []) {
+        const typeId = Array.isArray(unit) ? unit[0] : unit?.typeId || unit;
+        const count = Array.isArray(unit) ? unit[1] : unit?.count || 1;
+        if (!typeId) continue;
         for (let i = 0; i < count; i++) {
           this.spawnQueue.push({
             at: t,
@@ -565,17 +588,33 @@ export class Game {
             pathKey,
             distanceRatio: group.distanceRatio,
           });
-          t += group.interval ?? 0.9;
+          t += group.interval ?? (this.bcMode ? 0.55 : 0.9);
         }
       }
     }
     this.spawnQueue.sort((a, b) => a.at - b.at);
-    this.status = `第 ${next + 1} 波：${wave.name}`;
+    this.status = this.bcMode
+      ? `遠征 第 ${next + 1} 波：${wave.name}`
+      : `第 ${next + 1} 波：${wave.name}`;
     this.sfx.play("waveStart");
     this.sfx.startBgm("battle");
+    // 遠征：立刻刷一隻，玩家立刻看到敵人
+    if (this.bcMode && this.spawnQueue.length) {
+      const first = this.spawnQueue[0];
+      if (first.at <= 0.05) {
+        this.spawnQueue.shift();
+        this._spawnEnemy(first.typeId, first.pathKey, {
+          distanceRatio: first.distanceRatio,
+        });
+      }
+    }
     this.ui?.onState?.(this.getPublicState());
     this.ui?.toast?.(
-      isBossWave ? `⚠ ${wave.name}` : `第 ${next + 1} 波 — ${wave.name}`
+      isBossWave
+        ? `⚠ ${wave.name}`
+        : this.bcMode
+          ? `敵軍來襲！第 ${next + 1}／${this.stage.waves.length} 波`
+          : `第 ${next + 1} 波 — ${wave.name}`
     );
   }
 
@@ -583,14 +622,27 @@ export class Game {
     const keys = Object.keys(this.pathMetricsMap);
     let pk = pathKey || "workflow";
     if (!this.pathMetricsMap[pk]) pk = keys[0];
-    const metrics = this.pathMetricsMap[pk];
-    if (!metrics) return null;
-    const enemy = createEnemy(typeId, pk, metrics, {
-      hpScale: this.stage.hpScale ?? 1,
-      speedScale: this.stage.speedScale ?? 1,
-      leakScale: this.stage.leakScale ?? 1,
-      distanceRatio: opts.distanceRatio,
-    });
+    let metrics = this.pathMetricsMap[pk];
+    // 遠征：path 異常時仍強制生成在右側
+    if (!metrics) {
+      if (this.bcMode && this.bc) {
+        metrics = { total: 900, points: [] };
+      } else {
+        return null;
+      }
+    }
+    let enemy;
+    try {
+      enemy = createEnemy(typeId, pk, metrics, {
+        hpScale: this.stage.hpScale ?? 1,
+        speedScale: this.stage.speedScale ?? 1,
+        leakScale: this.stage.leakScale ?? 1,
+        distanceRatio: this.bcMode ? 0 : opts.distanceRatio,
+      });
+    } catch (err) {
+      console.warn("[spawn] unknown enemy", typeId, err);
+      return null;
+    }
     if (this.bcMode && this.bc) {
       placeEnemyOnBcLane(enemy, this.bc, this.enemies.length);
     }
@@ -599,6 +651,9 @@ export class Game {
       this.fx.push(createRing(enemy.x, enemy.y, enemy.def.color, { maxR: 70, life: 0.55 }));
       this.fx.push(createFloatText(enemy.x, enemy.y - 24, "BOSS", "#f9a8d4"));
       this.sfx.play("waveStart");
+      if (this.bcMode) {
+        this.ui?.toast?.(`⚠ Boss 登場：${enemy.def.nameZh || typeId}`);
+      }
     }
     return enemy;
   }
@@ -1010,29 +1065,47 @@ export class Game {
     }
 
     // snapshot because list grows from summons
+    const alliesAlive = this.specialists.filter((s) => s.alive !== false && !s._bcDead);
     const list = this.enemies.slice();
     for (const e of list) {
       if (!e.alive && !e.pendingSpawns?.length) continue;
       if (e.alive) {
-        const hz = this.bcMode
-          ? { speedMul: 1, noSlow: false, extraDist: 0 }
-          : sampleHazardOnEnemy(this.hazardState, e, dt, this.stage.map);
-        e.status.hazardSpeedMul = hz.speedMul;
-        e.status.noSlow = hz.noSlow;
-        if (!this.bcMode) tryPortalJump(this.hazardState, e);
-        updateEnemy(e, dt, this.now, {
-          buffs: {
-            coreSlowRadius: this.bcMode ? 0 : this.buffs.coreSlowRadius,
-            coreSlowPower: this.buffs.coreSlowPower,
-            corePos,
-          },
-          pathMetricsMap: this.pathMetricsMap,
-          auras,
-          stallZones,
-          hazardExtraDist: hz.extraDist,
-        });
         if (this.bcMode && this.bc) {
-          e.y = this.bc.laneY + (e.bcYOff || 0);
+          // 遠征：專用左右推線物理（不走 path 取樣）
+          e.animTime = (e.animTime || 0) + dt;
+          if (e.hitFlash > 0) e.hitFlash = Math.max(0, e.hitFlash - dt);
+          if (e.status?.burnUntil > this.now) {
+            e.hp -= (e.status.burnDps || 0) * dt;
+            if (e.hp <= 0) e.alive = false;
+          }
+          // Boss 招式仍走原系統（位置在推線上即可）
+          if (e.def.boss && e.alive) {
+            e.bossEvents = tickBossAttacks(e, dt, this.now);
+          } else {
+            e.bossEvents = [];
+          }
+          if (e.alive) {
+            const bcRes = updateBcEnemy(e, dt, alliesAlive, this.bc);
+            if (bcRes.hitPlayerBase > 0 || e.leaked) {
+              e.leaked = true;
+            }
+          }
+        } else {
+          const hz = sampleHazardOnEnemy(this.hazardState, e, dt, this.stage.map);
+          e.status.hazardSpeedMul = hz.speedMul;
+          e.status.noSlow = hz.noSlow;
+          tryPortalJump(this.hazardState, e);
+          updateEnemy(e, dt, this.now, {
+            buffs: {
+              coreSlowRadius: this.buffs.coreSlowRadius,
+              coreSlowPower: this.buffs.coreSlowPower,
+              corePos,
+            },
+            pathMetricsMap: this.pathMetricsMap,
+            auras,
+            stallZones,
+            hazardExtraDist: hz.extraDist,
+          });
         }
         if (e._pendingBanner) {
           this.fx.push(createBossBanner(e._pendingBanner, e.def.color));
@@ -1085,14 +1158,15 @@ export class Game {
 
     const enemiesById = new Map(this.enemies.map((e) => [e.id, e]));
     for (const s of this.specialists) {
+      if (s._bcDead || s.alive === false) continue;
       updateSpecialist(s, dt);
       if (this.bcMode && this.bc) {
         const canSiege =
           this.bc.siege || this.waveIndex >= this.stage.waves.length - 1;
         const moved = updateBcSpecialist(s, dt, this.enemies, this.bc);
         // 未進入 Boss 波前，在敵方門前停下、不拆塔
-        if (!canSiege && s.x > this.bc.enemyBase.x - 100) {
-          s.x = this.bc.enemyBase.x - 100;
+        if (!canSiege && s.x > this.bc.enemyBase.x - 120) {
+          s.x = Math.min(s.x, this.bc.enemyBase.x - 120);
         } else if (canSiege && moved.castleHits > 0) {
           const down = damageEnemyCastle(this.bc, moved.castleHits);
           this.fx.push(
@@ -1116,6 +1190,8 @@ export class Game {
       if (!target) continue;
       const shots = fireSpecialist(s, target);
       s.cooldown = s.def.interval / (syn.attackSpeedMult || 1);
+      // 遠征近戰加速一點
+      if (this.bcMode) s.cooldown = Math.min(s.cooldown, Math.max(0.35, s.def.interval * 0.75));
       this.projectiles.push(...shots);
       this.fx.push(...buildShootVfx(s));
       const skill = getJobSkill(s.typeId) || {};
@@ -1127,6 +1203,10 @@ export class Game {
         ice: !!skill.slowChain,
         crit: !!skill.critChance,
       });
+    }
+    // 清掉遠征陣亡單位
+    if (this.bcMode) {
+      this.specialists = this.specialists.filter((s) => !s._bcDead && s.alive !== false);
     }
 
     for (const p of this.projectiles) {

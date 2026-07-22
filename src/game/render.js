@@ -699,20 +699,23 @@ function drawCore(ctx, core, hp, maxHp, now, shield = 0) {
 
 function drawSpecialists(ctx, specialists, selectedId, now) {
   for (const s of specialists) {
+    if (s._bcDead || s.alive === false) continue;
     const selected = s.id === selectedId;
     const stunned = (s.stunnedUntil || 0) > now;
     const silenced = (s.silencedUntil || 0) > now;
-    const bob = s.attackT > 0 ? 0 : Math.sin(now * 4 + s.id) * 1.5;
-    const lunge = s.attackT > 0 ? (s.facing || 1) * 3 : 0;
+    const bc = !!s.bcMode;
+    const bob = s.attackT > 0 ? 0 : Math.sin(now * 4 + s.id) * (bc ? 2.5 : 1.5);
+    const lunge = s.attackT > 0 ? (s.facing || 1) * (bc ? 5 : 3) : 0;
     // Prefer AI chibi portrait on the field; fall back to pixel sprite
     const portrait = getSpecialistPortrait(s.typeId, s.def);
     const usePortrait = portrait && (portrait.naturalWidth > 0 || portrait.width > 0);
+    const drawScale = bc ? 1.35 : 1;
 
     ctx.save();
     if (stunned || silenced) {
       ctx.globalAlpha = 0.55;
     }
-    if (selected) {
+    if (selected && !bc) {
       ctx.beginPath();
       ctx.arc(s.x, s.y, s.def.range, 0, Math.PI * 2);
       ctx.fillStyle = hexAlpha(s.def.color, 0.08);
@@ -726,13 +729,13 @@ function drawSpecialists(ctx, specialists, selectedId, now) {
 
     ctx.fillStyle = "rgba(0,0,0,0.35)";
     ctx.beginPath();
-    ctx.ellipse(s.x, s.y + 18, 16, 5, 0, 0, Math.PI * 2);
+    ctx.ellipse(s.x, s.y + 18 * drawScale, 16 * drawScale, 5 * drawScale, 0, 0, Math.PI * 2);
     ctx.fill();
 
     const dx = s.x + lunge;
     const dy = s.y - 8 + bob;
     if (usePortrait) {
-      const size = 48;
+      const size = bc ? 64 : 48;
       ctx.imageSmoothingEnabled = true;
       // Soft circular-ish clip via rounded rect card
       ctx.save();
@@ -747,6 +750,17 @@ function drawSpecialists(ctx, specialists, selectedId, now) {
       ctx.lineWidth = selected ? 2.5 : 1.5;
       roundRectPath(ctx, left, top, size, size, 10);
       ctx.stroke();
+      // 遠征血條
+      if (bc && s.maxHp) {
+        const ratio = Math.max(0, Math.min(1, (s.hp || 0) / s.maxHp));
+        const bw = size;
+        const bx = left;
+        const by = top + size + 2;
+        ctx.fillStyle = "rgba(0,0,0,0.5)";
+        ctx.fillRect(bx, by, bw, 4);
+        ctx.fillStyle = ratio > 0.35 ? "#4ade80" : "#f87171";
+        ctx.fillRect(bx, by, bw * ratio, 4);
+      }
     } else {
       const sprite = getSpecialistSprite(s.typeId, s.def, {
         attackT: s.attackT || 0,
@@ -755,6 +769,7 @@ function drawSpecialists(ctx, specialists, selectedId, now) {
       drawSprite(ctx, sprite, dx, dy, {
         bob: 0,
         flip: (s.facing || 1) < 0,
+        scale: bc ? 1.4 : 1,
       });
     }
 
@@ -771,13 +786,14 @@ function drawSpecialists(ctx, specialists, selectedId, now) {
     const label = s.def.nameZh || s.def.code;
     ctx.font = "700 10px 'PingFang TC', 'Noto Sans TC', system-ui";
     const tw = Math.max(28, ctx.measureText(label).width + 8);
+    const ly = bc ? s.y + 36 : s.y + 22;
     ctx.fillStyle = "rgba(40, 30, 18, 0.82)";
-    ctx.fillRect(Math.round(s.x - tw / 2), Math.round(s.y + 22), tw, 13);
+    ctx.fillRect(Math.round(s.x - tw / 2), Math.round(ly), tw, 13);
     ctx.strokeStyle = "rgba(255, 220, 120, 0.55)";
-    ctx.strokeRect(Math.round(s.x - tw / 2), Math.round(s.y + 22), tw, 13);
+    ctx.strokeRect(Math.round(s.x - tw / 2), Math.round(ly), tw, 13);
     ctx.fillStyle = "#ffe9a8";
     ctx.textAlign = "center";
-    ctx.fillText(label, s.x, s.y + 32);
+    ctx.fillText(label, s.x, ly + 10);
 
     // Boss 控制狀態 + 剩餘秒數
     if (stunned || silenced) {
