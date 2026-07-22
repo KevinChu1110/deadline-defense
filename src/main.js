@@ -46,6 +46,17 @@ import {
   BOSSES,
   getArenaBossId,
 } from "./data/bosses.js";
+import {
+  listSaveSlots,
+  switchToSlot,
+  createOrOpenSlot,
+  deleteSlot,
+  flushActiveSlot,
+  getActiveSlotIndex,
+  formatSlotTime,
+  ensureSaveSlotsMigrated,
+  SLOT_COUNT,
+} from "./data/save-slots.js";
 
 const canvas = document.querySelector("#game");
 const els = {
@@ -97,7 +108,13 @@ const els = {
   btnSaveNick: document.querySelector("#btn-save-nick"),
   btnContinue: document.querySelector("#btn-continue"),
   btnHomeRank: document.querySelector("#btn-home-rank"),
+  btnHomeGuide: document.querySelector("#btn-home-guide"),
   homeLeaves: document.querySelector("#home-leaves"),
+  saveSlotList: document.querySelector("#save-slot-list"),
+  guideOverlay: document.querySelector("#guide-overlay"),
+  guideTabs: document.querySelector("#guide-tabs"),
+  guideBody: document.querySelector("#guide-body"),
+  btnGuideClose: document.querySelector("#btn-guide-close"),
   rankOverlay: document.querySelector("#rank-overlay"),
   rankList: document.querySelector("#rank-list"),
   rankTabs: document.querySelector("#rank-tabs"),
@@ -162,6 +179,7 @@ function hideAllOverlays() {
   setOverlayOpen(els.rankOverlay, false);
   setOverlayOpen(els.pauseOverlay, false);
   setOverlayOpen(els.helpOverlay, false);
+  setOverlayOpen(els.guideOverlay, false);
 }
 
 const HELP_SEEN_KEY = "deadline-defense-help-seen-v1";
@@ -228,6 +246,7 @@ function clearRunState() {
 function showResult(kind) {
   try {
     screen = "result";
+    flushActiveSlot();
     hideAllOverlays();
 
     // Write copy first so UI never shows empty/default if something throws later
@@ -352,6 +371,7 @@ function getStarsForStage(stageId) {
 
 function renderStageList() {
   if (!els.stageList) return;
+  flushActiveSlot();
   const progress = loadProgress();
   els.stageList.innerHTML = "";
   // 下一個可挑戰
@@ -395,6 +415,7 @@ function renderStageList() {
   renderArenaList();
   syncNickInput();
   refreshHomeMeta(progress, nextIdx);
+  renderSaveSlots();
 }
 
 function refreshHomeMeta(progress = loadProgress(), nextIdx = 0) {
@@ -455,8 +476,165 @@ function syncNickInput() {
 function saveNickFromInput() {
   const n = setNickname(els.nickInput?.value || "冒險者");
   if (els.nickInput) els.nickInput.value = n;
+  flushActiveSlot();
+  renderSaveSlots();
   showToast(`暱稱：${n}`);
   sfx.play("uiOk");
+}
+
+function renderSaveSlots() {
+  if (!els.saveSlotList) return;
+  ensureSaveSlotsMigrated();
+  const slots = listSaveSlots();
+  const active = getActiveSlotIndex();
+  els.saveSlotList.innerHTML = "";
+  slots.forEach((slot, i) => {
+    const row = document.createElement("div");
+    row.className = `save-slot${i === active ? " is-active" : ""}${slot.empty ? " is-empty" : ""}`;
+    const title = slot.empty ? `空存檔 ${i + 1}` : slot.name || `存檔 ${i + 1}`;
+    const detail = slot.empty
+      ? "點「開新局」開始冒險"
+      : `通關 ${slot.clearedCount} · 解鎖至第 ${slot.unlocked} 關 · 🍁${slot.leaves} · ★${slot.starsTotal} · ${formatSlotTime(slot.updatedAt)}`;
+    row.innerHTML = `
+      <span class="save-slot-idx">${i + 1}</span>
+      <span class="save-slot-body">
+        <strong>${escapeHtml(title)}${i === active ? " · 使用中" : ""}</strong>
+        <small>${escapeHtml(detail)}</small>
+      </span>
+      <span class="save-slot-actions">
+        <button type="button" class="btn primary maple-primary" data-act="open" data-i="${i}">
+          ${slot.empty ? "開新局" : i === active ? "重整" : "讀取"}
+        </button>
+        ${
+          slot.empty
+            ? ""
+            : `<button type="button" class="btn danger" data-act="del" data-i="${i}">刪除</button>`
+        }
+      </span>
+    `;
+    row.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        const act = btn.getAttribute("data-act");
+        const idx = Number(btn.getAttribute("data-i"));
+        withAudio(() => {
+          if (act === "open") {
+            if (slot.empty) {
+              const name = prompt("冒險者暱稱？", `冒險者 ${idx + 1}`) || `冒險者 ${idx + 1}`;
+              createOrOpenSlot(idx, name);
+            } else {
+              switchToSlot(idx);
+            }
+            syncNickInput();
+            refreshHomeMeta();
+            renderStageList();
+            showToast(`已切換存檔 ${idx + 1}`);
+            sfx.play("uiOk");
+          } else if (act === "del") {
+            if (!confirm(`確定刪除存檔 ${idx + 1}？此操作無法復原。`)) return;
+            deleteSlot(idx);
+            if (getActiveSlotIndex() === idx || slot.empty === false) {
+              /* deleteSlot already handled */
+            }
+            syncNickInput();
+            refreshHomeMeta();
+            renderStageList();
+            renderSaveSlots();
+            showToast(`已刪除存檔 ${idx + 1}`);
+            sfx.play("uiClick");
+          }
+        });
+      });
+    });
+    // click row = load
+    row.addEventListener("click", (ev) => {
+      if (ev.target.closest("button")) return;
+      withAudio(() => {
+        if (slot.empty) {
+          const name = prompt("冒險者暱稱？", `冒險者 ${i + 1}`) || `冒險者 ${i + 1}`;
+          createOrOpenSlot(i, name);
+        } else {
+          switchToSlot(i);
+        }
+        syncNickInput();
+        refreshHomeMeta();
+        renderStageList();
+        showToast(`存檔 ${i + 1}`);
+        sfx.play("uiOk");
+      });
+    });
+    els.saveSlotList.appendChild(row);
+  });
+}
+
+const GUIDE_PAGES = {
+  play: `
+    <h3>🎯 玩法目標</h3>
+    <p>怪物會沿路徑攻向<strong>神木</strong>。部署職業清怪，別讓神木血量歸零。</p>
+    <ul>
+      <li>每關 10 波；第 5／10 波通常有 Boss</li>
+      <li>擊殺與清波賺<strong>局內楓幣</strong>，用來場上轉職</li>
+      <li>帳號<strong>楓葉</strong>用來升級職業卡（編隊畫面）</li>
+      <li>通關解鎖下一地區；三星評價有額外楓葉</li>
+    </ul>
+    <div class="guide-tip">💡 漏怪會扣神木；Boss 還會遠程攻擊神木，注意上方血條的「下一招」。</div>
+  `,
+  job: `
+    <h3>⚔️ 轉職路線（台服）</h3>
+    <p>場上點角色，用楓幣轉下一階。路線對齊冒險家一～四轉。</p>
+    <ul>
+      <li><strong>劍士</strong>：狂戰士→十字軍→英雄／見習騎士→騎士→聖騎士／槍騎兵→龍騎士→黑騎士</li>
+      <li><strong>法師</strong>：僧侶→祭司→主教；火毒／冰雷大魔導</li>
+      <li><strong>弓箭手</strong>：獵人→遊俠→箭神；弩弓手→狙擊手→神射手</li>
+      <li><strong>盜賊</strong>：刺客→暗殺者→夜使者；俠盜→神偷→暗影神偷</li>
+      <li><strong>海盜</strong>：打手→格鬥家→拳霸；槍手→神槍手→槍神</li>
+    </ul>
+    <div class="guide-tip">💡 破隱靠神射／主教線；破甲靠黑騎／槍神／狂狼等。</div>
+  `,
+  boss: `
+    <h3>🐉 五大遠征 Boss</h3>
+    <ul>
+      <li><strong>海怒斯</strong>（水世界）物理無效、嘴炮、火柱、千斤墜</li>
+      <li><strong>拉圖斯</strong>（玩具城）時空暫停、反射、吸取血魔</li>
+      <li><strong>殘暴炎魔</strong>（冰原）八臂封印、火柱、魔方回血</li>
+      <li><strong>暗黑龍王</strong>（神木村）劇毒、連鎖閃電、龍息</li>
+      <li><strong>皮卡啾</strong>（時間神殿 · 最難）封印、反盾、花瓣、狂暴</li>
+    </ul>
+    <div class="guide-tip">💡 蓄力時畫面會有圈／警告；被暈／沉默的職業頭上會顯示秒數。</div>
+  `,
+  control: `
+    <h3>👆 操作手勢</h3>
+    <ul>
+      <li>點職業卡 → 點綠格部署；拖曳亦可</li>
+      <li>再點同一張卡 = 自動放到空格</li>
+      <li>點空地或 Esc = 取消部署</li>
+      <li>點場上角色 = 轉職選單</li>
+      <li><strong>Space</strong> 暫停 · <strong>Enter</strong> 開始波次 · <strong>H / ?</strong> 說明</li>
+      <li>1–4 選出戰卡 · M 靜音</li>
+    </ul>
+    <div class="guide-tip">💡 首頁可切換 3 個存檔；排行榜為本機多暱稱競分。</div>
+  `,
+};
+
+let guideTab = "play";
+
+function openGuideOverlay(tab = "play") {
+  guideTab = tab;
+  if (els.guideTabs) {
+    els.guideTabs.querySelectorAll(".guide-tab").forEach((b) => {
+      b.classList.toggle("is-active", b.dataset.guide === guideTab);
+    });
+  }
+  if (els.guideBody) {
+    els.guideBody.innerHTML = GUIDE_PAGES[guideTab] || GUIDE_PAGES.play;
+  }
+  setOverlayOpen(els.guideOverlay, true);
+  sfx.play("uiClick");
+}
+
+function closeGuideOverlay() {
+  setOverlayOpen(els.guideOverlay, false);
+  sfx.play("uiClick");
 }
 
 function openRankOverlay(tab = "all") {
@@ -537,6 +715,8 @@ function openStageSelect() {
   document.body.classList.remove("in-play");
   document.body.classList.add("home-open");
   hideAllOverlays();
+  flushActiveSlot();
+  renderSaveSlots();
   renderStageList();
   setOverlayOpen(els.stageOverlay, true);
   // Sync unlock + BGM (no await)
@@ -1638,6 +1818,23 @@ els.btnHomeRank?.addEventListener("click", () =>
     openRankOverlay(rankTab || "all");
   })
 );
+els.btnHomeGuide?.addEventListener("click", () =>
+  withAudio(() => {
+    openGuideOverlay("play");
+  })
+);
+els.btnGuideClose?.addEventListener("click", () =>
+  withAudio(() => {
+    closeGuideOverlay();
+  })
+);
+els.guideTabs?.addEventListener("click", (ev) => {
+  const t = ev.target.closest(".guide-tab");
+  if (!t) return;
+  withAudio(() => {
+    openGuideOverlay(t.dataset.guide || "play");
+  });
+});
 els.btnRankClose?.addEventListener("click", () =>
   withAudio(() => {
     sfx.play("uiClick");
@@ -1764,6 +1961,10 @@ window.addEventListener("keydown", (e) => {
   if (e.key === "m" || e.key === "M") game.toggleMute();
   if (e.key === "?" || e.key === "h" || e.key === "H") openHelpOverlay();
 });
+
+// 啟動時遷移／載入存檔
+ensureSaveSlotsMigrated();
+flushActiveSlot();
 
 /** First gesture: unlock audio + start menu BGM (must stay sync for autoplay). */
 const unlockOnce = () => {
