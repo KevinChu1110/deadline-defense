@@ -45,8 +45,9 @@ HOST=127.0.0.1
 BOT_ROOT=/home/kevin.chu/artale-bot
 PLAYER_DATA_PATH=/home/kevin.chu/artale-bot/player-data.json
 STATIC_DIR=/home/kevin.chu/artale-web/dist
-WEB_ORIGIN=https://maplestory-word.duckdns.org/defense
-DISCORD_REDIRECT_URI=https://maplestory-word.duckdns.org/defense/api/auth/discord/callback
+# 對外走 ngrok（VPN 擋 DuckDNS）；與 artale-games 共用固定網域
+WEB_ORIGIN=https://primary-marmoset-publicly.ngrok-free.app/defense
+DISCORD_REDIRECT_URI=https://primary-marmoset-publicly.ngrok-free.app/defense/api/auth/discord/callback
 ALLOW_DEV_LOGIN=1
 COOKIE_SECURE=1
 ENV
@@ -57,6 +58,11 @@ else
   grep -q '^STATIC_DIR=' "\$DIR/server/.env" || echo 'STATIC_DIR=/home/kevin.chu/artale-web/dist' >> "\$DIR/server/.env"
   grep -q '^HOST=' "\$DIR/server/.env" || echo 'HOST=127.0.0.1' >> "\$DIR/server/.env"
   grep -q '^COOKIE_SECURE=' "\$DIR/server/.env" || echo 'COOKIE_SECURE=1' >> "\$DIR/server/.env"
+  # 強制改為 ngrok 對外網址（DuckDNS 在 VPN 外會被擋）
+  if grep -q 'maplestory-word.duckdns.org' "\$DIR/server/.env" 2>/dev/null; then
+    sed -i 's|https://maplestory-word.duckdns.org/defense|https://primary-marmoset-publicly.ngrok-free.app/defense|g' "\$DIR/server/.env"
+    echo "  已將 WEB_ORIGIN/Redirect 改為 ngrok"
+  fi
   echo "  保留既有 server/.env"
 fi
 
@@ -143,9 +149,10 @@ EOF
 
 echo ""
 echo "✅ 部署完成"
-echo "   👉 https://maplestory-word.duckdns.org/defense/"
-echo "   👉 https://maplestory-word.duckdns.org/defense/api/health"
+echo "   👉 https://primary-marmoset-publicly.ngrok-free.app/defense/"
+echo "   👉 https://primary-marmoset-publicly.ngrok-free.app/defense/api/health"
+echo "   （經 artale-games:2567 反代 /defense → artale-web-api:8787 + 既有 ngrok）"
 echo ""
 echo "   Discord OAuth Redirect（若要用）："
-echo "   https://maplestory-word.duckdns.org/defense/api/auth/discord/callback"
+echo "   https://primary-marmoset-publicly.ngrok-free.app/defense/api/auth/discord/callback"
 echo "   編輯遠端 ${REMOTE_DIR}/server/.env 填 DISCORD_CLIENT_ID / SECRET"
