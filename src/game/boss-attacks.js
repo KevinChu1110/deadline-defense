@@ -459,6 +459,8 @@ export function tickBossAttacks(enemy, dt, now) {
       maxLife: cast,
       name: slot.name,
       global,
+      skillId: slot.id,
+      skillType: slot.type,
     };
     events.push({
       kind: "bossTelegraph",
@@ -471,9 +473,13 @@ export function tickBossAttacks(enemy, dt, now) {
   return events;
 }
 
+function fxId() {
+  return Math.random().toString(36).slice(2);
+}
+
 function fxRing(x, y, color, maxR = 50) {
   return {
-    id: Math.random().toString(36).slice(2),
+    id: fxId(),
     kind: "ring",
     x,
     y,
@@ -488,7 +494,7 @@ function fxRing(x, y, color, maxR = 50) {
 
 function fxWave(x, y, color, maxR) {
   return {
-    id: Math.random().toString(36).slice(2),
+    id: fxId(),
     kind: "shockwave",
     x,
     y,
@@ -501,12 +507,513 @@ function fxWave(x, y, color, maxR) {
   };
 }
 
+function fxParts(x, y, color, n = 10, opts = {}) {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const ang = Math.random() * Math.PI * 2;
+    const sp = (opts.speed || 80) * (0.4 + Math.random() * 0.8);
+    out.push({
+      id: fxId(),
+      kind: "particle",
+      x,
+      y,
+      vx: Math.cos(ang) * sp,
+      vy: Math.sin(ang) * sp - 20,
+      life: opts.life || 0.45,
+      maxLife: opts.life || 0.45,
+      color,
+      size: (opts.size || 3) * (0.6 + Math.random() * 0.8),
+      gravity: opts.gravity ?? 40,
+    });
+  }
+  return out;
+}
+
+/**
+ * 依技能 id／type 產生專屬特效（一招一視覺）
+ */
+export function buildBossCastVfx(enemy, skill, game, hitTargets = []) {
+  const x = enemy.x;
+  const y = enemy.y;
+  const c = skill.color || enemy.def.color || "#fca5a5";
+  const core = game.stage?.map?.core || { x: 900, y: 300 };
+  const id = skill.id || "";
+  const name = skill.name || "";
+  const fx = [];
+
+  // ── 依 skill.id 優先 ──
+  if (id === "phys_immune" || id === "turtleneck" || skill.type === "immune") {
+    fx.push({
+      id: fxId(),
+      kind: "shieldBubble",
+      x,
+      y,
+      r: 48,
+      color: c,
+      life: 0.7,
+      maxLife: 0.7,
+    });
+    fx.push(...fxParts(x, y, "#cbd5e1", 12, { speed: 40, gravity: -10 }));
+    return fx;
+  }
+  if (id === "mouth") {
+    // 嘴炮：音波環 + 全畫面淡藍
+    fx.push(fxWave(x, y, c, 200));
+    fx.push(fxWave(x, y, "#e0f2fe", 120));
+    fx.push(...fxParts(x, y, "#7dd3fc", 14, { speed: 100, gravity: 10 }));
+    return fx;
+  }
+  if (id === "fire_pillar" || id === "pillar" || (skill.type === "coreStrike" && /火|柱|pillar|petal|花瓣|龍息|clock|潮|tide/i.test(name + id))) {
+    // 火柱／龍息：Boss → 神木 光束 + 柱
+    fx.push({
+      id: fxId(),
+      kind: "beam",
+      x,
+      y,
+      x2: core.x,
+      y2: core.y,
+      color: c,
+      lineWidth: 5,
+      life: 0.45,
+      maxLife: 0.45,
+    });
+    fx.push({
+      id: fxId(),
+      kind: "pillar",
+      x: core.x,
+      y: core.y,
+      h: 140,
+      w: 22,
+      color: c,
+      color2: "#7f1d1d",
+      life: 0.55,
+      maxLife: 0.55,
+    });
+    fx.push(...fxParts(core.x, core.y, c, 16, { speed: 90, gravity: -20 }));
+    return fx;
+  }
+  if (id === "crush" || name.includes("千斤墜")) {
+    fx.push(fxWave(x, y, c, skill.radius || 150));
+    fx.push({
+      id: fxId(),
+      kind: "crossBolt",
+      x,
+      y,
+      r: 40,
+      color: "#0369a1",
+      life: 0.4,
+      maxLife: 0.4,
+    });
+    fx.push(...fxParts(x, y, "#1e3a5f", 18, { speed: 120, gravity: 80, size: 4 }));
+    return fx;
+  }
+  if (id === "dispel") {
+    fx.push({
+      id: fxId(),
+      kind: "spiral",
+      x,
+      y,
+      r: 10,
+      maxR: 70,
+      angle: 0,
+      color: c,
+      life: 0.5,
+      maxLife: 0.5,
+    });
+    return fx;
+  }
+  if (id === "slam" || name.includes("揮掌") || id === "arm") {
+    fx.push({
+      id: fxId(),
+      kind: "armSlash",
+      x,
+      y,
+      r: skill.radius || 100,
+      color: c,
+      a0: -2,
+      a1: 2,
+      life: 0.35,
+      maxLife: 0.35,
+    });
+    fx.push(fxWave(x, y, c, skill.radius || 110));
+    return fx;
+  }
+  if (id === "black_ball" || id === "summon" || id === "statue" || skill.type === "summonPulse") {
+    fx.push(fxRing(x, y, c, 70));
+    for (let i = 0; i < 5; i++) {
+      const ang = (i / 5) * Math.PI * 2;
+      fx.push(...fxParts(x + Math.cos(ang) * 30, y + Math.sin(ang) * 30, c, 4, { speed: 50 }));
+    }
+    return fx;
+  }
+  if (id === "time_magic" || id === "time_stop" || name.includes("時空")) {
+    fx.push({
+      id: fxId(),
+      kind: "clockHand",
+      x,
+      y,
+      r: 55,
+      angle: 0,
+      spin: 10,
+      color: c,
+      life: 0.65,
+      maxLife: 0.65,
+    });
+    fx.push({
+      id: fxId(),
+      kind: "spiral",
+      x,
+      y,
+      r: 5,
+      maxR: 90,
+      angle: 1,
+      color: "#ddd6fe",
+      life: 0.5,
+      maxLife: 0.5,
+    });
+    return fx;
+  }
+  if (id === "reflect" || id === "scale" || skill.type === "reflect") {
+    fx.push({
+      id: fxId(),
+      kind: "shieldBubble",
+      x,
+      y,
+      r: 44,
+      color: c,
+      life: 0.75,
+      maxLife: 0.75,
+    });
+    fx.push(...fxParts(x, y, "#fef9c3", 10, { speed: 60, gravity: -5 }));
+    return fx;
+  }
+  if (id === "drain" || name.includes("吸取")) {
+    fx.push({
+      id: fxId(),
+      kind: "beam",
+      x: core.x,
+      y: core.y,
+      x2: x,
+      y2: y,
+      color: c,
+      lineWidth: 4,
+      life: 0.5,
+      maxLife: 0.5,
+    });
+    fx.push(...fxParts(x, y, "#f0abfc", 12, { speed: 40, gravity: -30 }));
+    fx.push({
+      id: fxId(),
+      kind: "hitFlash",
+      x: core.x,
+      y: core.y,
+      color: c,
+      r: 36,
+      life: 0.3,
+      maxLife: 0.3,
+    });
+    return fx;
+  }
+  if (id === "lava") {
+    fx.push({
+      id: fxId(),
+      kind: "poisonCloud",
+      x,
+      y,
+      r: skill.radius || 120,
+      color: "rgba(249,115,22,0.5)",
+      life: 0.55,
+      maxLife: 0.55,
+    });
+    fx.push(...fxParts(x, y, "#fb923c", 14, { speed: 70, gravity: -40 }));
+    return fx;
+  }
+  if (id === "seal" || name.includes("封印")) {
+    fx.push({
+      id: fxId(),
+      kind: "hexSeal",
+      x,
+      y,
+      r: 50,
+      angle: 0,
+      color: c,
+      life: 0.6,
+      maxLife: 0.6,
+    });
+    for (const sp of hitTargets) {
+      fx.push({
+        id: fxId(),
+        kind: "hexSeal",
+        x: sp.x,
+        y: sp.y,
+        r: 22,
+        color: c,
+        life: 0.4,
+        maxLife: 0.4,
+      });
+    }
+    return fx;
+  }
+  if (id === "cube" || skill.type === "healCube") {
+    fx.push({
+      id: fxId(),
+      kind: "crossBolt",
+      x,
+      y,
+      r: 32,
+      color: "#fbbf24",
+      life: 0.5,
+      maxLife: 0.5,
+    });
+    fx.push(fxRing(x, y, "#fde047", 60));
+    fx.push(...fxParts(x, y, "#fef08a", 14, { speed: 50, gravity: -25 }));
+    return fx;
+  }
+  if (id === "curse" || skill.type === "curse") {
+    fx.push({
+      id: fxId(),
+      kind: "skull",
+      x,
+      y: y - 20,
+      glyph: "☠️",
+      size: 28,
+      vy: -24,
+      color: c,
+      life: 0.7,
+      maxLife: 0.7,
+    });
+    fx.push(fxRing(x, y, c, 80));
+    return fx;
+  }
+  if (id === "poison" || skill.type === "poisonBreath") {
+    fx.push({
+      id: fxId(),
+      kind: "poisonCloud",
+      x,
+      y,
+      r: skill.radius || 140,
+      color: "rgba(34,197,94,0.55)",
+      life: 0.6,
+      maxLife: 0.6,
+    });
+    fx.push(...fxParts(x, y, "#4ade80", 16, { speed: 70, gravity: 5 }));
+    return fx;
+  }
+  if (id === "tail") {
+    fx.push({
+      id: fxId(),
+      kind: "armSlash",
+      x,
+      y,
+      r: 70,
+      color: c,
+      a0: 0.5,
+      a1: 2.8,
+      life: 0.35,
+      maxLife: 0.35,
+    });
+    fx.push(fxWave(x, y, c, skill.radius || 100));
+    return fx;
+  }
+  if (id === "chain" || skill.type === "chainLightning") {
+    let prev = { x, y };
+    for (const sp of hitTargets) {
+      const midX = (prev.x + sp.x) / 2 + (Math.random() * 20 - 10);
+      const midY = (prev.y + sp.y) / 2 + (Math.random() * 20 - 10);
+      fx.push({
+        id: fxId(),
+        kind: "lightning",
+        x: prev.x,
+        y: prev.y,
+        x2: sp.x,
+        y2: sp.y,
+        points: [
+          [prev.x, prev.y],
+          [midX, midY],
+          [sp.x, sp.y],
+        ],
+        color: c,
+        life: 0.35,
+        maxLife: 0.35,
+      });
+      prev = sp;
+    }
+    return fx;
+  }
+  if (id === "breath") {
+    fx.push({
+      id: fxId(),
+      kind: "beam",
+      x,
+      y,
+      x2: core.x,
+      y2: core.y,
+      color: c,
+      lineWidth: 7,
+      life: 0.5,
+      maxLife: 0.5,
+    });
+    fx.push({
+      id: fxId(),
+      kind: "hitFlash",
+      x: core.x,
+      y: core.y,
+      color: "#4c1d95",
+      r: 50,
+      life: 0.35,
+      maxLife: 0.35,
+    });
+    return fx;
+  }
+  if (id === "rock" || name.includes("落石")) {
+    for (let i = 0; i < 6; i++) {
+      fx.push({
+        id: fxId(),
+        kind: "rockFall",
+        x: x + (Math.random() * 100 - 50),
+        y: y - 80 - Math.random() * 40,
+        vy: 200 + Math.random() * 80,
+        color: "#78716c",
+        life: 0.45,
+        maxLife: 0.45,
+      });
+    }
+    fx.push(fxWave(x, y, c, skill.radius || 130));
+    return fx;
+  }
+  if (id === "feather" || skill.type === "multiSilence") {
+    for (const sp of hitTargets) {
+      fx.push({
+        id: fxId(),
+        kind: "petals",
+        x: sp.x,
+        y: sp.y,
+        r: 26,
+        count: 6,
+        color: c,
+        angle: Math.random(),
+        life: 0.5,
+        maxLife: 0.5,
+      });
+    }
+    return fx;
+  }
+  if (id === "petal") {
+    fx.push({
+      id: fxId(),
+      kind: "petals",
+      x: core.x,
+      y: core.y,
+      r: 40,
+      count: 12,
+      color: c,
+      life: 0.6,
+      maxLife: 0.6,
+    });
+    fx.push({
+      id: fxId(),
+      kind: "beam",
+      x,
+      y,
+      x2: core.x,
+      y2: core.y,
+      color: c,
+      lineWidth: 4,
+      life: 0.4,
+      maxLife: 0.4,
+    });
+    return fx;
+  }
+  if (id === "rage" || skill.type === "enrage" || skill.type === "hastePulse") {
+    fx.push(fxWave(x, y, c, 140));
+    fx.push({
+      id: fxId(),
+      kind: "hitFlash",
+      x,
+      y,
+      color: c,
+      r: 60,
+      life: 0.45,
+      maxLife: 0.45,
+    });
+    fx.push(...fxParts(x, y, c, 20, { speed: 110, gravity: -15 }));
+    return fx;
+  }
+  if (id === "tide") {
+    fx.push({
+      id: fxId(),
+      kind: "bubbleBurst",
+      x,
+      y,
+      r: 50,
+      count: 10,
+      color: c,
+      life: 0.5,
+      maxLife: 0.5,
+    });
+    fx.push({
+      id: fxId(),
+      kind: "beam",
+      x,
+      y,
+      x2: core.x,
+      y2: core.y,
+      color: c,
+      lineWidth: 4,
+      life: 0.4,
+      maxLife: 0.4,
+    });
+    return fx;
+  }
+
+  // ── type fallback ──
+  if (skill.type === "shockwave") {
+    fx.push(fxWave(x, y, c, skill.radius || 100));
+    fx.push(...fxParts(x, y, c, 10, { speed: 90 }));
+  } else if (skill.type === "silence") {
+    fx.push({
+      id: fxId(),
+      kind: "hexSeal",
+      x,
+      y,
+      r: 45,
+      color: c,
+      life: 0.5,
+      maxLife: 0.5,
+    });
+  } else if (skill.type === "coreStrike") {
+    fx.push({
+      id: fxId(),
+      kind: "beam",
+      x,
+      y,
+      x2: core.x,
+      y2: core.y,
+      color: c,
+      life: 0.4,
+      maxLife: 0.4,
+    });
+    fx.push({
+      id: fxId(),
+      kind: "hitFlash",
+      x: core.x,
+      y: core.y,
+      color: c,
+      r: 40,
+      life: 0.3,
+      maxLife: 0.3,
+    });
+  } else {
+    fx.push(fxRing(x, y, c, 55));
+  }
+  return fx;
+}
+
 export function applyBossCast(game, event) {
   const { enemy, skill } = event;
   if (!skill || !enemy) return;
-  const fx = [];
   const now = game.now;
   let sfxName = "bossPhase";
+  let hitTargets = [];
 
   const toast = (msg) => {
     if (msg) game.ui?.toast?.(msg);
@@ -519,10 +1026,10 @@ export function applyBossCast(game, event) {
       for (const sp of game.specialists) {
         if (Math.hypot(sp.x - enemy.x, sp.y - enemy.y) <= r) {
           sp.stunnedUntil = Math.max(sp.stunnedUntil || 0, now + (skill.stun || 1.2));
+          hitTargets.push(sp);
           hit++;
         }
       }
-      fx.push(fxWave(enemy.x, enemy.y, skill.color || "#fca5a5", r));
       toast(skill.toast || (hit ? `${skill.name}！暈眩 ${hit} 名` : `${skill.name}`));
       break;
     }
@@ -533,35 +1040,33 @@ export function applyBossCast(game, event) {
       for (const sp of game.specialists) {
         if (global || Math.hypot(sp.x - enemy.x, sp.y - enemy.y) <= r) {
           sp.silencedUntil = Math.max(sp.silencedUntil || 0, now + (skill.silence || 1.5));
+          hitTargets.push(sp);
           hit++;
         }
       }
-      fx.push(fxRing(enemy.x, enemy.y, skill.color || "#c4b5fd", global ? 180 : r));
       toast(skill.toast || `${skill.name}！沉默 ${hit}`);
       break;
     }
     case "multiSilence": {
-      const list = [...game.specialists]
+      hitTargets = [...game.specialists]
         .sort(() => Math.random() - 0.5)
         .slice(0, skill.count || 2);
-      for (const sp of list) {
+      for (const sp of hitTargets) {
         sp.silencedUntil = Math.max(sp.silencedUntil || 0, now + (skill.silence || 1.8));
-        fx.push(fxRing(sp.x, sp.y, skill.color || "#f9a8d4", 40));
       }
-      toast(skill.toast || `${skill.name} 命中 ${list.length} 人`);
+      toast(skill.toast || `${skill.name} 命中 ${hitTargets.length} 人`);
       break;
     }
     case "chainLightning": {
-      const list = [...game.specialists]
+      hitTargets = [...game.specialists]
         .map((sp) => ({ sp, d: Math.hypot(sp.x - enemy.x, sp.y - enemy.y) }))
         .sort((a, b) => a.d - b.d)
         .slice(0, skill.count || 3)
         .map((x) => x.sp);
-      for (const sp of list) {
+      for (const sp of hitTargets) {
         sp.stunnedUntil = Math.max(sp.stunnedUntil || 0, now + (skill.stun || 1.2));
-        fx.push(fxRing(sp.x, sp.y, skill.color || "#818cf8", 36));
       }
-      toast(skill.toast || `${skill.name} ×${list.length}`);
+      toast(skill.toast || `${skill.name} ×${hitTargets.length}`);
       break;
     }
     case "poisonBreath": {
@@ -573,10 +1078,10 @@ export function applyBossCast(game, event) {
           sp.stunnedUntil = Math.max(sp.stunnedUntil || 0, now + (skill.stun || 0.5));
           sp.cursedUntil = Math.max(sp.cursedUntil || 0, now + 3);
           sp.curseDmgMul = Math.min(sp.curseDmgMul || 1, 0.8);
+          hitTargets.push(sp);
           hit++;
         }
       }
-      fx.push(fxWave(enemy.x, enemy.y, skill.color || "#22c55e", r));
       toast(skill.toast || `劇毒吐息命中 ${hit}`);
       break;
     }
@@ -590,17 +1095,6 @@ export function applyBossCast(game, event) {
         game.coreHp = Math.max(0, game.coreHp - dmg);
         toast(skill.toast || `${skill.name} 命中神木 −${dmg}`);
       }
-      const core = game.stage.map.core;
-      fx.push({
-        id: Math.random().toString(36).slice(2),
-        kind: "hitFlash",
-        x: core.x,
-        y: core.y,
-        color: skill.color || "#fb7185",
-        life: 0.28,
-        maxLife: 0.28,
-        r: 44,
-      });
       break;
     }
     case "drain": {
@@ -611,27 +1105,23 @@ export function applyBossCast(game, event) {
       const heal = Math.round(enemy.maxHp * (skill.healPct || 0.05));
       enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
       toast(skill.toast || `${skill.name}：神木 −${dmg}，Boss +${heal} HP`);
-      fx.push(fxRing(enemy.x, enemy.y, skill.color || "#f0abfc", 60));
       break;
     }
     case "armorUp": {
       enemy.status.bossArmorUntil = now + (skill.duration || 4);
       enemy.status.bossArmorAdd = skill.armorAdd || 0.15;
       toast(skill.toast || `${enemy.def.nameZh} 護甲上升`);
-      fx.push(fxRing(enemy.x, enemy.y, skill.color || "#fbbf24", 55));
       break;
     }
     case "immune": {
       enemy.status.bossImmuneUntil = now + (skill.duration || 3);
       toast(skill.toast || `${skill.name}！暫時免傷`);
-      fx.push(fxRing(enemy.x, enemy.y, skill.color || "#94a3b8", 70));
       break;
     }
     case "reflect": {
       enemy.status.bossReflectUntil = now + (skill.duration || 3);
       enemy.status.bossReflectStun = skill.reflectStun || 0.8;
       toast(skill.toast || `${skill.name}！`);
-      fx.push(fxRing(enemy.x, enemy.y, skill.color || "#e9d5ff", 65));
       break;
     }
     case "curse": {
@@ -642,22 +1132,20 @@ export function applyBossCast(game, event) {
         if (global || Math.hypot(sp.x - enemy.x, sp.y - enemy.y) <= r) {
           sp.cursedUntil = Math.max(sp.cursedUntil || 0, now + (skill.duration || 4));
           sp.curseDmgMul = Math.min(sp.curseDmgMul || 1, skill.dmgMul || 0.7);
+          hitTargets.push(sp);
           hit++;
         }
       }
       toast(skill.toast || `${skill.name}！${hit} 名輸出下降`);
-      fx.push(fxRing(enemy.x, enemy.y, skill.color || "#7f1d1d", global ? 160 : r));
       break;
     }
     case "dispel": {
-      // 清 Boss 身上的 slow/burn/analyze，並清我方 curse 以外的…簡化：清 boss 異常 + 我方 analyzed 無
       enemy.status.slowUntil = 0;
       enemy.status.burnUntil = 0;
       enemy.status.analyzedUntil = 0;
       enemy.status.armorBreakUntil = 0;
       enemy.burnStacks = 0;
       toast(skill.toast || "消除狀態！");
-      fx.push(fxRing(enemy.x, enemy.y, skill.color || "#94a3b8", 80));
       break;
     }
     case "healCube": {
@@ -668,7 +1156,6 @@ export function applyBossCast(game, event) {
       enemy.status.analyzedUntil = 0;
       enemy.status.armorBreakUntil = 0;
       toast(skill.toast || `魔方回血 +${heal}`);
-      fx.push(fxRing(enemy.x, enemy.y, skill.color || "#fbbf24", 70));
       break;
     }
     case "hastePulse":
@@ -686,7 +1173,6 @@ export function applyBossCast(game, event) {
         }
       }
       toast(skill.toast || `${skill.name}！`);
-      fx.push(fxWave(enemy.x, enemy.y, skill.color || "#f43f5e", 120));
       break;
     }
     case "summonPulse": {
@@ -704,7 +1190,7 @@ export function applyBossCast(game, event) {
       break;
   }
 
-  game.fx.push(...fx);
+  game.fx.push(...buildBossCastVfx(enemy, skill, game, hitTargets));
   game.sfx?.play?.(sfxName);
 }
 
@@ -734,11 +1220,21 @@ export function drawBossTelegraphs(ctx, enemies) {
     const t = e.bossAtk?.telegraph;
     if (!t || !e.alive) continue;
     const a = Math.max(0.15, t.life / t.maxLife);
+    const sid = t.skillId || "";
     ctx.save();
     if (t.global) {
       ctx.globalAlpha = 0.1 + a * 0.18;
       ctx.fillStyle = t.color || "#fca5a5";
       ctx.fillRect(0, 0, 960, 540);
+      // 時空類：額外畫時鐘
+      if (sid.includes("time") || t.name?.includes("時空") || t.name?.includes("封印")) {
+        ctx.globalAlpha = 0.5 + a * 0.4;
+        ctx.strokeStyle = t.color || "#c084fc";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(480, 270, 80 + a * 20, 0, Math.PI * 2);
+        ctx.stroke();
+      }
       ctx.globalAlpha = 0.95;
       ctx.fillStyle = t.color || "#fecdd3";
       ctx.font = "800 15px 'PingFang TC', system-ui";
@@ -748,32 +1244,43 @@ export function drawBossTelegraphs(ctx, enemies) {
       ctx.globalAlpha = 0.35 + a * 0.5;
       ctx.strokeStyle = t.color || "#fca5a5";
       ctx.lineWidth = 3;
-      ctx.setLineDash([8, 6]);
-      ctx.beginPath();
+      // 依招式換預示形狀
       const pulse = t.r * (0.85 + 0.15 * Math.sin(performance.now() / 80));
-      ctx.arc(e.x, e.y, pulse, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
+      if (sid === "fire_pillar" || sid === "pillar" || sid === "breath" || sid === "petal" || sid === "tide") {
+        // 指向神木的預示線
+        ctx.setLineDash([6, 6]);
+        ctx.beginPath();
+        ctx.moveTo(e.x, e.y);
+        ctx.lineTo(900, 300);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.arc(900, 300, 30 * a + 10, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (sid === "chain") {
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, pulse, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      } else if (sid === "poison") {
+        ctx.globalAlpha = 0.25 + a * 0.3;
+        ctx.fillStyle = t.color || "#22c55e";
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, pulse, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.setLineDash([8, 6]);
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, pulse, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      ctx.globalAlpha = 0.95;
       ctx.fillStyle = t.color || "#fecdd3";
       ctx.font = "800 11px 'PingFang TC', system-ui";
       ctx.textAlign = "center";
       ctx.fillText(t.name, e.x, e.y - (e.def.radius || 20) - 28);
-    }
-    // immune / reflect aura
-    if ((e.status?.bossImmuneUntil || 0) > 0 || (e.status?.bossReflectUntil || 0) > 0) {
-      /* drawn per-frame via status — need now; skip here */
-    }
-    ctx.restore();
-  }
-  // status rings
-  for (const e of enemies) {
-    if (!e.alive || !e.def.boss) continue;
-    ctx.save();
-    if ((e.status?.bossImmuneUntil || 0) > performance.now() / 1000) {
-      /* now is game time not perf — use existence */
-    }
-    if (e.status?.bossImmuneUntil) {
-      // approximate: if field set show ring (cleared after expire in logic by comparison with game.now in draw path)
     }
     ctx.restore();
   }
