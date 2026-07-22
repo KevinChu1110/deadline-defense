@@ -24,6 +24,9 @@ import {
   getPotentialOnAccount,
   usePotentialOnAccount,
   craftPotentialOnAccount,
+  getCombatProfile,
+  startActionRaid,
+  completeActionRaid,
 } from "./store.js";
 import * as auth from "./auth.js";
 
@@ -110,7 +113,7 @@ const server = http.createServer(async (req, res) => {
           product: "artale-web-api",
           dataPath: getDataPath(),
           auth: auth.getAuthConfig(),
-          combat: "action-v1-planned",
+          combat: "action-raid-v1",
           discordRaid: "disabled-on-web-launch",
         },
         req
@@ -374,16 +377,32 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, out, req);
     }
 
+    // ── 動作突襲 M3 ─────────────────────────────────────
+    if (req.method === "GET" && pathname === "/api/combat/profile") {
+      const sess = sessionFromReq(req);
+      const id = sess?.discordId || url.searchParams.get("discordId");
+      if (!id) return json(res, 401, { error: "請先登入" }, req);
+      const profile = getCombatProfile(id);
+      if (!profile) return json(res, 404, { error: "找不到帳號" }, req);
+      return json(res, 200, profile, req);
+    }
+
     if (req.method === "POST" && pathname === "/api/combat/raid/start") {
-      return json(
-        res,
-        501,
-        {
-          error: "動作戰鬥 M3 開發中",
-          plan: "完整動作向 Boss 戰（非文字模擬）",
-        },
-        req
-      );
+      const sess = sessionFromReq(req);
+      const body = await readBody(req);
+      const discordId = sess?.discordId || body.discordId;
+      if (!discordId) return json(res, 401, { error: "請先登入" }, req);
+      const out = startActionRaid(discordId, body.bossId || "zakum");
+      return json(res, 200, out, req);
+    }
+
+    if (req.method === "POST" && pathname === "/api/combat/raid/complete") {
+      const sess = sessionFromReq(req);
+      const body = await readBody(req);
+      const discordId = sess?.discordId || body.discordId;
+      if (!discordId) return json(res, 401, { error: "請先登入" }, req);
+      const out = completeActionRaid(discordId, body);
+      return json(res, 200, out, req);
     }
 
     json(res, 404, { error: "not found", path: pathname }, req);

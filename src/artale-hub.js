@@ -126,6 +126,24 @@ export async function craftPotential(toKey, times = 1) {
   });
 }
 
+export async function fetchCombatProfile() {
+  return api("/api/combat/profile");
+}
+
+export async function startActionRaid(bossId = "zakum") {
+  return api("/api/combat/raid/start", {
+    method: "POST",
+    body: JSON.stringify({ bossId }),
+  });
+}
+
+export async function completeActionRaid(payload) {
+  return api("/api/combat/raid/complete", {
+    method: "POST",
+    body: JSON.stringify(payload || {}),
+  });
+}
+
 const CLASS_ZH = {
   beginner: "初心者",
   gunslinger: "槍神／槍手",
@@ -710,11 +728,42 @@ function renderTab(tab, me, active, ui = {}) {
   }
 
   if (tab === "combat") {
+    const bosses = [
+      {
+        id: "zakum",
+        name: "殘暴炎魔",
+        tier: "S+",
+        region: "冰原雪域",
+        blurb: "M3 v1 首隻 · 可讀 telegraph · 三階段",
+        open: true,
+      },
+      {
+        id: "horntail",
+        name: "暗黑龍王",
+        tier: "SS",
+        region: "神木村",
+        blurb: "更高血量 · 建議 Lv.50+",
+        open: true,
+      },
+    ];
     return `
-      <div class="hub-combat-card">
+      <div class="hub-combat-card highlight">
         <h3>Boss 突襲 · 動作戰鬥</h3>
-        <p>定案：完整動作向。M3 開發中。</p>
-        <button type="button" class="btn primary maple-primary" disabled>即將開放</button>
+        <p>橫向站場：移動／跳躍／普攻／技能。傷害吃角色等級＋武器＋星力簡化快照。</p>
+        <div class="hub-raid-boss-grid">
+          ${bosses
+            .map(
+              (b) => `
+            <button type="button" class="hub-raid-boss-card" data-start-raid="${b.id}">
+              <strong>${escapeHtml(b.name)}</strong>
+              <span>${escapeHtml(b.region)} · ${escapeHtml(b.tier)}</span>
+              <small>${escapeHtml(b.blurb)}</small>
+              <em>出戰 ▶</em>
+            </button>`
+            )
+            .join("")}
+        </div>
+        <p class="muted" style="margin-top:8px;font-size:0.78rem">操作：←→ 移動 · Space 跳 · J/Z 普攻 · K/X 技能 · Esc 離開</p>
       </div>
       <div class="hub-combat-card">
         <h3>無止境</h3>
@@ -739,7 +788,7 @@ function renderTab(tab, me, active, ui = {}) {
         ✅ M0 讀取 Bot 資料<br/>
         ✅ M1 Discord OAuth 登入<br/>
         ✅ M2 換裝 · 星力台 · 潛能台<br/>
-        ▢ M3 動作突襲　▢ M4 無止境
+        ✅ M3 動作突襲 v1　▢ M4 無止境
       </p>
     </div>`;
 }
@@ -753,7 +802,7 @@ function escapeHtml(s) {
 }
 
 export function bindHubEvents(els, ctx) {
-  const { onBackTitle, onOpenDefense, onState, getState } = ctx;
+  const { onBackTitle, onOpenDefense, onStartRaid, onState, getState } = ctx;
 
   els.artaleHub?.querySelector("#hub-btn-back-title")?.addEventListener("click", () => onBackTitle?.());
   els.artaleHub?.querySelector("#hub-btn-open-defense")?.addEventListener("click", () => onOpenDefense?.());
@@ -1034,6 +1083,18 @@ export function bindHubEvents(els, ctx) {
         });
       } catch (e) {
         onState?.({ ...st, tab: "pot", potPanel: "craft", error: e.message });
+      }
+    });
+  });
+
+  // 動作突襲
+  els.artaleHub?.querySelectorAll("[data-start-raid]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const bossId = btn.getAttribute("data-start-raid");
+      try {
+        await onStartRaid?.(bossId);
+      } catch (e) {
+        onState?.({ ...getState?.(), tab: "combat", error: e.message });
       }
     });
   });

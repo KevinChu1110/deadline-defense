@@ -291,6 +291,31 @@
             <div id="artale-hub" class="artale-hub-root"></div>
           </div>
 
+          <!-- M3 動作突襲 -->
+          <div id="action-raid-overlay" class="overlay action-raid-overlay" hidden>
+            <div class="action-raid-shell maple-panel maple-ornament">
+              <header class="action-raid-bar">
+                <div>
+                  <p class="overlay-kicker">ACTION RAID · M3</p>
+                  <h2 id="action-raid-title">動作突襲</h2>
+                </div>
+                <div class="action-raid-bar-actions">
+                  <span class="muted" id="action-raid-hint">←→ 移動 · Space 跳 · J 普攻 · K 技能 · Esc 離開</span>
+                  <button type="button" class="btn" id="btn-action-raid-exit">離開</button>
+                </div>
+              </header>
+              <canvas id="action-raid-canvas" width="960" height="540" aria-label="動作突襲戰場"></canvas>
+              <div id="action-raid-result" class="action-raid-result" hidden>
+                <h3 id="action-raid-result-title">結果</h3>
+                <p id="action-raid-result-copy" class="muted"></p>
+                <div class="overlay-actions">
+                  <button type="button" class="btn" id="btn-action-raid-hub">回主城</button>
+                  <button type="button" class="btn primary maple-primary" id="btn-action-raid-retry">再戰</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Discord import -->
           <div id="discord-import-overlay" class="overlay dialog-overlay" hidden>
             <div class="dialog-card maple-panel maple-ornament discord-import-card" role="dialog" aria-modal="true">

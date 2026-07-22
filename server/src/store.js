@@ -19,6 +19,12 @@ import {
   usePotentialAction as usePotentialActionCore,
   craftPotential as craftPotentialCore,
 } from "./potential-ops.js";
+import {
+  buildCombatProfile,
+  getBoss,
+  listBosses,
+  scaleBossForProfile,
+} from "./combat-profile.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -334,4 +340,71 @@ export function accountSummaryWithEquip(discordId) {
   if (!base) return null;
   const equip = getEquipView(discordId);
   return { ...base, equip };
+}
+
+/** 動作突襲戰鬥快照 */
+export function getCombatProfile(discordId) {
+  const p = getAccount(discordId);
+  if (!p) return null;
+  const profile = buildCombatProfile(p);
+  profile.discordId = String(discordId);
+  return profile;
+}
+
+export function startActionRaid(discordId, bossId = "zakum") {
+  const p = getAccount(discordId);
+  if (!p) throw new Error("找不到帳號");
+  const profile = buildCombatProfile(p);
+  profile.discordId = String(discordId);
+  const bossMeta = getBoss(bossId);
+  if (!bossMeta) throw new Error("未知 Boss");
+  if (bossMeta.unlockLevel && profile.level < bossMeta.unlockLevel) {
+    throw new Error(
+      `需要角色 Lv.${bossMeta.unlockLevel}（目前 Lv.${profile.level}）`
+    );
+  }
+  // v1：龍王改為開放可挑戰（UI 已開放）；unlock 僅提示
+  const boss = scaleBossForProfile(bossMeta, profile);
+  return {
+    ok: true,
+    raidId: `ar_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
+    profile,
+    boss,
+    controls: {
+      move: "←→ / A D",
+      jump: "Space / W",
+      attack: "J / Z",
+      skill: "K / X",
+      exit: "Esc",
+    },
+  };
+}
+
+/** 結算（v1 只記日誌欄位，獎勵二期） */
+export function completeActionRaid(discordId, payload = {}) {
+  const p = getAccount(discordId);
+  if (!p) throw new Error("找不到帳號");
+  const all = loadAll();
+  const acc = all[String(discordId)];
+  if (!acc) throw new Error("找不到帳號");
+  acc.actionRaidStats = acc.actionRaidStats || { wins: 0, losses: 0, last: null };
+  if (payload.win) acc.actionRaidStats.wins += 1;
+  else acc.actionRaidStats.losses += 1;
+  acc.actionRaidStats.last = {
+    at: Date.now(),
+    bossId: payload.bossId || null,
+    win: !!payload.win,
+    level: payload.level || null,
+  };
+  acc.lastActiveAt = Date.now();
+  saveAll(all);
+  return {
+    ok: true,
+    stats: acc.actionRaidStats,
+    rewardNote: "M3 v1 無掉落；M4 接獎勵／排行",
+  };
+}
+
+export function getActionBossList() {
+  return listBosses();
 }

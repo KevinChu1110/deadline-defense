@@ -54,6 +54,7 @@ import {
   previewImport,
 } from "./data/discord-bridge.js";
 import * as artaleHub from "./artale-hub.js";
+import { createActionRaid } from "./game/action-raid.js";
 import {
   listSaveSlots,
   switchToSlot,
@@ -219,7 +220,20 @@ const els = {
   artaleHubOverlay: document.querySelector("#artale-hub-overlay"),
   artaleHub: document.querySelector("#artale-hub"),
   btnEnterHub: document.querySelector("#btn-enter-hub"),
+  actionRaidOverlay: document.querySelector("#action-raid-overlay"),
+  actionRaidCanvas: document.querySelector("#action-raid-canvas"),
+  actionRaidTitle: document.querySelector("#action-raid-title"),
+  actionRaidResult: document.querySelector("#action-raid-result"),
+  actionRaidResultTitle: document.querySelector("#action-raid-result-title"),
+  actionRaidResultCopy: document.querySelector("#action-raid-result-copy"),
+  btnActionRaidExit: document.querySelector("#btn-action-raid-exit"),
+  btnActionRaidHub: document.querySelector("#btn-action-raid-hub"),
+  btnActionRaidRetry: document.querySelector("#btn-action-raid-retry"),
 };
+
+/** @type {ReturnType<typeof createActionRaid> | null} */
+let actionRaidSession = null;
+let lastRaidBossId = "zakum";
 
 /** Artale 主城狀態 */
 let hubState = {
@@ -276,6 +290,7 @@ function setOverlayOpen(el, open) {
 }
 
 function hideAllOverlays() {
+  stopActionRaid();
   setOverlayOpen(els.stageOverlay, false);
   setOverlayOpen(els.charOverlay, false);
   setOverlayOpen(els.rewardOverlay, false);
@@ -288,6 +303,66 @@ function hideAllOverlays() {
   setOverlayOpen(els.settingsOverlay, false);
   setOverlayOpen(els.discordImportOverlay, false);
   setOverlayOpen(els.artaleHubOverlay, false);
+  setOverlayOpen(els.actionRaidOverlay, false);
+}
+
+function stopActionRaid() {
+  if (actionRaidSession) {
+    actionRaidSession.stop(true);
+    actionRaidSession = null;
+  }
+  if (els.actionRaidResult) els.actionRaidResult.hidden = true;
+}
+
+async function launchActionRaid(bossId = "zakum") {
+  lastRaidBossId = bossId || "zakum";
+  if (!hubState.me) throw new Error("請先登入");
+  const payload = await artaleHub.startActionRaid(lastRaidBossId);
+  stopActionRaid();
+  setOverlayOpen(els.artaleHubOverlay, false);
+  setOverlayOpen(els.actionRaidOverlay, true);
+  if (els.actionRaidTitle) {
+    els.actionRaidTitle.textContent = `${payload.boss.nameZh} · ${payload.profile.name}`;
+  }
+  if (els.actionRaidResult) els.actionRaidResult.hidden = true;
+
+  actionRaidSession = createActionRaid({
+    canvas: els.actionRaidCanvas,
+    profile: payload.profile,
+    boss: payload.boss,
+    onEnd: async (result) => {
+      try {
+        await artaleHub.completeActionRaid({
+          win: result.win,
+          bossId: result.bossId,
+          level: result.level,
+        });
+      } catch {
+        /* ignore complete errors */
+      }
+      if (els.actionRaidResult) {
+        els.actionRaidResult.hidden = false;
+        if (els.actionRaidResultTitle) {
+          els.actionRaidResultTitle.textContent = result.win
+            ? "勝利！"
+            : "戰敗…";
+        }
+        if (els.actionRaidResultCopy) {
+          els.actionRaidResultCopy.textContent = result.win
+            ? `擊敗 ${result.bossName}！剩餘 HP ${Math.ceil(result.hpLeft)}/${result.maxHp}`
+            : `倒在 ${result.bossName} 面前。再磨磨裝備／星力再來！`;
+        }
+      }
+      sfx.play(result.win ? "uiClick" : "uiClick");
+    },
+    onExit: () => {
+      stopActionRaid();
+      setOverlayOpen(els.actionRaidOverlay, false);
+      openArtaleHub();
+    },
+  });
+  actionRaidSession.start();
+  sfx.play("uiClick");
 }
 
 function paintHub() {
@@ -305,6 +380,14 @@ function paintHub() {
     onOpenDefense: () => {
       setOverlayOpen(els.artaleHubOverlay, false);
       openCampaignPanel(1);
+    },
+    onStartRaid: async (bossId) => {
+      try {
+        await launchActionRaid(bossId);
+      } catch (e) {
+        hubState = { ...hubState, tab: "combat", error: e.message || String(e) };
+        paintHub();
+      }
     },
   });
 }
@@ -2809,6 +2892,29 @@ els.btnRank?.addEventListener("click", () =>
   })
 );
 els.btnEnterHub?.addEventListener("click", () => withAudio(() => openArtaleHub()));
+els.btnActionRaidExit?.addEventListener("click", () =>
+  withAudio(() => {
+    stopActionRaid();
+    setOverlayOpen(els.actionRaidOverlay, false);
+    openArtaleHub();
+  })
+);
+els.btnActionRaidHub?.addEventListener("click", () =>
+  withAudio(() => {
+    stopActionRaid();
+    setOverlayOpen(els.actionRaidOverlay, false);
+    openArtaleHub();
+  })
+);
+els.btnActionRaidRetry?.addEventListener("click", () =>
+  withAudio(async () => {
+    try {
+      await launchActionRaid(lastRaidBossId);
+    } catch (e) {
+      showToast(e.message || "無法再戰");
+    }
+  })
+);
 els.btnStartGame?.addEventListener("click", () =>
   withAudio(() => {
     openCampaignPanel(1);
