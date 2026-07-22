@@ -7,7 +7,7 @@
  *   DISCORD_REDIRECT_URI   預設 http://127.0.0.1:8787/api/auth/discord/callback
  *   WEB_ORIGIN            預設 http://127.0.0.1:5173
  *   SESSION_SECRET        可選，用於簽章
- *   ALLOW_DEV_LOGIN=1     允許本機用 discordId 免 OAuth（預設開）
+ *   ALLOW_DEV_LOGIN=1     允許用 discordId 免 OAuth 登入（**預設關**，只給本機開發用）
  */
 import crypto from "crypto";
 
@@ -20,7 +20,10 @@ const REDIRECT_URI =
   process.env.DISCORD_REDIRECT_URI ||
   "http://127.0.0.1:5173/api/auth/discord/callback";
 const WEB_ORIGIN = process.env.WEB_ORIGIN || "http://127.0.0.1:5173";
-const ALLOW_DEV_LOGIN = process.env.ALLOW_DEV_LOGIN !== "0";
+// ⚠️ 原本是 `!== "0"`，也就是**沒設就是開**。線上沒設 → 任何人都能
+//    POST /api/auth/dev-login {discordId:"任意ID"} 拿到該玩家的完整 session，
+//    之後所有端點都以他的身分操作。改成必須明確設 "1" 才開。
+const ALLOW_DEV_LOGIN = process.env.ALLOW_DEV_LOGIN === "1";
 
 export function oauthConfigured() {
   return !!(CLIENT_ID && CLIENT_SECRET);
@@ -186,16 +189,13 @@ export function corsHeaders(req) {
   } catch {
     /* ignore */
   }
-  if (origin) {
-    if (allowed.has(origin)) {
-      allow = origin;
-    } else {
-      try {
-        if (/\.netlify\.app$/i.test(new URL(origin).hostname)) allow = origin;
-      } catch {
-        /* ignore */
-      }
-    }
+  // ⚠️ 這裡原本只要 hostname 結尾是 .netlify.app 就放行，而 netlify 子網域
+  //    任何人都能免費註冊。加上正式環境 cookie 是 SameSite=None，攻擊者只要在
+  //    evil-xxx.netlify.app 放一頁，誘導玩家點進去就能用他的 session 讀走全部
+  //    資料並卸裝備／衝爆星力，回應還讀得到（ACAO 回的是攻擊者 origin）。
+  //    改成只認 WEB_ORIGIN 與 CORS_ORIGINS 明列的完整白名單。
+  if (origin && allowed.has(origin)) {
+    allow = origin;
   }
   return {
     "Access-Control-Allow-Origin": allow,

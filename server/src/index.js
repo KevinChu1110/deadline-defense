@@ -268,18 +268,20 @@ const server = http.createServer(async (req, res) => {
       );
     }
 
+    // ⚠️ 這條原本完全免認證，`q` 空字串會直接吐前 30 筆帳號，
+    //    逐字元窮舉就能撈出全部玩家的 Discord ID（再配合可指定 discordId 的
+    //    端點就是「任何路人都能破壞任何人的存檔」）。改成必須登入且 q 不得為空。
     if (req.method === "GET" && pathname === "/api/dev/search") {
-      const q = url.searchParams.get("q") || "";
+      if (!sessionFromReq(req)) return json(res, 401, { error: "請先登入" }, req);
+      const q = (url.searchParams.get("q") || "").trim();
+      if (!q) return json(res, 200, { results: [] }, req);
       return json(res, 200, { results: findAccountsByName(q, 30) }, req);
     }
 
     if (req.method === "GET" && pathname === "/api/me") {
       const sess = sessionFromReq(req);
-      const id = sess?.discordId || url.searchParams.get("discordId");
+      const id = sess?.discordId;
       if (!id) return json(res, 401, { error: "請先登入 Discord" }, req);
-      if (!sess && !auth.ALLOW_DEV_LOGIN) {
-        return json(res, 401, { error: "請先 Discord 登入" }, req);
-      }
       const me = accountSummary(id);
       if (!me) return json(res, 404, { error: "找不到此 Discord 帳號資料" }, req);
       return json(res, 200, me, req);
@@ -287,7 +289,7 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === "GET" && pathname.startsWith("/api/me/characters/")) {
       const sess = sessionFromReq(req);
-      const id = sess?.discordId || url.searchParams.get("discordId");
+      const id = sess?.discordId;
       const charId = decodeURIComponent(pathname.split("/").pop());
       if (!id) return json(res, 401, { error: "請先登入" }, req);
       const detail = getCharacterDetail(id, charId);
@@ -298,13 +300,10 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "POST" && pathname === "/api/me/select-char") {
       const sess = sessionFromReq(req);
       const body = await readBody(req);
-      const discordId = sess?.discordId || body.discordId;
+      const discordId = sess?.discordId;
       const { charId } = body;
       if (!discordId || !charId) {
         return json(res, 400, { error: "需要登入與 charId" }, req);
-      }
-      if (sess && body.discordId && body.discordId !== sess.discordId) {
-        return json(res, 403, { error: "不可操作他人帳號" }, req);
       }
       const me = selectCharacter(discordId, charId);
       return json(res, 200, me, req);
@@ -313,7 +312,7 @@ const server = http.createServer(async (req, res) => {
     // ── 裝備 ─────────────────────────────────────
     if (req.method === "GET" && pathname === "/api/equip") {
       const sess = sessionFromReq(req);
-      const id = sess?.discordId || url.searchParams.get("discordId");
+      const id = sess?.discordId;
       if (!id) return json(res, 401, { error: "請先登入" }, req);
       const view = getEquipView(id);
       if (!view) return json(res, 404, { error: "找不到帳號" }, req);
@@ -323,7 +322,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "POST" && pathname === "/api/equip/wear") {
       const sess = sessionFromReq(req);
       const body = await readBody(req);
-      const discordId = sess?.discordId || body.discordId;
+      const discordId = sess?.discordId;
       if (!discordId) return json(res, 401, { error: "請先登入" }, req);
       if (!body.itemId) return json(res, 400, { error: "缺少 itemId" }, req);
       const view = equipOnAccount(discordId, body.itemId, body.subIdx || 0);
@@ -333,7 +332,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "POST" && pathname === "/api/equip/unequip") {
       const sess = sessionFromReq(req);
       const body = await readBody(req);
-      const discordId = sess?.discordId || body.discordId;
+      const discordId = sess?.discordId;
       if (!discordId) return json(res, 401, { error: "請先登入" }, req);
       if (!body.slot) return json(res, 400, { error: "缺少 slot" }, req);
       const view = unequipOnAccount(discordId, body.slot, body.subIdx || 0);
@@ -343,7 +342,7 @@ const server = http.createServer(async (req, res) => {
     // ── 星力 ─────────────────────────────────────
     if (req.method === "GET" && pathname === "/api/starforce") {
       const sess = sessionFromReq(req);
-      const id = sess?.discordId || url.searchParams.get("discordId");
+      const id = sess?.discordId;
       if (!id) return json(res, 401, { error: "請先登入" }, req);
       const view = getStarforceOnAccount(id);
       if (!view) return json(res, 404, { error: "找不到帳號" }, req);
@@ -353,7 +352,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "POST" && pathname === "/api/starforce/attempt") {
       const sess = sessionFromReq(req);
       const body = await readBody(req);
-      const discordId = sess?.discordId || body.discordId;
+      const discordId = sess?.discordId;
       if (!discordId) return json(res, 401, { error: "請先登入" }, req);
       if (!body.slot) return json(res, 400, { error: "缺少 slot" }, req);
       const out = attemptStarforceOnAccount(
@@ -368,7 +367,7 @@ const server = http.createServer(async (req, res) => {
     // ── 潛能 ─────────────────────────────────────
     if (req.method === "GET" && pathname === "/api/potential") {
       const sess = sessionFromReq(req);
-      const id = sess?.discordId || url.searchParams.get("discordId");
+      const id = sess?.discordId;
       if (!id) return json(res, 401, { error: "請先登入" }, req);
       const view = getPotentialOnAccount(id);
       if (!view) return json(res, 404, { error: "找不到帳號" }, req);
@@ -378,7 +377,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "POST" && pathname === "/api/potential/use") {
       const sess = sessionFromReq(req);
       const body = await readBody(req);
-      const discordId = sess?.discordId || body.discordId;
+      const discordId = sess?.discordId;
       if (!discordId) return json(res, 401, { error: "請先登入" }, req);
       if (!body.slot || !body.action) {
         return json(res, 400, { error: "需要 slot 與 action" }, req);
@@ -395,7 +394,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "POST" && pathname === "/api/potential/craft") {
       const sess = sessionFromReq(req);
       const body = await readBody(req);
-      const discordId = sess?.discordId || body.discordId;
+      const discordId = sess?.discordId;
       if (!discordId) return json(res, 401, { error: "請先登入" }, req);
       if (!body.toKey) return json(res, 400, { error: "缺少 toKey" }, req);
       const out = craftPotentialOnAccount(
@@ -409,7 +408,7 @@ const server = http.createServer(async (req, res) => {
     // ── 動作突襲 M3 ─────────────────────────────────────
     if (req.method === "GET" && pathname === "/api/combat/profile") {
       const sess = sessionFromReq(req);
-      const id = sess?.discordId || url.searchParams.get("discordId");
+      const id = sess?.discordId;
       if (!id) return json(res, 401, { error: "請先登入" }, req);
       const profile = getCombatProfile(id);
       if (!profile) return json(res, 404, { error: "找不到帳號" }, req);
@@ -419,7 +418,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "POST" && pathname === "/api/combat/raid/start") {
       const sess = sessionFromReq(req);
       const body = await readBody(req);
-      const discordId = sess?.discordId || body.discordId;
+      const discordId = sess?.discordId;
       if (!discordId) return json(res, 401, { error: "請先登入" }, req);
       const out = startActionRaid(discordId, body.bossId || "zakum");
       return json(res, 200, out, req);
@@ -428,7 +427,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "POST" && pathname === "/api/combat/raid/complete") {
       const sess = sessionFromReq(req);
       const body = await readBody(req);
-      const discordId = sess?.discordId || body.discordId;
+      const discordId = sess?.discordId;
       if (!discordId) return json(res, 401, { error: "請先登入" }, req);
       const out = completeActionRaid(discordId, body);
       return json(res, 200, out, req);

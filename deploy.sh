@@ -48,8 +48,11 @@ STATIC_DIR=/home/kevin.chu/artale-web/dist
 # 對外走 ngrok（VPN 擋 DuckDNS）；與 artale-games 共用固定網域
 WEB_ORIGIN=https://primary-marmoset-publicly.ngrok-free.app/defense
 DISCORD_REDIRECT_URI=https://primary-marmoset-publicly.ngrok-free.app/defense/api/auth/discord/callback
-ALLOW_DEV_LOGIN=1
+# ⚠️ 不要在正式環境開 ALLOW_DEV_LOGIN：開了等於任何人都能用任意 discordId 登入成該玩家
 COOKIE_SECURE=1
+# CORS 白名單（前端實際所在的 origin）。原本靠「結尾是 .netlify.app 就放行」，
+# 但那個子網域任何人都能註冊，等於開放 CSRF 竊取 session。
+CORS_ORIGINS=https://maplestory-defense.netlify.app
 ENV
   echo "  已建立 server/.env"
 else
@@ -58,6 +61,12 @@ else
   grep -q '^STATIC_DIR=' "\$DIR/server/.env" || echo 'STATIC_DIR=/home/kevin.chu/artale-web/dist' >> "\$DIR/server/.env"
   grep -q '^HOST=' "\$DIR/server/.env" || echo 'HOST=127.0.0.1' >> "\$DIR/server/.env"
   grep -q '^COOKIE_SECURE=' "\$DIR/server/.env" || echo 'COOKIE_SECURE=1' >> "\$DIR/server/.env"
+  grep -q '^CORS_ORIGINS=' "\$DIR/server/.env" || echo 'CORS_ORIGINS=https://maplestory-defense.netlify.app' >> "\$DIR/server/.env"
+  # ⚠️ 舊版樣板寫死 ALLOW_DEV_LOGIN=1，等於線上開著「用任意 discordId 登入成該玩家」的後門
+  if grep -q '^ALLOW_DEV_LOGIN=1' "\$DIR/server/.env" 2>/dev/null; then
+    sed -i 's|^ALLOW_DEV_LOGIN=1|ALLOW_DEV_LOGIN=0|' "\$DIR/server/.env"
+    echo "  已關閉線上 dev-login 後門"
+  fi
   # 強制改為 ngrok 對外網址（DuckDNS 在 VPN 外會被擋）
   if grep -q 'maplestory-word.duckdns.org' "\$DIR/server/.env" 2>/dev/null; then
     sed -i 's|https://maplestory-word.duckdns.org/defense|https://primary-marmoset-publicly.ngrok-free.app/defense|g' "\$DIR/server/.env"
