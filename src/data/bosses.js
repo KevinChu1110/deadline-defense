@@ -9,7 +9,7 @@
  * | 暗黑龍王 | 神木村     | darkdragon SS 160 | 4   |
  * | 皮卡啾   | 時間神殿   | pinkbean SSS 180 | 5 最難 |
  */
-import { MAP_ARENA } from "./maps.js";
+import { MAP_BC_ARENA } from "./maps.js";
 
 const baseBoss = (p) => ({
   boss: true,
@@ -261,57 +261,76 @@ export function buildArenaStage(bossId) {
     leafre: "LEAFRE",
     temple: "TEMPLE",
   };
+  // 敵方城堡血量隨難度；貓咪大戰爭式推線
+  const castleHp =
+    tierCastleHp(meta.tier) * (0.9 + idx * 0.08);
   return {
     id: `arena-${id}`,
     index: 100 + Math.max(0, idx),
     code: codeByRegion[boss.region] || "ALTAR",
-    name: `競賽場 · ${boss.nameZh}`,
+    name: `遠征 · ${boss.nameZh}`,
     nameEn: id,
     arena: true,
+    bcMode: true,
     arenaBossId: id,
-    briefing: `${meta.emoji} ${boss.regionZh || ""} · ${meta.blurb}。3 波速決，分數進排行榜。`,
-    coreHp: sc.core,
-    teamLimit: sc.team,
-    deploymentPoints: sc.pts,
-    sellEnabled: true,
-    hpScale: sc.hpScale,
-    speedScale: 1 + idx * 0.02,
-    leakScale: 1 + idx * 0.05,
-    map: MAP_ARENA,
+    briefing: `${meta.emoji} ${boss.regionZh || ""} · ${meta.blurb}。點職業卡出兵，推倒對方基地！`,
+    coreHp: Math.max(12, Math.round(sc.core * 0.85)),
+    teamLimit: 16,
+    deploymentPoints: Math.max(18, Math.round(sc.pts * 1.2)),
+    bcWalletMax: 60,
+    enemyCastleHp: Math.round(castleHp),
+    sellEnabled: false,
+    hpScale: sc.hpScale * 0.92,
+    speedScale: 0.95 + idx * 0.02,
+    leakScale: 1 + idx * 0.04,
+    map: MAP_BC_ARENA,
     waves: [
       {
-        name: "先鋒試煉",
-        intel: "清線賺楓幣，先把核心職業轉好。",
+        name: "先鋒線",
+        intel: "點右側職業卡出兵 · 錢包會自動回復",
         groups: [
-          g(0, "workflow", [["fire_boar", 5], ["stump", 4]], 0.75),
-          g(0, "event", [["jr_wraith", 5], ["pig", 4]], 0.75),
+          g(0, "workflow", [["fire_boar", 6], ["stump", 5]], 0.7),
+          g(2, "event", [["pig", 5], ["jr_wraith", 4]], 0.7),
         ],
       },
       {
-        name: "王前加兵",
-        intel: "高威脅混合潮，注意護甲與隱形。",
+        name: "加派援軍",
+        intel: "敵人變強了，混編近戰遠程推線",
         groups: [
-          g(0, "workflow", [["iron_hog", 2], ["hellhound", 3], ["dark_stump", 3]], 0.8),
-          g(0, "event", [["drake", 3], ["red_drake", 2], ["wraith", 2]], 0.85),
-          { at: 3, path: "workflow", units: [["bat", 8]], interval: 0.4, distanceRatio: 0.5 },
+          g(0, "workflow", [["iron_hog", 2], ["hellhound", 3], ["dark_stump", 3]], 0.75),
+          g(2, "event", [["drake", 3], ["red_drake", 2], ["wraith", 2]], 0.8),
+          { at: 4, path: "workflow", units: [["bat", 7]], interval: 0.35 },
         ],
       },
       {
-        name: `【競賽Boss】${boss.nameZh}（${meta.tier || "?"}）`,
-        intel: `${meta.blurb}。守住神木！`,
+        name: `【Boss】${boss.nameZh}（${meta.tier || "?"}）`,
+        intel: `${meta.blurb} · 打倒 Boss 並推倒敵方基地！`,
         groups: [
           g(0, "workflow", [[id, 1]], 1),
-          g(3, "event", [["hellhound", 3], ["fire_boar", 4]], 0.75),
-          g(6, "workflow", [["jr_wraith", 4], ["iron_hog", 2]], 0.9),
+          g(4, "event", [["hellhound", 3], ["fire_boar", 4]], 0.7),
+          g(8, "workflow", [["jr_wraith", 4], ["iron_hog", 2]], 0.85),
         ],
       },
     ],
-    waveClearBonus: { 0: 2, 1: 3 },
-    waveRewards: {
-      0: ["espresso", "keyboard", "sticky"],
-      1: ["stapler", "firewall", "backup"],
-    },
+    waveClearBonus: { 0: 3, 1: 4 },
+    // 遠征不中斷選道具，保持推線節奏
+    waveRewards: {},
   };
+}
+
+function tierCastleHp(tier) {
+  switch (tier) {
+    case "SSS":
+      return 4200;
+    case "SS":
+      return 3200;
+    case "S+":
+      return 2600;
+    case "S":
+      return 2100;
+    default:
+      return 1800;
+  }
 }
 
 export function listArenaStages() {

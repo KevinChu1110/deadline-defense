@@ -57,57 +57,66 @@ export function drawScene(ctx, state) {
   ctx.clearRect(0, 0, width, height);
   ctx.imageSmoothingEnabled = true;
 
-  drawMapBackground(ctx, width, height, theme);
-  if (state.hazardState) {
-    drawHazards(ctx, state.hazardState, stage.map, state.now || 0);
+  if (state.bcMode && state.bc) {
+    drawBcBattlefield(ctx, state, theme);
+  } else {
+    drawMapBackground(ctx, width, height, theme);
+    if (state.hazardState) {
+      drawHazards(ctx, state.hazardState, stage.map, state.now || 0);
+    }
+
+    ctx.imageSmoothingEnabled = false;
+    const pathEntries = Object.entries(paths);
+    const pathStyle = pathStyleForTheme(theme);
+    pathEntries.forEach(([key, points]) => {
+      drawPath(ctx, points, {
+        color:
+          key === "event"
+            ? pathStyle.event
+            : key === "pathC"
+              ? pathStyle.pathC
+              : pathStyle.main,
+        lane:
+          key === "event"
+            ? pathStyle.eventLane
+            : key === "pathC"
+              ? pathStyle.pathCLane
+              : pathStyle.mainLane,
+        label: key === "event" ? "B路" : key === "pathC" ? "C路" : "A路",
+        labelColor:
+          key === "event" ? "#fbbf24" : key === "pathC" ? "#f472b6" : theme.accent || "#fde68a",
+      });
+    });
+    drawPads(ctx, pads, padsOccupied, hoverPad, !!state.placingType);
+    if (buffs.coreSlowRadius > 0) {
+      drawCoreSlowAura(ctx, core, buffs.coreSlowRadius, state.now);
+    }
+    drawCore(ctx, core, state.coreHp, state.coreMax, state.now, buffs.coreShield || 0);
+    // 神木受傷紅閃
+    if ((state.coreHitFlash || 0) > 0) {
+      const a = Math.min(0.55, state.coreHitFlash * 1.1);
+      ctx.save();
+      ctx.fillStyle = `rgba(239, 68, 68, ${a})`;
+      ctx.beginPath();
+      ctx.arc(core.x, core.y, 48 + (0.55 - state.coreHitFlash) * 40, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
   }
 
-  ctx.imageSmoothingEnabled = false;
-  const pathEntries = Object.entries(paths);
-  const pathStyle = pathStyleForTheme(theme);
-  pathEntries.forEach(([key, points]) => {
-    drawPath(ctx, points, {
-      color:
-        key === "event"
-          ? pathStyle.event
-          : key === "pathC"
-            ? pathStyle.pathC
-            : pathStyle.main,
-      lane:
-        key === "event"
-          ? pathStyle.eventLane
-          : key === "pathC"
-            ? pathStyle.pathCLane
-            : pathStyle.mainLane,
-      label: key === "event" ? "B路" : key === "pathC" ? "C路" : "A路",
-      labelColor:
-        key === "event" ? "#fbbf24" : key === "pathC" ? "#f472b6" : theme.accent || "#fde68a",
-    });
-  });
-  drawPads(ctx, pads, padsOccupied, hoverPad, !!state.placingType);
-  if (buffs.coreSlowRadius > 0) {
-    drawCoreSlowAura(ctx, core, buffs.coreSlowRadius, state.now);
-  }
-  drawCore(ctx, core, state.coreHp, state.coreMax, state.now, buffs.coreShield || 0);
-  // 神木受傷紅閃
-  if ((state.coreHitFlash || 0) > 0) {
-    const a = Math.min(0.55, state.coreHitFlash * 1.1);
-    ctx.save();
-    ctx.fillStyle = `rgba(239, 68, 68, ${a})`;
-    ctx.beginPath();
-    ctx.arc(core.x, core.y, 48 + (0.55 - state.coreHitFlash) * 40, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
   drawSpecialists(ctx, specialists, state.selectedSpecialistId, state.now);
   drawEnemies(ctx, enemies, state.now);
   drawBossTelegraphs(ctx, enemies);
   drawBossStatusAuras(ctx, enemies, state.now || 0);
   drawProjectiles(ctx, projectiles, state.now);
   drawFx(ctx, fx);
-  drawRangePreview(ctx, state);
-  if (state.placingType) {
-    drawPlacingBanner(ctx, width, height, state.placingDef);
+  if (!state.bcMode) {
+    drawRangePreview(ctx, state);
+    if (state.placingType) {
+      drawPlacingBanner(ctx, width, height, state.placingDef);
+    }
+  } else {
+    drawBcHudBanner(ctx, width, height, state);
   }
   // 地圖名角標
   if (theme?.nameZh) {
@@ -118,9 +127,137 @@ export function drawScene(ctx, state) {
     ctx.fillStyle = theme.accent || "#fde68a";
     ctx.font = "700 11px 'PingFang TC', system-ui";
     ctx.textAlign = "left";
-    ctx.fillText(theme.nameZh, 18, height - 14);
+    ctx.fillText(state.bcMode ? `遠征 · ${theme.nameZh}` : theme.nameZh, 18, height - 14);
     ctx.restore();
   }
+}
+
+/** 貓咪大戰爭風格：天空 + 地面 + 雙基地 */
+function drawBcBattlefield(ctx, state, theme) {
+  const { width, height } = state.stage.map;
+  const bc = state.bc;
+  const groundTop = state.stage.map.groundTop || 355;
+
+  // sky
+  const sky = ctx.createLinearGradient(0, 0, 0, groundTop);
+  sky.addColorStop(0, theme?.skyTop || "#7eb8e8");
+  sky.addColorStop(1, theme?.skyBot || "#c8e0a8");
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, width, groundTop);
+
+  // far hills
+  ctx.fillStyle = "rgba(60, 100, 50, 0.25)";
+  ctx.beginPath();
+  ctx.moveTo(0, groundTop);
+  ctx.quadraticCurveTo(200, groundTop - 80, 400, groundTop - 40);
+  ctx.quadraticCurveTo(600, groundTop - 100, 960, groundTop - 30);
+  ctx.lineTo(width, groundTop);
+  ctx.closePath();
+  ctx.fill();
+
+  // ground
+  const ground = ctx.createLinearGradient(0, groundTop, 0, height);
+  ground.addColorStop(0, "#6b9e4a");
+  ground.addColorStop(0.35, "#5a8a3c");
+  ground.addColorStop(1, "#3d5c28");
+  ctx.fillStyle = ground;
+  ctx.fillRect(0, groundTop, width, height - groundTop);
+
+  // lane dirt strip
+  ctx.fillStyle = "rgba(120, 90, 50, 0.35)";
+  ctx.fillRect(0, bc.laneY - 28, width, 56);
+  ctx.strokeStyle = "rgba(90, 60, 30, 0.35)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, bc.laneY + 28);
+  ctx.lineTo(width, bc.laneY + 28);
+  ctx.stroke();
+
+  drawBcCastle(ctx, bc.playerBase, state.coreHp, state.coreMax, true, state.now);
+  drawBcCastle(ctx, bc.enemyBase, bc.enemyCastleHp, bc.enemyCastleMax, false, state.now);
+
+  if ((state.coreHitFlash || 0) > 0) {
+    const a = Math.min(0.5, state.coreHitFlash);
+    ctx.fillStyle = `rgba(239, 68, 68, ${a})`;
+    ctx.beginPath();
+    ctx.arc(bc.playerBase.x, bc.playerBase.y, 60, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawBcCastle(ctx, base, hp, maxHp, isPlayer, now) {
+  const x = base.x;
+  const y = base.y;
+  const r = base.r || 44;
+  ctx.save();
+  // pedestal
+  ctx.fillStyle = isPlayer ? "#4a7c3a" : "#6b3a2a";
+  ctx.beginPath();
+  ctx.ellipse(x, y + 18, r + 8, 14, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // body
+  const bodyGrad = ctx.createLinearGradient(x - r, y - r, x + r, y + r);
+  if (isPlayer) {
+    bodyGrad.addColorStop(0, "#8fd06a");
+    bodyGrad.addColorStop(1, "#3d7a32");
+  } else {
+    bodyGrad.addColorStop(0, "#e07060");
+    bodyGrad.addColorStop(1, "#7a2820");
+  }
+  ctx.fillStyle = bodyGrad;
+  ctx.strokeStyle = isPlayer ? "#1e3d1a" : "#3a1210";
+  ctx.lineWidth = 3;
+  // simple fort shape
+  ctx.beginPath();
+  ctx.moveTo(x - r * 0.7, y + 12);
+  ctx.lineTo(x - r * 0.7, y - r * 0.35);
+  ctx.lineTo(x - r * 0.35, y - r * 0.35);
+  ctx.lineTo(x - r * 0.35, y - r * 0.7);
+  ctx.lineTo(x + r * 0.35, y - r * 0.7);
+  ctx.lineTo(x + r * 0.35, y - r * 0.35);
+  ctx.lineTo(x + r * 0.7, y - r * 0.35);
+  ctx.lineTo(x + r * 0.7, y + 12);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // door
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  ctx.fillRect(x - 8, y - 4, 16, 16);
+
+  // HP bar
+  const ratio = Math.max(0, Math.min(1, (hp || 0) / Math.max(1, maxHp || 1)));
+  const bw = r * 1.8;
+  const bh = 8;
+  const bx = x - bw / 2;
+  const by = y - r - 10;
+  ctx.fillStyle = "rgba(0,0,0,0.55)";
+  ctx.fillRect(bx - 1, by - 1, bw + 2, bh + 2);
+  ctx.fillStyle = "#1a1a1a";
+  ctx.fillRect(bx, by, bw, bh);
+  ctx.fillStyle = isPlayer ? "#4ade80" : "#f87171";
+  ctx.fillRect(bx, by, bw * ratio, bh);
+  ctx.fillStyle = "#fff8e0";
+  ctx.font = "700 10px system-ui";
+  ctx.textAlign = "center";
+  ctx.fillText(isPlayer ? "我方基地" : "敵方基地", x, by - 4);
+  ctx.fillText(`${Math.ceil(hp)}`, x, by + bh + 11);
+  ctx.restore();
+}
+
+function drawBcHudBanner(ctx, width, height, state) {
+  ctx.save();
+  ctx.fillStyle = "rgba(20, 14, 8, 0.55)";
+  ctx.fillRect(width / 2 - 160, 8, 320, 28);
+  ctx.strokeStyle = "rgba(196, 160, 90, 0.5)";
+  ctx.strokeRect(width / 2 - 160, 8, 320, 28);
+  ctx.fillStyle = "#fde68a";
+  ctx.font = "700 13px 'PingFang TC', system-ui";
+  ctx.textAlign = "center";
+  const siege = state.bc?.siege ? " · 總攻中！" : "";
+  ctx.fillText(`遠征推線 · 點職業卡出兵${siege}`, width / 2, 27);
+  ctx.restore();
 }
 
 function pathStyleForTheme(theme) {

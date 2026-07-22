@@ -71,6 +71,16 @@ import {
 import { themeForStage } from "../data/map-themes.js";
 import { BOSSES } from "../data/bosses.js";
 import { applyBossCast } from "./boss-attacks.js";
+import {
+  initBcState,
+  tickBcWallet,
+  tickBcSpawnCd,
+  bcSpawnReady,
+  markBcSpawned,
+  updateBcSpecialist,
+  placeEnemyOnBcLane,
+  damageEnemyCastle,
+} from "./battle-cats-mode.js";
 
 function defaultBuffs() {
   return {
@@ -123,6 +133,7 @@ export class Game {
     this.pathMap = built.paths;
     this.pathMetricsMap = built.metrics;
     this.hazardState = createHazardState(this.stage.map);
+    this.bcMode = !!(this.stage.bcMode || this.stage.arena || this.stage.map?.bcMode);
     this.reset();
   }
 
@@ -179,7 +190,11 @@ export class Game {
     this.pendingRewardChoices = null;
     this.buffs = defaultBuffs();
     this.pickedItems = [];
-    this.status = "Ready — 部署初心者、清怪賺楓幣，再場上轉職";
+    this.bcMode = !!(this.stage.bcMode || this.stage.arena || this.stage.map?.bcMode);
+    this.bc = this.bcMode ? initBcState(this.stage.map, this.stage) : null;
+    this.status = this.bcMode
+      ? "遠征推線 — 點職業卡出兵，推倒敵方基地！"
+      : "Ready — 部署初心者、清怪賺楓幣，再場上轉職";
     this.sfx.stopBgm();
     this.ui?.onState?.(this.getPublicState());
   }
@@ -260,16 +275,131 @@ export class Game {
       mapTheme: themeForStage(this.stage),
       isArena: !!this.stage.arena,
       arenaBossId: this.stage.arenaBossId || null,
-      jobChangeOptions: this.selectedSpecialistId
-        ? this.getJobChangeOptions(this.selectedSpecialistId)
-        : [],
+      bcMode: !!this.bcMode,
+      enemyCastleHp: this.bc?.enemyCastleHp ?? 0,
+      enemyCastleMax: this.bc?.enemyCastleMax ?? 0,
+      walletMax: this.bc?.walletMax ?? 0,
+      spawnCd: this.bc?.spawnCd ? { ...this.bc.spawnCd } : {},
+      jobChangeOptions:
+        this.bcMode
+          ? []
+          : this.selectedSpecialistId
+            ? this.getJobChangeOptions(this.selectedSpecialistId)
+            : [],
       bossHud: this._getBossHud(),
       controlHud: this._getControlHud(),
-      placingHint: this.placingType
-        ? `部署「${SPECIALISTS[this.placingType]?.nameZh || "職業"}」— 點地圖綠格／再點卡自動放 · Esc 取消`
-        : null,
+      placingHint: this.bcMode
+        ? "點右側職業卡出兵 → 單位自動往右推線 · 推倒敵方基地獲勝"
+        : this.placingType
+          ? `部署「${SPECIALISTS[this.placingType]?.nameZh || "職業"}」— 點地圖綠格／再點卡自動放 · Esc 取消`
+          : null,
       coreHitFlash: this.coreHitFlash || 0,
     };
+  }
+
+  /**
+   * 貓咪大戰爭式出兵（遠征）
+   * @returns {boolean}
+   */
+  tryDeployBc(typeId) {
+    if (!this.bcMode || !this.bc) return false;
+    if (this.result || this.pausedForReward || this.paused) return false;
+    if (!typeId || !this.loadout.includes(typeId)) {
+      this.sfx.play("error");
+      this.ui?.toast?.("此職業不在出戰名單");
+      return false;
+    }
+    if (!canDeployJob(typeId)) {
+      this.sfx.play("error");
+      this.ui?.toast?.("此職業尚未解鎖");
+      return false;
+    }
+    if (!bcSpawnReady(this.bc, typeId)) {
+      this.sfx.play("error");
+      this.ui?.toast?.("出兵冷卻中…");
+      return false;
+    }
+    const alive = this.specialists.length;
+    if (alive >= (this.bc.maxUnits || this.teamLimit)) {
+      this.sfx.play("error");
+      this.ui?.toast?.("戰場人數已滿");
+      return false;
+    }
+    const level = getCardLevel(typeId);
+    const def = buildLeveledDef(typeId, level);
+    if (this.points < def.cost) {
+      this.sfx.play("error");
+      this.ui?.toast?.("錢包不足（會自動回復）");
+      return false;
+    }
+    const base = this.bc.playerBase;
+    const yOff = ((this.specialists.length % 5) - 2) * 7;
+    const pad = { x: base.x + 28 + Math.random() * 12, y: this.bc.laneY + yOff };
+    const unit = createSpecialist(typeId, -1, pad, def);
+    unit.bcMode = true;
+    unit.bcYOff = yOff;
+    unit.facing = 1;
+    this.specialists.push(unit);
+    this.points -= def.cost;
+    markBcSpawned(this.bc, typeId);
+    this.selectedSpecialistId = null;
+    this.placingType = null;
+    this.status = `${def.nameZh} 出兵！`;
+    this.sfx.play("deploy");
+    this.fx.push(...createParticles(pad.x, pad.y, def.color, 10, { speed: 80, life: 0.35 }));
+    this.fx.push(createRing(pad.x, pad.y, def.color, { maxR: 36, life: 0.28 }));
+    this.ui?.onState?.(this.getPublicState());
+    this.ui?.toast?.(`${def.nameZh} −${def.cost} 出兵`);
+    return true;
+  }
+
+  _winBcSiege() {
+    if (this.result) return;
+    this.result = "win";
+    this.waveActive = false;
+    if (this.bc) this.bc.siege = false;
+    this.status = "遠征勝利！敵方基地陷落！";
+    this.sfx.play("win");
+    this.sfx.stopBgm();
+    this.fx.push(
+      createFloatText(this.bc.enemyBase.x, this.bc.enemyBase.y - 48, "BASE DOWN", "#fde68a")
+    );
+    this.fx.push(
+      ...createParticles(this.bc.enemyBase.x, this.bc.enemyBase.y, "#fbbf24", 28, {
+        speed: 140,
+        life: 0.7,
+      })
+    );
+    this.waveIndex = Math.max(this.waveIndex, this.stage.waves.length - 1);
+    const stageIndex = this.stage.index ?? 0;
+    const winLeaves = 25;
+    addMapleLeaves(winLeaves, "arena");
+    this.lastStars = null;
+    const score = computeClearScore({
+      coreHp: this.coreHp,
+      coreMax: this.coreMax,
+      mesos: this.mesosEarned || this.mesos || 0,
+      leaks: this.leaks || 0,
+      usedJobChange: this.usedJobChange,
+      waveTotal: this.stage.waves.length,
+      stageIndex: 12,
+      bossKill: true,
+    });
+    this.lastScore = score;
+    const nick = getNickname() || "冒險者";
+    const bossId = this.stage.arenaBossId;
+    const bossName = BOSSES[bossId]?.nameZh || this.stage.name;
+    submitArenaScore({
+      nick,
+      score,
+      bossId,
+      bossName,
+      coreHp: this.coreHp,
+      leaks: this.leaks || 0,
+    });
+    this.ui?.toast?.(`遠征勝利 · 分數 ${score} · 🍁+${winLeaves}`);
+    this.ui?.onResult?.("win");
+    this.ui?.onState?.(this.getPublicState());
   }
 
   /** 場上 Boss 血條 + 下一招 */
@@ -461,6 +591,9 @@ export class Game {
       leakScale: this.stage.leakScale ?? 1,
       distanceRatio: opts.distanceRatio,
     });
+    if (this.bcMode && this.bc) {
+      placeEnemyOnBcLane(enemy, this.bc, this.enemies.length);
+    }
     this.enemies.push(enemy);
     if (enemy.def.boss) {
       this.fx.push(createRing(enemy.x, enemy.y, enemy.def.color, { maxR: 70, life: 0.55 }));
@@ -570,6 +703,10 @@ export class Game {
   }
 
   sellSelected() {
+    if (this.bcMode) {
+      this.ui?.toast?.("遠征推線無法回收單位");
+      return;
+    }
     if (!this.selectedSpecialistId || this.result || this.pausedForReward) return;
     const idx = this.specialists.findIndex((s) => s.id === this.selectedSpecialistId);
     if (idx < 0) return;
@@ -703,18 +840,38 @@ export class Game {
     if (bonus > 0) {
       this.points += bonus;
       this.ui?.toast?.(
-        `波次完成 · 🪙+${mesoWave} 楓幣 · +${bonus} 部署 · 🍁+${leafGain}`
+        this.bcMode
+          ? `波次完成 · 錢包+${bonus} · 🍁+${leafGain}`
+          : `波次完成 · 🪙+${mesoWave} 楓幣 · +${bonus} 部署 · 🍁+${leafGain}`
       );
     } else {
-      this.ui?.toast?.(`波次完成 · 🪙+${mesoWave} 楓幣 · 🍁+${leafGain}`);
+      this.ui?.toast?.(
+        this.bcMode ? `波次完成 · 🍁+${leafGain}` : `波次完成 · 🪙+${mesoWave} 楓幣 · 🍁+${leafGain}`
+      );
     }
 
     // reset crit meso cap each wave
     this.waveMesoFromCrit = 0;
 
+    // BC 最終波：必須推倒敵方基地
+    if (
+      this.bcMode &&
+      this.bc &&
+      this.waveIndex >= this.stage.waves.length - 1 &&
+      this.bc.enemyCastleHp > 0
+    ) {
+      this.bc.siege = true;
+      this.status = "總攻！推倒敵方基地！";
+      this.ui?.toast?.("總攻！點卡出兵，拆掉敵方基地");
+      this.ui?.onState?.(this.getPublicState());
+      return;
+    }
+
     if (this.waveIndex >= this.stage.waves.length - 1) {
       this.result = "win";
-      this.status = this.stage.arena ? "競賽勝利！分數已記入排行。" : "神木平安！關卡完成。";
+      this.status = this.stage.arena
+        ? "遠征勝利！分數已記入排行。"
+        : "神木平安！關卡完成。";
       this.sfx.play("win");
       const isArena = !!this.stage.arena;
       let firstClear = false;
@@ -817,12 +974,20 @@ export class Game {
     }
 
     this.now += dt;
-    tickHazards(this.hazardState, dt);
-    tickPortalCd(this.hazardState, dt);
+    if (!this.bcMode) {
+      tickHazards(this.hazardState, dt);
+      tickPortalCd(this.hazardState, dt);
+    }
+
+    // BC：錢包回復 + 出兵 CD
+    if (this.bcMode && this.bc) {
+      this.points = tickBcWallet(this.bc, this.points, dt);
+      tickBcSpawnCd(this.bc, dt);
+    }
 
     const corePos = this.stage.map.core;
     const syn = this._synergyBuffs();
-    const stallZones = this._stallZones();
+    const stallZones = this.bcMode ? [] : this._stallZones();
     const auraAtk = this._allyAuraAtk();
     const auras = this.enemies
       .filter((e) => e.alive && e.def.hasteAura)
@@ -849,13 +1014,15 @@ export class Game {
     for (const e of list) {
       if (!e.alive && !e.pendingSpawns?.length) continue;
       if (e.alive) {
-        const hz = sampleHazardOnEnemy(this.hazardState, e, dt, this.stage.map);
+        const hz = this.bcMode
+          ? { speedMul: 1, noSlow: false, extraDist: 0 }
+          : sampleHazardOnEnemy(this.hazardState, e, dt, this.stage.map);
         e.status.hazardSpeedMul = hz.speedMul;
         e.status.noSlow = hz.noSlow;
-        tryPortalJump(this.hazardState, e);
+        if (!this.bcMode) tryPortalJump(this.hazardState, e);
         updateEnemy(e, dt, this.now, {
           buffs: {
-            coreSlowRadius: this.buffs.coreSlowRadius,
+            coreSlowRadius: this.bcMode ? 0 : this.buffs.coreSlowRadius,
             coreSlowPower: this.buffs.coreSlowPower,
             corePos,
           },
@@ -864,6 +1031,9 @@ export class Game {
           stallZones,
           hazardExtraDist: hz.extraDist,
         });
+        if (this.bcMode && this.bc) {
+          e.y = this.bc.laneY + (e.bcYOff || 0);
+        }
         if (e._pendingBanner) {
           this.fx.push(createBossBanner(e._pendingBanner, e.def.color));
           this.sfx.playBoss("phase", { bossId: e.def.id || e.typeId });
@@ -916,6 +1086,29 @@ export class Game {
     const enemiesById = new Map(this.enemies.map((e) => [e.id, e]));
     for (const s of this.specialists) {
       updateSpecialist(s, dt);
+      if (this.bcMode && this.bc) {
+        const canSiege =
+          this.bc.siege || this.waveIndex >= this.stage.waves.length - 1;
+        const moved = updateBcSpecialist(s, dt, this.enemies, this.bc);
+        // 未進入 Boss 波前，在敵方門前停下、不拆塔
+        if (!canSiege && s.x > this.bc.enemyBase.x - 100) {
+          s.x = this.bc.enemyBase.x - 100;
+        } else if (canSiege && moved.castleHits > 0) {
+          const down = damageEnemyCastle(this.bc, moved.castleHits);
+          this.fx.push(
+            createFloatText(
+              this.bc.enemyBase.x,
+              this.bc.enemyBase.y - 30,
+              `-${moved.castleHits}`,
+              "#fde68a"
+            )
+          );
+          if (down) {
+            this._winBcSiege();
+            return;
+          }
+        }
+      }
       if (s.cooldown > 0) continue;
       // Boss 暈眩／沉默：無法出手
       if (isSpecialistDisabled(s, this.now)) continue;
@@ -1029,6 +1222,22 @@ export class Game {
             this.fx.push(createRing(target.x, target.y, target.def.color, { maxR: 30 }));
             if (wasBoss) {
               this.fx.push(createFloatText(target.x, target.y - 16, "CLEARED", "#f9a8d4"));
+              // BC：擊殺 Boss 重創敵方基地
+              if (this.bcMode && this.bc) {
+                const chunk = Math.round(this.bc.enemyCastleMax * 0.28);
+                if (damageEnemyCastle(this.bc, chunk)) {
+                  this._winBcSiege();
+                  return;
+                }
+                this.fx.push(
+                  createFloatText(
+                    this.bc.enemyBase.x,
+                    this.bc.enemyBase.y - 50,
+                    `基地 -${chunk}`,
+                    "#f9a8d4"
+                  )
+                );
+              }
             }
             if (target.pendingSpawns?.length) this._flushPendingSpawns(target);
           }
@@ -1056,12 +1265,24 @@ export class Game {
       this._onWaveCleared();
     }
 
+    // BC 總攻：無怪且基地仍在 → 繼續拆塔（單位仍更新於上方）
+    if (
+      this.bcMode &&
+      this.bc?.siege &&
+      !this.waveActive &&
+      this.enemies.length === 0 &&
+      this.bc.enemyCastleHp <= 0
+    ) {
+      this._winBcSiege();
+      return;
+    }
+
     if (this.coreHp <= 0) {
       this.coreHp = 0;
       this.result = "lose";
       this.waveActive = false;
       this.sfx.stopBgm();
-      this.status = "神木倒下了…";
+      this.status = this.bcMode ? "我方基地陷落…" : "神木倒下了…";
       this.sfx.play("lose");
       const consolation = failConsolationLeaves(
         this.waveIndex,
@@ -1157,8 +1378,10 @@ export class Game {
       placingDef: this.placingType ? SPECIALISTS[this.placingType] : null,
       now: this.now,
       buffs: this.buffs,
-      hazardState: this.hazardState,
+      hazardState: this.bcMode ? null : this.hazardState,
       mapTheme: themeForStage(this.stage),
+      bcMode: !!this.bcMode,
+      bc: this.bc,
     });
   }
 

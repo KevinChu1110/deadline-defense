@@ -237,3 +237,38 @@ export const MAP_ARENA = {
   ],
   core: CORE,
 };
+
+/**
+ * 遠征 Boss — 貓咪大戰爭風格單線地圖
+ * 敵人由右向左走（path 終點＝我方基地），我方出兵往右推
+ */
+export const MAP_BC_ARENA = {
+  width: 960,
+  height: 540,
+  bcMode: true,
+  laneY: 400,
+  groundTop: 355,
+  playerBase: { x: 72, y: 400, r: 46 },
+  enemyBase: { x: 888, y: 400, r: 52 },
+  // 敵軍路線：右 → 左（漏怪打到我方基地）
+  paths: {
+    workflow: [
+      { x: 920, y: 400 },
+      { x: 780, y: 400 },
+      { x: 620, y: 400 },
+      { x: 460, y: 400 },
+      { x: 300, y: 400 },
+      { x: 160, y: 400 },
+      { x: 72, y: 400 },
+    ],
+    event: [
+      { x: 920, y: 418 },
+      { x: 700, y: 418 },
+      { x: 480, y: 418 },
+      { x: 260, y: 418 },
+      { x: 72, y: 418 },
+    ],
+  },
+  pads: [],
+  core: { x: 72, y: 400 },
+};

@@ -63,6 +63,10 @@ const els = {
   core: document.querySelector("#stat-core"),
   wave: document.querySelector("#stat-wave"),
   points: document.querySelector("#stat-points"),
+  lblCore: document.querySelector("#lbl-core"),
+  lblPoints: document.querySelector("#lbl-points"),
+  lblMesos: document.querySelector("#lbl-mesos"),
+  lblTeam: document.querySelector("#lbl-team"),
   mesosHud: document.querySelector("#stat-mesos"),
   team: document.querySelector("#stat-team"),
   leavesHud: document.querySelector("#stat-leaves"),
@@ -757,15 +761,16 @@ const GUIDE_PAGES = {
     <div class="guide-tip">💡 破隱靠神射／主教線；破甲靠黑騎／槍神／狂狼等。</div>
   `,
   boss: `
-    <h3>🐉 五大遠征 Boss</h3>
+    <h3>🐉 遠征 Boss（推線模式）</h3>
+    <p>遠征採用<strong>貓咪大戰爭式</strong>玩法：點職業卡出兵，單位自動往右推，拆敵方基地獲勝。</p>
     <ul>
-      <li><strong>海怒斯</strong>（水世界）物理無效、嘴炮、火柱、千斤墜</li>
-      <li><strong>拉圖斯</strong>（玩具城）時空暫停、反射、吸取血魔</li>
-      <li><strong>殘暴炎魔</strong>（冰原）八臂封印、火柱、魔方回血</li>
-      <li><strong>暗黑龍王</strong>（神木村）劇毒、連鎖閃電、龍息</li>
-      <li><strong>皮卡啾</strong>（時間神殿 · 最難）封印、反盾、花瓣、狂暴</li>
+      <li><strong>海怒斯</strong>（水世界）物理無效、嘴炮、火柱</li>
+      <li><strong>拉圖斯</strong>（玩具城）時空暫停、反射</li>
+      <li><strong>殘暴炎魔</strong>（冰原）八臂封印、火柱</li>
+      <li><strong>暗黑龍王</strong>（神木村）劇毒、連鎖閃電</li>
+      <li><strong>皮卡啾</strong>（時間神殿 · 最難）封印、反盾、狂暴</li>
     </ul>
-    <div class="guide-tip">💡 蓄力時畫面會有圈／警告；被暈／沉默的職業頭上會顯示秒數。</div>
+    <div class="guide-tip">💡 錢包會自動回復；Boss 波後可攻擊敵方基地。地區戰役仍是塔防佈陣。</div>
   `,
   control: `
     <h3>👆 操作手勢</h3>
@@ -1633,10 +1638,18 @@ const ui = {
     els.core.textContent = `${state.coreHp}`;
     els.wave.textContent =
       state.waveIndex < 0 ? `0 / ${state.waveTotal}` : `${state.waveIndex + 1} / ${state.waveTotal}`;
-    els.points.textContent = `${state.points}`;
+    els.points.textContent = state.bcMode
+      ? `${state.points}${state.walletMax ? `/${state.walletMax}` : ""}`
+      : `${state.points}`;
     els.team.textContent = `${state.teamCount} / ${state.teamLimit}`;
+    if (els.lblCore) els.lblCore.textContent = state.bcMode ? "我方基地" : "神木";
+    if (els.lblPoints) els.lblPoints.textContent = state.bcMode ? "錢包" : "點數";
+    if (els.lblMesos) els.lblMesos.textContent = state.bcMode ? "敵方基地" : "楓幣";
+    if (els.lblTeam) els.lblTeam.textContent = state.bcMode ? "出兵" : "場上";
     if (els.mesosHud) {
-      els.mesosHud.textContent = String(state.mesos ?? 0);
+      els.mesosHud.textContent = state.bcMode
+        ? `${Math.ceil(state.enemyCastleHp || 0)}`
+        : String(state.mesos ?? 0);
     }
     if (els.leavesHud) {
       els.leavesHud.textContent = String(state.leaves ?? loadCardProgress().leaves);
@@ -1688,7 +1701,9 @@ const ui = {
     // loadout hint
     const names = (state.loadout || []).map((id) => SPECIALISTS[id]?.nameZh).filter(Boolean);
     els.loadoutHint.textContent = names.length
-      ? `出戰：${names.join("、")} · 點選或拖到綠格`
+      ? state.bcMode
+        ? `出戰：${names.join("、")} · 點卡出兵推線`
+        : `出戰：${names.join("、")} · 點選或拖到綠格`
       : "請先完成角色選擇";
 
     renderCombatHud(state);
@@ -1700,7 +1715,14 @@ const ui = {
     }
 
     const selected = game.specialists.find((s) => s.id === state.selectedSpecialistId);
-    if (selected) {
+    if (state.bcMode) {
+      const castle = Math.ceil(state.enemyCastleHp || 0);
+      const cmax = Math.ceil(state.enemyCastleMax || 1);
+      els.selectedInfo.innerHTML = `
+        <strong>遠征推線</strong>（貓咪大戰爭風）<br/>
+        <span class="muted">點右側職業卡出兵 · 錢包自動回復<br/>
+        敵方基地 ${castle}/${cmax}${state.waveIndex >= (state.waveTotal || 1) - 1 ? " · 可拆塔" : " · Boss 波後可拆塔"}</span>`;
+    } else if (selected) {
       renderSelectedUnitPanel(selected, state);
     } else if (state.placingType) {
       const d = SPECIALISTS[state.placingType];
@@ -1836,6 +1858,12 @@ function handleSpecialistCardTap(id) {
   if (!game || screen !== "play") return;
   const state = game.getPublicState();
   if (state.result || state.pausedForReward) return;
+  // 遠征 BC：點一下直接出兵
+  if (state.bcMode) {
+    void sfx.unlock();
+    game.tryDeployBc(id);
+    return;
+  }
   const lv = getCardLevel(id);
   const leveled = buildLeveledDef(id, lv);
   const d = SPECIALISTS[id];
@@ -1863,6 +1891,13 @@ function beginSpecialistDrag(e, id, d) {
   if (!game || screen !== "play") return;
   const state = game.getPublicState();
   if (state.result || state.pausedForReward) return;
+  // 遠征：不拖曳，點一下出兵
+  if (state.bcMode) {
+    void sfx.unlock();
+    e.preventDefault();
+    game.tryDeployBc(id);
+    return;
+  }
   const lv = getCardLevel(id);
   const leveled = buildLeveledDef(id, lv);
   if (state.points < leveled.cost) {
@@ -1939,8 +1974,9 @@ function renderSpecialistCards(state) {
     if (state?.placingType === id) btn.classList.add("active");
     const cantAfford = (state?.points ?? game.points) < leveled.cost;
     const teamFull = (state?.teamCount ?? 0) >= (state?.teamLimit ?? 6);
-    if (cantAfford || teamFull || blocked) btn.classList.add("disabled");
-    btn.title = "按住拖到地圖綠格部署";
+    const onCd = state?.bcMode && state?.spawnCd?.[id] > 0;
+    if (cantAfford || teamFull || blocked || onCd) btn.classList.add("disabled");
+    btn.title = state?.bcMode ? "點一下出兵（推線）" : "按住拖到地圖綠格部署";
 
     const portrait = getSpecialistPortrait(id, d);
     const img = document.createElement("canvas");
@@ -1953,7 +1989,12 @@ function renderSpecialistCards(state) {
 
     const text = document.createElement("span");
     const lastSkill = (leveled.skillNames || [d.skill]).slice(-1)[0];
-    text.innerHTML = `<strong>${d.nameZh} ★${lv}</strong><small>${lastSkill} · 傷${leveled.damage} · 拖曳部署</small>`;
+    const actHint = state?.bcMode
+      ? onCd
+        ? `冷卻 ${state.spawnCd[id].toFixed(1)}s`
+        : "點一下出兵"
+      : "拖曳部署";
+    text.innerHTML = `<strong>${d.nameZh} ★${lv}</strong><small>${lastSkill} · 傷${leveled.damage} · ${actHint}</small>`;
 
     const cost = document.createElement("span");
     cost.className = "cost";
@@ -1961,11 +2002,12 @@ function renderSpecialistCards(state) {
 
     btn.append(img, text, cost);
 
-    if (!cantAfford && !teamFull && !blocked) {
+    if (!cantAfford && !teamFull && !blocked && !onCd) {
       btn.addEventListener("pointerdown", (e) => beginSpecialistDrag(e, id, d));
     } else {
       btn.addEventListener("click", () => {
-        if (cantAfford) showToast("部署點數不足");
+        if (onCd) showToast("出兵冷卻中");
+        else if (cantAfford) showToast(state?.bcMode ? "錢包不足" : "部署點數不足");
         else if (teamFull) showToast("場上人數已滿");
       });
     }
@@ -2316,7 +2358,10 @@ window.addEventListener("keydown", (e) => {
   const loadout = game.loadout || [];
   if (e.key >= "1" && e.key <= "4") {
     const i = Number(e.key) - 1;
-    if (loadout[i]) game.setPlacing(loadout[i]);
+    if (loadout[i]) {
+      if (game.bcMode) game.tryDeployBc(loadout[i]);
+      else game.setPlacing(loadout[i]);
+    }
   }
   if (e.key === "Escape") game.setPlacing(null);
   if (e.key === "Delete" || e.key === "Backspace") game.sellSelected();
