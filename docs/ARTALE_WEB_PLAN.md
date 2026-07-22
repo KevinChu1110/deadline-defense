@@ -72,27 +72,22 @@ npm run dev
 
 開啟後主選單 → **進入主城**。
 
-## SIT 部署（sit-kevin）
+## SIT 部署
 
-**對外必須走 ngrok**（公司 VPN/SG 擋 DuckDNS 直連；與派對遊戲同一條 tunnel）。
+| 層 | 位置 | URL |
+|----|------|-----|
+| **前端** | Netlify `maplestory-defense` | https://maplestory-defense.netlify.app |
+| **API** | sit-kevin + ngrok（只暴露 API） | https://primary-marmoset-publicly.ngrok-free.app/defense/api/… |
 
-| 用途 | URL |
-|------|-----|
-| 遊戲主城 | https://primary-marmoset-publicly.ngrok-free.app/defense/ |
-| API 健康 | https://primary-marmoset-publicly.ngrok-free.app/defense/api/health |
-
-路徑：`ngrok → :2567 artale-games` 反代 `/defense` → `:8787 artale-web-api`（共用 `player-data`）。
-
-```bash
-# 本機 monorepo
-cd deadline-defense
-./deploy.sh          # build + rsync + PM2 artale-web-api
-./deploy.sh --fast   # 略過 vite build
-
-# 若改了 artale-games-server 的 /defense 反代：
-# 同步後 systemctl restart artale-games
+```
+瀏覽器 (Netlify)
+   │  fetch VITE_API_BASE + /api/*
+   ▼
+ngrok → :2567 /defense/* → :8787 artale-web-api → player-data.json
 ```
 
-- PM2：`artale-web-api` · 遠端 `~/artale-web`
-- 資料：`PLAYER_DATA_PATH=~/artale-bot/player-data.json`
-- 首訪 ngrok 可能有一次「Visit Site」確認頁（已知）
+- 建置：`netlify.toml` 設 `VITE_API_BASE`（跨站 API）
+- Cookie：`SameSite=None; Secure` + CORS 允許 `*.netlify.app`
+- 登入：OAuth 未設時用「開發用 ID」；OAuth Redirect 仍指 ngrok API callback
+- API 更新：`./deploy.sh`（PM2 `artale-web-api`）
+- 前端更新：`git push`（Netlify 自動 build）或 `netlify deploy --prod`

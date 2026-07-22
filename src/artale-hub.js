@@ -4,10 +4,17 @@
 
 const SESSION_KEY = "artale-web-discord-id";
 
-/** 相容 Vite base（本機 `/`、SIT `/defense/`） */
+/**
+ * API 絕對／相對路徑
+ * - Netlify 前端 + ngrok API：設 VITE_API_BASE=https://….ngrok-free.app/defense
+ * - 本機 Vite：不設，走同源 /api（proxy）
+ * - 同源 /defense 部署：可用 BASE_URL=/defense/
+ */
 export function apiUrl(p) {
-  const base = import.meta.env.BASE_URL || "/";
   const clean = String(p || "").replace(/^\//, "");
+  const apiBase = String(import.meta.env.VITE_API_BASE || "").replace(/\/$/, "");
+  if (apiBase) return `${apiBase}/${clean}`;
+  const base = import.meta.env.BASE_URL || "/";
   if (base === "/") return `/${clean}`;
   return `${base.replace(/\/?$/, "/")}${clean}`;
 }
@@ -221,13 +228,16 @@ export function renderHubShell(els, state) {
         </div>
         ${error ? `<p class="hub-error">${escapeHtml(error)}</p>` : ""}
 
-        <button type="button" class="btn primary maple-primary hub-discord-btn" id="hub-btn-discord" ${apiOk === false ? "disabled" : ""}>
+        <button type="button" class="btn primary maple-primary hub-discord-btn" id="hub-btn-discord"
+          ${apiOk === false || oauthOk === false ? "disabled" : ""}>
           🎮 使用 Discord 登入
         </button>
         <p class="muted hub-oauth-hint">
-          需在 <code>server/.env</code>（從 env.example 複製）設定 Client ID／Secret<br/>
-          並於 Discord Developer Portal 加入 Redirect：<br/>
-          <code>http://127.0.0.1:5173/api/auth/discord/callback</code>
+          ${
+            oauthOk === false
+              ? "SIT 尚未設定 Discord OAuth Client — 請用下方「開發用 ID 登入」。API 走 ngrok，前端在 Netlify。"
+              : "Discord OAuth 已設定。API 在 ngrok，網頁在 Netlify。"
+          }
         </p>
 
         <details class="hub-dev-details">

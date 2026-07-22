@@ -130,33 +130,79 @@ export function parseCookies(req) {
   return out;
 }
 
-export function sessionCookie(sid, { clear = false } = {}) {
-  const secure =
+function cookieSameSite() {
+  // 跨站（Netlify 前端 + ngrok API）必須 SameSite=None; Secure
+  const v = (process.env.COOKIE_SAMESITE || "").trim();
+  if (v) return v;
+  if (
     process.env.COOKIE_SECURE === "1" ||
     process.env.COOKIE_SECURE === "true"
-      ? "; Secure"
-      : "";
-  if (clear) {
-    return `artale_sid=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`;
+  ) {
+    // 正式環境預設 None（可被 COOKIE_SAMESITE=Lax 覆寫）
+    return "None";
   }
-  const maxAge = 7 * 24 * 60 * 60;
-  return `artale_sid=${encodeURIComponent(sid)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`;
+  return "Lax";
 }
 
-export function corsHeaders(req) {
-  const origin = req.headers.origin || WEB_ORIGIN;
-  // 開發時允許 vite origin
-  const allowed = new Set([
+export function sessionCookie(sid, { clear = false } = {}) {
+  const sameSite = cookieSameSite();
+  const needSecure =
+    sameSite.toLowerCase() === "none" ||
+    process.env.COOKIE_SECURE === "1" ||
+    process.env.COOKIE_SECURE === "true";
+  const secure = needSecure ? "; Secure" : "";
+  if (clear) {
+    return `artale_sid=; Path=/; HttpOnly; SameSite=${sameSite}; Max-Age=0${secure}`;
+  }
+  const maxAge = 7 * 24 * 60 * 60;
+  return `artale_sid=${encodeURIComponent(sid)}; Path=/; HttpOnly; SameSite=${sameSite}; Max-Age=${maxAge}${secure}`;
+}
+
+function allowedOrigins() {
+  const set = new Set([
     WEB_ORIGIN,
     "http://127.0.0.1:5173",
     "http://localhost:5173",
   ]);
-  const allow = allowed.has(origin) ? origin : WEB_ORIGIN;
+  // 去掉 path，只留 origin（WEB_ORIGIN 可能含 /defense）
+  try {
+    set.add(new URL(WEB_ORIGIN).origin);
+  } catch {
+    /* ignore */
+  }
+  for (const o of String(process.env.CORS_ORIGINS || "").split(",")) {
+    const t = o.trim();
+    if (t) set.add(t);
+  }
+  return set;
+}
+
+export function corsHeaders(req) {
+  const origin = req.headers.origin || "";
+  const allowed = allowedOrigins();
+  let allow = WEB_ORIGIN;
+  try {
+    allow = new URL(WEB_ORIGIN).origin;
+  } catch {
+    /* ignore */
+  }
+  if (origin) {
+    if (allowed.has(origin)) {
+      allow = origin;
+    } else {
+      try {
+        if (/\.netlify\.app$/i.test(new URL(origin).hostname)) allow = origin;
+      } catch {
+        /* ignore */
+      }
+    }
+  }
   return {
     "Access-Control-Allow-Origin": allow,
     "Access-Control-Allow-Credentials": "true",
     "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
+    Vary: "Origin",
   };
 }
 

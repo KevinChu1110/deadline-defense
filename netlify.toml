@@ -1,13 +1,17 @@
-# Netlify 部署設定 — 神木防衛 (Vite)
+# Netlify — 只託管前端靜態；API 走 ngrok（sit-kevin）
 [build]
   command = "npm run build"
   publish = "dist"
 
-# SPA / 前端路由：全部回 index.html（目前無多頁也安全）
+[build.environment]
+  NODE_VERSION = "20"
+  # 跨站 API：ngrok 只暴露 API（經 artale-games /defense 反代到 :8787）
+  VITE_API_BASE = "https://primary-marmoset-publicly.ngrok-free.app/defense"
+  # 前端 root，不要 /defense base
+  VITE_BASE = "/"
+
+# SPA fallback
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-
-[build.environment]
-  NODE_VERSION = "20"
