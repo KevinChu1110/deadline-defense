@@ -305,7 +305,7 @@ const server = http.createServer(async (req, res) => {
       if (!discordId || !charId) {
         return json(res, 400, { error: "需要登入與 charId" }, req);
       }
-      const me = selectCharacter(discordId, charId);
+      const me = await selectCharacter(discordId, charId);
       return json(res, 200, me, req);
     }
 
@@ -325,7 +325,7 @@ const server = http.createServer(async (req, res) => {
       const discordId = sess?.discordId;
       if (!discordId) return json(res, 401, { error: "請先登入" }, req);
       if (!body.itemId) return json(res, 400, { error: "缺少 itemId" }, req);
-      const view = equipOnAccount(discordId, body.itemId, body.subIdx || 0);
+      const view = await equipOnAccount(discordId, body.itemId, body.subIdx || 0);
       return json(res, 200, view, req);
     }
 
@@ -335,7 +335,7 @@ const server = http.createServer(async (req, res) => {
       const discordId = sess?.discordId;
       if (!discordId) return json(res, 401, { error: "請先登入" }, req);
       if (!body.slot) return json(res, 400, { error: "缺少 slot" }, req);
-      const view = unequipOnAccount(discordId, body.slot, body.subIdx || 0);
+      const view = await unequipOnAccount(discordId, body.slot, body.subIdx || 0);
       return json(res, 200, view, req);
     }
 
@@ -355,7 +355,7 @@ const server = http.createServer(async (req, res) => {
       const discordId = sess?.discordId;
       if (!discordId) return json(res, 401, { error: "請先登入" }, req);
       if (!body.slot) return json(res, 400, { error: "缺少 slot" }, req);
-      const out = attemptStarforceOnAccount(
+      const out = await attemptStarforceOnAccount(
         discordId,
         body.slot,
         body.subIdx || 0,
@@ -382,7 +382,7 @@ const server = http.createServer(async (req, res) => {
       if (!body.slot || !body.action) {
         return json(res, 400, { error: "需要 slot 與 action" }, req);
       }
-      const out = usePotentialOnAccount(
+      const out = await usePotentialOnAccount(
         discordId,
         body.slot,
         body.subIdx || 0,
@@ -397,7 +397,7 @@ const server = http.createServer(async (req, res) => {
       const discordId = sess?.discordId;
       if (!discordId) return json(res, 401, { error: "請先登入" }, req);
       if (!body.toKey) return json(res, 400, { error: "缺少 toKey" }, req);
-      const out = craftPotentialOnAccount(
+      const out = await craftPotentialOnAccount(
         discordId,
         body.toKey,
         body.times || 1
@@ -429,7 +429,7 @@ const server = http.createServer(async (req, res) => {
       const body = await readBody(req);
       const discordId = sess?.discordId;
       if (!discordId) return json(res, 401, { error: "請先登入" }, req);
-      const out = completeActionRaid(discordId, body);
+      const out = await completeActionRaid(discordId, body);
       return json(res, 200, out, req);
     }
 

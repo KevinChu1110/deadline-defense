@@ -226,6 +226,18 @@ export function parseBridgePayload(raw) {
     activeCharId: data.activeCharId || characters[0]?.charId,
   };
 
+  // ⚠️ v2 的原始 blob 一定要帶過去。normalized 若漏掉它，importBridgeToSlots 就永遠
+  //    走「用等級重建」那條破壞性路徑，備份還原等於滅檔。
+  if (Array.isArray(data.slots)) {
+    normalized.slots = data.slots
+      .filter((x) => x && typeof x === "object")
+      .slice(0, SLOT_COUNT)
+      .map((x) => ({
+        index: Math.max(0, Math.min(SLOT_COUNT - 1, Number(x.index) || 0)),
+        blob: typeof x.blob === "string" ? x.blob : null,
+      }));
+  }
+
   return { ok: true, data: normalized };
 }
 
@@ -248,6 +260,10 @@ export function encodeBridgeCode(payload) {
  * @returns {{ written: { slot: number, name: string, class: string, level: number, jobId: string }[] }}
  */
 export function importBridgeToSlots(payload, opts = {}) {
+  // v2 備份（來自本網頁的「匯出進度碼」）→ 原樣還原，不走等級重建那條破壞性路徑
+  if (Array.isArray(payload.slots) && payload.slots.some((x) => x && x.blob)) {
+    return restoreSlotsFromBackup(payload);
+  }
   const chars = (payload.characters || []).slice(0, SLOT_COUNT);
   if (!chars.length) throw new Error("沒有可匯入的角色");
 
@@ -322,6 +338,64 @@ export function importBridgeToSlots(payload, opts = {}) {
   return { written };
 }
 
+/** 覆寫前先把現有三槽存成一份備份，中途失敗可整批還原 */
+function snapshotSlots() {
+  const snap = [];
+  for (let i = 0; i < SLOT_COUNT; i++) {
+    try {
+      snap.push(localStorage.getItem(`deadline-defense-slot-blob-${i}`));
+    } catch {
+      snap.push(null);
+    }
+  }
+  let meta = null;
+  try {
+    meta = localStorage.getItem("deadline-defense-saves-v1");
+  } catch {
+    /* ignore */
+  }
+  return { snap, meta };
+}
+
+function rollbackSlots({ snap, meta }) {
+  for (let i = 0; i < SLOT_COUNT; i++) {
+    try {
+      if (snap[i] == null) localStorage.removeItem(`deadline-defense-slot-blob-${i}`);
+      else localStorage.setItem(`deadline-defense-slot-blob-${i}`, snap[i]);
+    } catch {
+      /* ignore */
+    }
+  }
+  try {
+    if (meta != null) localStorage.setItem("deadline-defense-saves-v1", meta);
+  } catch {
+    /* ignore */
+  }
+}
+
+/** v2 備份還原：原樣寫回各槽，不重建 */
+function restoreSlotsFromBackup(payload) {
+  const backup = snapshotSlots();
+  const written = [];
+  try {
+    flushActiveSlot();
+    for (const entry of payload.slots) {
+      if (!entry || entry.blob == null) continue;
+      const i = Math.max(0, Math.min(SLOT_COUNT - 1, Number(entry.index) || 0));
+      localStorage.setItem(`deadline-defense-slot-blob-${i}`, entry.blob);
+      const ch = (payload.characters || []).find((c) => c.charId) || {};
+      written.push({ slot: i, name: ch.name || `存檔${i + 1}`, class: ch.class, level: ch.level });
+    }
+    if (!written.length) throw new Error("備份裡沒有任何存檔");
+    // saveCurrent:false —— live keys 還是還原前的舊狀態，照常回存會蓋掉剛寫好的槽
+    switchToSlot(written[0].slot, { saveCurrent: false });
+  } catch (e) {
+    rollbackSlots(backup);
+    throw new Error(`還原失敗，已回復原本的存檔（${e.message}）`);
+  }
+  return { written, restored: true };
+}
+
 /**
  * 從目前 3 槽匯出（給 Bot 反向同步用，v1 簡化）
  */
@@ -381,7 +455,21 @@ export function exportSlotsAsBridge() {
       mapleLeaves: characters.reduce((a, c) => Math.max(a, c.leaves || 0), 0),
     },
     characters: characters.map(({ leaves, webSlot, ...c }) => c),
-    activeCharId: characters[getActiveSlotIndex()]?.charId,
+    // ⚠️ 原本寫 characters[getActiveSlotIndex()] —— characters 已經跳過空槽，
+    //    索引跟槽號不是同一件事。槽 0 空、active=1 時會指到槽 2 的角色。
+    activeCharId: characters.find((c) => c.webSlot === getActiveSlotIndex())?.charId,
+    // v2：把各槽的原始 blob 一起帶走。只帶 level 的話，純本機存檔的 level 恆為 1，
+    // 玩家「匯出備份 → 貼回來」等於把通關紀錄、星星全部清空、解鎖退回第 1 關 ——
+    // 照 UI 提示做備份反而滅檔。有 slots 就原樣還原，不再用等級重建。
+    slots: characters.map((c) => {
+      let blob = null;
+      try {
+        blob = localStorage.getItem(`deadline-defense-slot-blob-${c.webSlot}`);
+      } catch {
+        /* ignore */
+      }
+      return { index: c.webSlot, blob };
+    }),
   };
   return payload;
 }

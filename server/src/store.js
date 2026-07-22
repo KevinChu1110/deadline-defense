@@ -3,6 +3,7 @@
  * 之後可換成 Postgres，路由不用改。
  */
 import fs from "fs";
+import { botOp } from "./bot-ops.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import {
@@ -167,58 +168,23 @@ export function accountSummary(discordId) {
   };
 }
 
-export function selectCharacter(discordId, charId) {
-  const all = loadAll();
-  const p = all[String(discordId)];
-  if (!p) throw new Error("找不到帳號");
-  if (!p.characters?.[charId]) throw new Error("找不到角色");
-  p.activeCharId = charId;
-  p.lastActiveAt = Date.now();
-  saveAll(all);
+export async function selectCharacter(discordId, charId) {
+  await botOp(discordId, "char.select", { charId });
   return accountSummary(discordId);
 }
 
 /**
  * OAuth 首次登入：若 player-data 尚無此 ID，建立空帳號 + 初心者角色
  */
-export function ensureAccountFromDiscord(discordUser) {
-  const all = loadAll();
-  const id = String(discordUser.id || discordUser.discordId);
-  if (all[id]) {
-    // 更新顯示名稱
-    if (discordUser.username && all[id].username !== discordUser.username) {
-      all[id].username = discordUser.username;
-      all[id].lastActiveAt = Date.now();
-      saveAll(all);
-    }
-    return accountSummary(id);
-  }
-
-  const charId = `char_web_${Date.now().toString(36)}`;
-  const username = discordUser.username || "冒險者";
-  all[id] = {
-    username,
-    activeCharId: charId,
-    characters: {
-      [charId]: {
-        name: username,
-        class: "beginner",
-        level: 1,
-        jobCode: 0,
-        levelStats: { str: 0, dex: 0, int: 0, luk: 0 },
-        totalExp: 0,
-        createdAt: Date.now(),
-        source: "artale-web-oauth",
-      },
-    },
-    items: [],
-    mapleLeaves: 120,
-    equipped: {},
-    createdAt: Date.now(),
-    lastActiveAt: Date.now(),
-    __fromArtaleWeb: true,
-  };
-  saveAll(all);
+export async function ensureAccountFromDiscord(discordUser) {
+  const id = String(discordUser?.id || "").trim();
+  if (!id) throw new Error("缺少 Discord ID");
+  const existing = getAccount(id);
+  if (existing) return accountSummary(id);
+  // 新帳號一樣由 bot 建立並存檔，網頁端不碰檔案
+  await botOp(id, "account.ensure", {
+    username: discordUser.username || discordUser.global_name || `User_${id.slice(-4)}`,
+  });
   return accountSummary(id);
 }
 
@@ -266,40 +232,22 @@ export function getEquipView(discordId) {
   };
 }
 
-export function equipOnAccount(discordId, itemId, subIdx = 0) {
-  const all = loadAll();
-  const p = all[String(discordId)];
-  if (!p) throw new Error("找不到帳號");
-  p.items = p.items || [];
-  if (!p.equipped) p.equipped = {};
-  equipItemCore(p, itemId, subIdx);
-  p.lastActiveAt = Date.now();
-  saveAll(all);
+/* ⚠️ 以下四個寫入操作一律轉送給 bot 執行（見 bot-ops.js 的說明）。
+   自己寫檔會被 bot 的記憶體快照在 800ms 內覆蓋，而且會連帶蓋掉其他玩家的進度。 */
+
+export async function equipOnAccount(discordId, itemId, subIdx = 0) {
+  await botOp(discordId, "equip.wear", { itemId, subIdx });
   return getEquipView(discordId);
 }
 
-export function unequipOnAccount(discordId, slotKey, subIdx = 0) {
-  const all = loadAll();
-  const p = all[String(discordId)];
-  if (!p) throw new Error("找不到帳號");
-  unequipItemCore(p, slotKey, subIdx);
-  p.lastActiveAt = Date.now();
-  saveAll(all);
+export async function unequipOnAccount(discordId, slotKey, subIdx = 0) {
+  await botOp(discordId, "equip.unequip", { slot: slotKey, subIdx });
   return getEquipView(discordId);
 }
 
-function withPlayer(discordId, fn) {
-  const all = loadAll();
-  const p = all[String(discordId)];
-  if (!p) throw new Error("找不到帳號");
-  p.__uid = String(discordId);
-  p.items = p.items || [];
-  if (!p.equipped) p.equipped = {};
-  const result = fn(p);
-  p.lastActiveAt = Date.now();
-  saveAll(all);
-  return result;
-}
+/* withPlayer() 已移除。
+   它是「讀整檔 → 改 → 整檔寫回」的通用包裝，也是先前所有 lost update 的源頭
+   （連純 GET 的潛能頁面都會整檔覆寫 1MB+）。寫入一律改走 bot-ops.js。 */
 
 /** 星力台 */
 export function getStarforceOnAccount(discordId) {
@@ -308,30 +256,41 @@ export function getStarforceOnAccount(discordId) {
   return getStarforceView(p);
 }
 
-export function attemptStarforceOnAccount(
+export async function attemptStarforceOnAccount(
   discordId,
   slotKey,
   subIdx = 0,
   useProtect = false
 ) {
-  return withPlayer(discordId, (p) =>
-    attemptStarforceCore(p, slotKey, subIdx, useProtect)
-  );
+  const out = await botOp(discordId, "starforce.attempt", {
+    slot: slotKey,
+    subIdx,
+    safeguard: useProtect,
+  });
+  return out?.result;
 }
 
 /** 潛能台（ensureSlot 會初始化天生可洗部位 → 寫回存檔） */
+/* 原本走 withPlayer，等於「開一次潛能頁面就整檔覆寫一次 1MB+ 的 player-data」。
+   ensureSlot 的初始化改成只在記憶體發生，落盤交給 bot 那邊的實際操作。 */
 export function getPotentialOnAccount(discordId) {
-  return withPlayer(discordId, (p) => getPotentialView(p));
+  const p = getAccount(discordId);
+  if (!p) return null;
+  return getPotentialView(p);
 }
 
-export function usePotentialOnAccount(discordId, slotKey, subIdx, action) {
-  return withPlayer(discordId, (p) =>
-    usePotentialActionCore(p, slotKey, subIdx, action)
-  );
+export async function usePotentialOnAccount(discordId, slotKey, subIdx, action) {
+  const out = await botOp(discordId, "potential.use", {
+    slot: slotKey,
+    subIdx,
+    action,
+  });
+  return out?.result;
 }
 
-export function craftPotentialOnAccount(discordId, toKey, times = 1) {
-  return withPlayer(discordId, (p) => craftPotentialCore(p, toKey, times));
+export async function craftPotentialOnAccount(discordId, toKey, times = 1) {
+  const out = await botOp(discordId, "potential.craft", { toKey, times });
+  return out?.result;
 }
 
 /** 豐富 accountSummary 的 equipped 為解析後物品 */
@@ -381,28 +340,13 @@ export function startActionRaid(discordId, bossId = "zakum") {
 }
 
 /** 結算（v1 只記日誌欄位，獎勵二期） */
-export function completeActionRaid(discordId, payload = {}) {
-  const p = getAccount(discordId);
-  if (!p) throw new Error("找不到帳號");
-  const all = loadAll();
-  const acc = all[String(discordId)];
-  if (!acc) throw new Error("找不到帳號");
-  acc.actionRaidStats = acc.actionRaidStats || { wins: 0, losses: 0, last: null };
-  if (payload.win) acc.actionRaidStats.wins += 1;
-  else acc.actionRaidStats.losses += 1;
-  acc.actionRaidStats.last = {
-    at: Date.now(),
-    bossId: payload.bossId || null,
+export async function completeActionRaid(discordId, payload = {}) {
+  const out = await botOp(discordId, "raid.complete", {
     win: !!payload.win,
-    level: payload.level || null,
-  };
-  acc.lastActiveAt = Date.now();
-  saveAll(all);
-  return {
-    ok: true,
-    stats: acc.actionRaidStats,
-    rewardNote: "M3 v1 無掉落；M4 接獎勵／排行",
-  };
+    bossId: payload.bossId,
+    level: payload.level,
+  });
+  return { ok: true, stats: out?.stats, rewardNote: "M3 v1 無掉落；M4 接獎勵／排行" };
 }
 
 export function getActionBossList() {
