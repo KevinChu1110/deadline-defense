@@ -79,6 +79,24 @@ export async function healthCheck() {
   return api("/api/health");
 }
 
+export async function fetchEquip() {
+  return api("/api/equip");
+}
+
+export async function wearItem(itemId, subIdx = 0) {
+  return api("/api/equip/wear", {
+    method: "POST",
+    body: JSON.stringify({ itemId, subIdx }),
+  });
+}
+
+export async function unequipSlot(slot, subIdx = 0) {
+  return api("/api/equip/unequip", {
+    method: "POST",
+    body: JSON.stringify({ slot, subIdx }),
+  });
+}
+
 const CLASS_ZH = {
   beginner: "初心者",
   gunslinger: "槍神／槍手",
@@ -118,9 +136,11 @@ export function renderHubShell(els, state) {
     tab = "home",
     me = null,
     session = null,
+    equip = null,
     apiOk = null,
     oauthOk = null,
     error = "",
+    equipFilter = "all",
   } = state;
 
   if (!me) {
@@ -203,8 +223,9 @@ export function renderHubShell(els, state) {
         ${tabBtn("pot", "潛能", tab)}
         ${tabBtn("combat", "突襲／無止境", tab)}
       </nav>
+      ${error ? `<p class="hub-error" style="margin:8px 0">${escapeHtml(error)}</p>` : ""}
       <div class="hub-body" id="hub-body">
-        ${renderTab(tab, me, active)}
+        ${renderTab(tab, me, active, equip, equipFilter)}
       </div>
     </div>
   `;
@@ -214,7 +235,120 @@ function tabBtn(id, label, cur) {
   return `<button type="button" class="btn hub-tab ${cur === id ? "is-active" : ""}" data-hub-tab="${id}">${label}</button>`;
 }
 
-function renderTab(tab, me, active) {
+function slotCell(slotKey, item, subIdx = 0, label = "") {
+  const filled = !!item;
+  const title = filled
+    ? `${item.name} Lv.${item.level || "?"}${item.totalAd ? ` · 攻${item.totalAd}` : ""}`
+    : label || slotKey;
+  return `
+    <button type="button"
+      class="ms-slot ${filled ? "filled" : "empty"}"
+      data-unequip-slot="${escapeHtml(slotKey)}"
+      data-sub-idx="${subIdx}"
+      title="${escapeHtml(title)}"
+      ${filled ? "" : "disabled"}>
+      <span class="ms-slot-label">${escapeHtml(label || slotKey)}</span>
+      <span class="ms-slot-name">${filled ? escapeHtml(shortName(item.name)) : "—"}</span>
+      ${filled && item.totalAd ? `<span class="ms-slot-stat">ATK ${item.totalAd}</span>` : ""}
+    </button>`;
+}
+
+function shortName(n) {
+  const s = String(n || "");
+  return s.length > 8 ? s.slice(0, 7) + "…" : s;
+}
+
+function renderMapleEquip(equip, me, active, equipFilter) {
+  if (!equip) {
+    return `<p class="muted center-hint">載入裝備中…</p>`;
+  }
+  const S = equip.slots || {};
+  const one = (k, label) => slotCell(k, S[k]?.item, 0, label);
+  const multi = (k, label, i) =>
+    slotCell(k, S[k]?.items?.[i], i, `${label}${i + 1}`);
+
+  const filter = equipFilter || "all";
+  let inv = equip.inventory || [];
+  if (filter === "bag") inv = inv.filter((x) => !x.equipped);
+  if (filter === "worn") inv = inv.filter((x) => x.equipped);
+
+  const invHtml = inv.length
+    ? inv
+        .map((it) => {
+          const stats = [];
+          if (it.totalAd) stats.push(`攻${it.totalAd}`);
+          if (it.str) stats.push(`力${it.str}`);
+          if (it.dex) stats.push(`敏${it.dex}`);
+          if (it.int) stats.push(`智${it.int}`);
+          if (it.luk) stats.push(`幸${it.luk}`);
+          return `
+          <button type="button" class="ms-inv-item ${it.equipped ? "is-worn" : ""}"
+            data-wear-id="${escapeHtml(it.itemId)}"
+            ${it.equipped ? "data-worn=1" : ""}
+            title="${escapeHtml(it.name)}">
+            <strong>${escapeHtml(it.name)}</strong>
+            <small>Lv.${it.level || "?"} · ${escapeHtml(it.slot || it.type || "")}
+            ${stats.length ? " · " + stats.join(" ") : ""}
+            ${it.equipped ? " · 已裝備" : ""}</small>
+          </button>`;
+        })
+        .join("")
+    : `<p class="muted">背包沒有可裝備物品</p>`;
+
+  return `
+    <div class="ms-equip-window">
+      <div class="ms-equip-titlebar">
+        <span>EQUIPMENT</span>
+        <strong>${escapeHtml(equip.charName || active?.name || me.username)} · Lv.${equip.charLevel || active?.level || "?"} · ${escapeHtml(classLabel(equip.charClass || active?.class))}</strong>
+      </div>
+      <div class="ms-equip-body">
+        <div class="ms-paper-doll">
+          <div class="ms-col">
+            ${one("face", "臉飾")}
+            ${one("eye", "眼飾")}
+            ${one("earring", "耳環")}
+            ${one("shoulder", "肩飾")}
+            ${one("weapon", "武器")}
+            ${one("glove", "手套")}
+            ${multi("ring", "戒", 0)}
+            ${multi("ring", "戒", 1)}
+          </div>
+          <div class="ms-col ms-col-center">
+            ${one("helmet", "帽子")}
+            ${one("overall", "套服")}
+            ${one("shoes", "鞋子")}
+            ${one("belt", "腰帶")}
+            ${multi("necklace", "項", 0)}
+            ${multi("necklace", "項", 1)}
+            <div class="ms-doll-silhouette" aria-hidden="true">🧍</div>
+          </div>
+          <div class="ms-col">
+            ${one("title", "稱號")}
+            ${one("cape", "披風")}
+            ${one("bullet", "副武")}
+            ${one("pet", "寵物")}
+            ${one("totem", "圖騰")}
+            ${multi("ring", "戒", 2)}
+            ${multi("ring", "戒", 3)}
+          </div>
+        </div>
+        <div class="ms-inventory">
+          <div class="ms-inv-head">
+            <strong>裝備欄</strong>
+            <div class="ms-inv-filters">
+              <button type="button" class="btn chip-preset ${filter === "all" ? "is-on" : ""}" data-eq-filter="all">全部</button>
+              <button type="button" class="btn chip-preset ${filter === "bag" ? "is-on" : ""}" data-eq-filter="bag">未穿</button>
+              <button type="button" class="btn chip-preset ${filter === "worn" ? "is-on" : ""}" data-eq-filter="worn">已穿</button>
+            </div>
+          </div>
+          <p class="muted ms-inv-hint">點背包物品穿上 · 點紙娃娃槽位卸下</p>
+          <div class="ms-inv-grid">${invHtml}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderTab(tab, me, active, equip, equipFilter) {
   if (tab === "chars") {
     if (!me.characters?.length) {
       return `<p class="muted center-hint">尚無角色</p>`;
@@ -235,32 +369,7 @@ function renderTab(tab, me, active) {
   }
 
   if (tab === "equip") {
-    const eq = me.equipped || {};
-    const slots = [
-      "weapon", "overall", "helmet", "glove", "shoes", "cape",
-      "belt", "earring", "shoulder", "eye", "face", "title",
-    ];
-    const rows = slots
-      .map((s) => {
-        const v = eq[s];
-        const name = Array.isArray(v)
-          ? v.map((x) => x?.name || "空").join("、") || "空"
-          : v?.name || "（空）";
-        return `<div class="hub-eq-row"><span class="hub-eq-slot">${s}</span><span>${escapeHtml(name)}</span></div>`;
-      })
-      .join("");
-    const inv = (me.inventoryPreview || [])
-      .slice(0, 24)
-      .map(
-        (it) =>
-          `<li>${escapeHtml(it.name)} <small>Lv.${it.level || "?"} · ${escapeHtml(it.type || "")}</small></li>`
-      )
-      .join("");
-    return `
-      <p class="muted">當前：<strong>${escapeHtml(active?.name || "—")}</strong> · 換裝操作 M2</p>
-      <div class="hub-eq-list">${rows}</div>
-      <h3 class="hub-subh">背包預覽</h3>
-      <ul class="hub-inv">${inv || "<li class='muted'>無</li>"}</ul>`;
+    return renderMapleEquip(equip, me, active, equipFilter);
   }
 
   if (tab === "star") {
@@ -317,7 +426,8 @@ function renderTab(tab, me, active) {
       <p class="hub-roadmap muted">
         ✅ M0 讀取 Bot 資料<br/>
         ✅ M1 Discord OAuth 登入<br/>
-        ▢ M2 換裝·星力·潛能　▢ M3 動作突襲　▢ M4 無止境
+        ✅ M2 換裝（楓之谷風）· 星力/潛能預覽<br/>
+        ▢ M3 動作突襲　▢ M4 無止境
       </p>
     </div>`;
 }
@@ -394,8 +504,18 @@ export function bindHubEvents(els, ctx) {
   });
 
   els.artaleHub?.querySelectorAll("[data-hub-tab]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      onState?.({ ...getState?.(), tab: btn.getAttribute("data-hub-tab") });
+    btn.addEventListener("click", async () => {
+      const tab = btn.getAttribute("data-hub-tab");
+      const next = { ...getState?.(), tab };
+      if (tab === "equip") {
+        try {
+          next.equip = await fetchEquip();
+          next.error = "";
+        } catch (e) {
+          next.error = e.message;
+        }
+      }
+      onState?.(next);
     });
   });
 
@@ -407,10 +527,55 @@ export function bindHubEvents(els, ctx) {
       if (!id || !charId) return;
       try {
         const me = await selectChar(id, charId);
-        onState?.({ me, tab: "chars", error: "" });
+        let equip = st.equip;
+        try {
+          equip = await fetchEquip();
+        } catch {
+          /* ignore */
+        }
+        onState?.({ me, equip, tab: "chars", error: "" });
       } catch (e) {
         onState?.({ error: e.message });
       }
+    });
+  });
+
+  // 穿上
+  els.artaleHub?.querySelectorAll("[data-wear-id]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (btn.getAttribute("data-worn") === "1") return;
+      const itemId = btn.getAttribute("data-wear-id");
+      try {
+        const equip = await wearItem(itemId);
+        onState?.({ ...getState?.(), equip, tab: "equip", error: "" });
+      } catch (e) {
+        onState?.({ ...getState?.(), error: e.message });
+      }
+    });
+  });
+
+  // 卸下
+  els.artaleHub?.querySelectorAll("[data-unequip-slot]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (btn.disabled) return;
+      const slot = btn.getAttribute("data-unequip-slot");
+      const subIdx = Number(btn.getAttribute("data-sub-idx") || 0);
+      try {
+        const equip = await unequipSlot(slot, subIdx);
+        onState?.({ ...getState?.(), equip, tab: "equip", error: "" });
+      } catch (e) {
+        onState?.({ ...getState?.(), error: e.message });
+      }
+    });
+  });
+
+  els.artaleHub?.querySelectorAll("[data-eq-filter]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      onState?.({
+        ...getState?.(),
+        tab: "equip",
+        equipFilter: btn.getAttribute("data-eq-filter"),
+      });
     });
   });
 }

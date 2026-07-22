@@ -5,6 +5,11 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import {
+  getEquipmentView,
+  equipItem as equipItemCore,
+  unequipItem as unequipItemCore,
+} from "./equip.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -226,4 +231,51 @@ export function getCharacterDetail(discordId, charId) {
       .map(summarizeItem)
       .filter(Boolean),
   };
+}
+
+/** 裝備視窗資料 */
+export function getEquipView(discordId) {
+  const p = getAccount(discordId);
+  if (!p) return null;
+  const view = getEquipmentView(p);
+  const active = p.characters?.[p.activeCharId];
+  return {
+    discordId: String(discordId),
+    username: p.username,
+    activeCharId: p.activeCharId,
+    charName: active?.name || p.username,
+    charClass: active?.class || "beginner",
+    charLevel: active?.level || 1,
+    ...view,
+  };
+}
+
+export function equipOnAccount(discordId, itemId, subIdx = 0) {
+  const all = loadAll();
+  const p = all[String(discordId)];
+  if (!p) throw new Error("找不到帳號");
+  p.items = p.items || [];
+  if (!p.equipped) p.equipped = {};
+  equipItemCore(p, itemId, subIdx);
+  p.lastActiveAt = Date.now();
+  saveAll(all);
+  return getEquipView(discordId);
+}
+
+export function unequipOnAccount(discordId, slotKey, subIdx = 0) {
+  const all = loadAll();
+  const p = all[String(discordId)];
+  if (!p) throw new Error("找不到帳號");
+  unequipItemCore(p, slotKey, subIdx);
+  p.lastActiveAt = Date.now();
+  saveAll(all);
+  return getEquipView(discordId);
+}
+
+/** 豐富 accountSummary 的 equipped 為解析後物品 */
+export function accountSummaryWithEquip(discordId) {
+  const base = accountSummary(discordId);
+  if (!base) return null;
+  const equip = getEquipView(discordId);
+  return { ...base, equip };
 }
