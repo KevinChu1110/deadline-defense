@@ -1014,13 +1014,33 @@ body.is-dragging-job .specialist-card {
 .showcase-fig.boss {
   background: linear-gradient(160deg, #2a1820, #1a1018);
   border-color: rgba(255, 120, 100, 0.45);
+  /* 略高一點，避免寬扁 Boss 被裁成零件 */
+  aspect-ratio: 1 / 1.05;
 }
 
 .showcase-fig.boss img {
-  object-fit: contain;
-  object-position: center;
-  padding: 4px;
-  background: radial-gradient(circle at 50% 40%, rgba(80, 40, 40, 0.5), transparent 70%);
+  object-fit: contain !important;
+  object-position: center center !important;
+  padding: 6px;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 40%, rgba(80, 40, 40, 0.45), transparent 70%);
+  /* 像素圖保持銳利，但 GIF 立繪用 auto */
+  image-rendering: auto;
+}
+
+/* 大 Boss 卡位稍放大，完整顯示龍首／炎魔 */
+.showcase-stack.bosses .b1 {
+  width: 58%;
+}
+.showcase-stack.bosses .b2 {
+  width: 52%;
+}
+.showcase-stack.bosses .b3 {
+  width: 50%;
+}
+.showcase-stack.bosses .b4 {
+  width: 44%;
 }
 
 .showcase-stack.heroes .f1 {
