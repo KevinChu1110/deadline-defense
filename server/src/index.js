@@ -19,6 +19,11 @@ import {
   getEquipView,
   equipOnAccount,
   unequipOnAccount,
+  getStarforceOnAccount,
+  attemptStarforceOnAccount,
+  getPotentialOnAccount,
+  usePotentialOnAccount,
+  craftPotentialOnAccount,
 } from "./store.js";
 import * as auth from "./auth.js";
 
@@ -301,6 +306,72 @@ const server = http.createServer(async (req, res) => {
       if (!body.slot) return json(res, 400, { error: "缺少 slot" }, req);
       const view = unequipOnAccount(discordId, body.slot, body.subIdx || 0);
       return json(res, 200, view, req);
+    }
+
+    // ── 星力 ─────────────────────────────────────
+    if (req.method === "GET" && pathname === "/api/starforce") {
+      const sess = sessionFromReq(req);
+      const id = sess?.discordId || url.searchParams.get("discordId");
+      if (!id) return json(res, 401, { error: "請先登入" }, req);
+      const view = getStarforceOnAccount(id);
+      if (!view) return json(res, 404, { error: "找不到帳號" }, req);
+      return json(res, 200, view, req);
+    }
+
+    if (req.method === "POST" && pathname === "/api/starforce/attempt") {
+      const sess = sessionFromReq(req);
+      const body = await readBody(req);
+      const discordId = sess?.discordId || body.discordId;
+      if (!discordId) return json(res, 401, { error: "請先登入" }, req);
+      if (!body.slot) return json(res, 400, { error: "缺少 slot" }, req);
+      const out = attemptStarforceOnAccount(
+        discordId,
+        body.slot,
+        body.subIdx || 0,
+        !!body.safeguard
+      );
+      return json(res, 200, out, req);
+    }
+
+    // ── 潛能 ─────────────────────────────────────
+    if (req.method === "GET" && pathname === "/api/potential") {
+      const sess = sessionFromReq(req);
+      const id = sess?.discordId || url.searchParams.get("discordId");
+      if (!id) return json(res, 401, { error: "請先登入" }, req);
+      const view = getPotentialOnAccount(id);
+      if (!view) return json(res, 404, { error: "找不到帳號" }, req);
+      return json(res, 200, view, req);
+    }
+
+    if (req.method === "POST" && pathname === "/api/potential/use") {
+      const sess = sessionFromReq(req);
+      const body = await readBody(req);
+      const discordId = sess?.discordId || body.discordId;
+      if (!discordId) return json(res, 401, { error: "請先登入" }, req);
+      if (!body.slot || !body.action) {
+        return json(res, 400, { error: "需要 slot 與 action" }, req);
+      }
+      const out = usePotentialOnAccount(
+        discordId,
+        body.slot,
+        body.subIdx || 0,
+        body.action
+      );
+      return json(res, 200, out, req);
+    }
+
+    if (req.method === "POST" && pathname === "/api/potential/craft") {
+      const sess = sessionFromReq(req);
+      const body = await readBody(req);
+      const discordId = sess?.discordId || body.discordId;
+      if (!discordId) return json(res, 401, { error: "請先登入" }, req);
+      if (!body.toKey) return json(res, 400, { error: "缺少 toKey" }, req);
+      const out = craftPotentialOnAccount(
+        discordId,
+        body.toKey,
+        body.times || 1
+      );
+      return json(res, 200, out, req);
     }
 
     if (req.method === "POST" && pathname === "/api/combat/raid/start") {

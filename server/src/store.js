@@ -10,6 +10,15 @@ import {
   equipItem as equipItemCore,
   unequipItem as unequipItemCore,
 } from "./equip.js";
+import {
+  getStarforceView,
+  attemptStarforce as attemptStarforceCore,
+} from "./starforce.js";
+import {
+  getPotentialView,
+  usePotentialAction as usePotentialActionCore,
+  craftPotential as craftPotentialCore,
+} from "./potential-ops.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -142,6 +151,7 @@ export function accountSummary(discordId) {
     username: p.username || "冒險者",
     activeCharId: p.activeCharId || chars[0]?.charId || null,
     mapleLeaves: Number(p.mapleLeaves || p.leaves || 0),
+    coins: Number(p.fish?.coins || 0),
     characters: chars,
     equipped,
     inventoryCount: (p.items || []).length,
@@ -270,6 +280,52 @@ export function unequipOnAccount(discordId, slotKey, subIdx = 0) {
   p.lastActiveAt = Date.now();
   saveAll(all);
   return getEquipView(discordId);
+}
+
+function withPlayer(discordId, fn) {
+  const all = loadAll();
+  const p = all[String(discordId)];
+  if (!p) throw new Error("找不到帳號");
+  p.__uid = String(discordId);
+  p.items = p.items || [];
+  if (!p.equipped) p.equipped = {};
+  const result = fn(p);
+  p.lastActiveAt = Date.now();
+  saveAll(all);
+  return result;
+}
+
+/** 星力台 */
+export function getStarforceOnAccount(discordId) {
+  const p = getAccount(discordId);
+  if (!p) return null;
+  return getStarforceView(p);
+}
+
+export function attemptStarforceOnAccount(
+  discordId,
+  slotKey,
+  subIdx = 0,
+  useProtect = false
+) {
+  return withPlayer(discordId, (p) =>
+    attemptStarforceCore(p, slotKey, subIdx, useProtect)
+  );
+}
+
+/** 潛能台（ensureSlot 會初始化天生可洗部位 → 寫回存檔） */
+export function getPotentialOnAccount(discordId) {
+  return withPlayer(discordId, (p) => getPotentialView(p));
+}
+
+export function usePotentialOnAccount(discordId, slotKey, subIdx, action) {
+  return withPlayer(discordId, (p) =>
+    usePotentialActionCore(p, slotKey, subIdx, action)
+  );
+}
+
+export function craftPotentialOnAccount(discordId, toKey, times = 1) {
+  return withPlayer(discordId, (p) => craftPotentialCore(p, toKey, times));
 }
 
 /** 豐富 accountSummary 的 equipped 為解析後物品 */
