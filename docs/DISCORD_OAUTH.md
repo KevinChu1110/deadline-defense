@@ -18,7 +18,7 @@ http://127.0.0.1:5173/api/auth/discord/callback
 
 ```bash
 cd deadline-defense/server
-cp .env.example .env
+cp env.example .env
 # 編輯 .env 填入：
 # DISCORD_CLIENT_ID=...
 # DISCORD_CLIENT_SECRET=...

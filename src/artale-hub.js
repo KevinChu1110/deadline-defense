@@ -142,7 +142,7 @@ export function renderHubShell(els, state) {
           🎮 使用 Discord 登入
         </button>
         <p class="muted hub-oauth-hint">
-          需在 <code>server/.env</code> 設定 Client ID／Secret<br/>
+          需在 <code>server/.env</code>（從 env.example 複製）設定 Client ID／Secret<br/>
           並於 Discord Developer Portal 加入 Redirect：<br/>
           <code>http://127.0.0.1:5173/api/auth/discord/callback</code>
         </p>
