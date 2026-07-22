@@ -432,9 +432,13 @@ async function openArtaleHub() {
       hubState.me = null;
       hubState.session = null;
     }
-  } catch {
+  } catch (e) {
     hubState.apiOk = false;
-    hubState.error = "API 未啟動。請執行：npm run dev:api";
+    hubState.oauthOk = false;
+    const msg = e?.message || String(e);
+    hubState.error = import.meta.env.VITE_API_BASE
+      ? `連不上 API（ngrok）。請確認 tunnel / artale-web-api 有在跑。${msg ? " · " + msg : ""}`
+      : "API 未啟動。本機請執行：npm run dev:api";
   }
   paintHub();
   sfx.play("uiClick");

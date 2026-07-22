@@ -37,10 +37,16 @@ export function setLinkedDiscordId(id) {
 }
 
 async function api(path, opts = {}) {
+  const { headers: extraHeaders, ...rest } = opts || {};
   const res = await fetch(apiUrl(path), {
     credentials: "include",
-    headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
-    ...opts,
+    ...rest,
+    headers: {
+      "Content-Type": "application/json",
+      // ngrok free：瀏覽器 fetch 必須帶此 header，否則回警告 HTML → 被當成 API 掛了
+      "ngrok-skip-browser-warning": "69420",
+      ...(extraHeaders || {}),
+    },
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || data.hint || `HTTP ${res.status}`);
