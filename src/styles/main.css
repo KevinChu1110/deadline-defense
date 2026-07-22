@@ -6005,9 +6005,35 @@ body.mode-bc .wave-cta {
   font-size: 0.9rem;
 }
 
+/* ⚠️ 這裡原本用 📱 emoji，但站上的像素風字型不吃 emoji，實機顯示成方塊。
+   改成純 CSS 畫一支手機，不依賴任何字型。 */
 .rotate-hint-icon {
-  font-size: 3.5rem;
+  display: grid;
+  place-items: center;
+  height: 72px;
   animation: rotate-hint-tilt 1.8s ease-in-out infinite;
+}
+
+.rotate-hint-phone {
+  display: block;
+  width: 40px;
+  height: 66px;
+  border: 3px solid #f7f4ea;
+  border-radius: 8px;
+  position: relative;
+  background: rgba(247, 244, 234, 0.12);
+}
+
+.rotate-hint-phone::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 5px;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+  background: #f7f4ea;
 }
 
 @keyframes rotate-hint-tilt {
@@ -6040,20 +6066,41 @@ body.mode-bc .wave-cta {
     display: none;
   }
 
+  /* 橫向手機整頁不該捲動：把 app 高度鎖在視窗內，內容溢出交給側欄自己捲。
+     100dvh 而非 100vh —— 手機瀏覽器網址列會吃掉 vh 的高度。 */
+  #app {
+    min-height: 0;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
   .stage {
-    grid-template-columns: minmax(0, 1fr) clamp(150px, 24vw, 220px);
+    /* 第二欄一定要 minmax(0, …)：只寫 clamp() 的話 grid 不會讓欄位小於
+       內容的 min-content，實測側欄被按鈕文字撐到 278px（設定上限是 220）。 */
+    grid-template-columns: minmax(0, 1fr) minmax(0, clamp(140px, 22vw, 200px));
     gap: 6px;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .canvas-wrap {
     grid-column: 1;
     padding: 2px;
+    min-height: 0;
   }
 
   .panel-right {
     grid-column: 2;
     padding: 6px;
+    min-height: 0;
+    max-height: 100%;
     overflow-y: auto;
+  }
+
+  /* 側欄變窄後，兩顆一排的控制鈕改成一排一顆才不會擠爆 */
+  .panel-right .btn {
+    font-size: 0.78rem;
+    padding: 8px 6px;
   }
 
   .panel-right .panel-block {
