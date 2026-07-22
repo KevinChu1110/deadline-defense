@@ -231,10 +231,12 @@ body {
        上下卻還空著 —— 縮放應該同時受限於「可用高度」才對
      改成用 aspect-ratio 鎖比例，寬高兩邊都不超出容器，取較小者。 */
   aspect-ratio: 16 / 9;
+  /* 用高度驅動、寬度由比例導出，再用 max-width 夾住。
+     若寫成 width:auto + height:auto，瀏覽器會直接用 canvas 的原生 960×540，
+     桌機容器再寬也長不大（實測 1440 螢幕上畫布只有 966px）。 */
+  height: 100%;
   width: auto;
-  height: auto;
   max-width: 100%;
-  max-height: 100%;
   display: block;
   border-radius: 10px;
   cursor: crosshair;
@@ -6062,8 +6064,17 @@ body.mode-bc .wave-cta {
 
   /* 橫向時垂直空間最珍貴：狀態列只留必要數字 */
   .top-bar .hud-meter-label small,
-  .brand small {
+  .brand small,
+  .brand strong,
+  .maple-leaf {
     display: none;
+  }
+
+  /* 矮螢幕橫向頂欄容易換行（740×360 實測 124px），改成不換行並允許橫向擠壓 */
+  .hud-slim {
+    flex-wrap: nowrap;
+    min-width: 0;
+    overflow: hidden;
   }
 
   /* 橫向手機整頁不該捲動：把 app 高度鎖在視窗內，內容溢出交給側欄自己捲。
