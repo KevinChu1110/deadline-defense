@@ -111,6 +111,16 @@ const els = {
   btnCampaignBack: document.querySelector("#btn-campaign-back"),
   campaignPanel: document.querySelector("#campaign-panel"),
   titleScreen: document.querySelector("#title-screen"),
+  campaignStepTitle: document.querySelector("#campaign-step-title"),
+  campaignStepSub: document.querySelector("#campaign-step-sub"),
+  btnWizardNextMode: document.querySelector("#btn-wizard-next-mode"),
+  btnModeCampaign: document.querySelector("#btn-mode-campaign"),
+  btnModeRaid: document.querySelector("#btn-mode-raid"),
+  wizardStepSave: document.querySelector("#wizard-step-save"),
+  wizardStepMode: document.querySelector("#wizard-step-mode"),
+  wizardStepStages: document.querySelector("#wizard-step-stages"),
+  wizardStepRaid: document.querySelector("#wizard-step-raid"),
+  wizardDots: document.querySelectorAll(".wizard-dot"),
   btnHomeRank: document.querySelector("#btn-home-rank"),
   btnHomeGuide: document.querySelector("#btn-home-guide"),
   homeLeaves: document.querySelector("#home-leaves"),
@@ -144,7 +154,20 @@ const els = {
   placeHint: document.querySelector("#place-hint"),
   controlStrip: document.querySelector("#control-strip"),
   coreHitFlash: document.querySelector("#core-hit-flash"),
+  dialogOverlay: document.querySelector("#dialog-overlay"),
+  dialogKicker: document.querySelector("#dialog-kicker"),
+  dialogTitle: document.querySelector("#dialog-title"),
+  dialogMessage: document.querySelector("#dialog-message"),
+  dialogInputWrap: document.querySelector("#dialog-input-wrap"),
+  dialogInput: document.querySelector("#dialog-input"),
+  dialogCancel: document.querySelector("#dialog-cancel"),
+  dialogOk: document.querySelector("#dialog-ok"),
 };
+
+/** Campaign wizard: 1 save → 2 mode → 3 stages|raid */
+let wizardStep = 1;
+let wizardMode = "campaign"; // campaign | raid
+let dialogResolver = null;
 
 /** Currently focused card for upgrade detail */
 let focusCardId = null;
@@ -184,6 +207,97 @@ function hideAllOverlays() {
   setOverlayOpen(els.pauseOverlay, false);
   setOverlayOpen(els.helpOverlay, false);
   setOverlayOpen(els.guideOverlay, false);
+  setOverlayOpen(els.dialogOverlay, false);
+}
+
+/**
+ * Maple-styled in-game dialog (replaces window.prompt / confirm).
+ * @param {{ title?: string, message?: string, kicker?: string, defaultValue?: string, showInput?: boolean, okText?: string, cancelText?: string, danger?: boolean }} opts
+ * @returns {Promise<string|boolean|null>} input string | true/false for confirm | null if cancel on prompt
+ */
+function openDialog(opts = {}) {
+  const {
+    title = "提示",
+    message = "",
+    kicker = "提示",
+    defaultValue = "",
+    showInput = false,
+    okText = "確定",
+    cancelText = "取消",
+    danger = false,
+  } = opts;
+
+  return new Promise((resolve) => {
+    // close previous
+    if (dialogResolver) {
+      dialogResolver(showInput ? null : false);
+      dialogResolver = null;
+    }
+    dialogResolver = resolve;
+    if (els.dialogKicker) els.dialogKicker.textContent = kicker;
+    if (els.dialogTitle) els.dialogTitle.textContent = title;
+    if (els.dialogMessage) {
+      els.dialogMessage.textContent = message;
+      els.dialogMessage.hidden = !message;
+    }
+    if (els.dialogInputWrap) els.dialogInputWrap.hidden = !showInput;
+    if (els.dialogInput) {
+      els.dialogInput.value = defaultValue;
+      els.dialogInput.hidden = !showInput;
+    }
+    if (els.dialogOk) {
+      els.dialogOk.textContent = okText;
+      els.dialogOk.classList.toggle("danger", !!danger);
+      els.dialogOk.classList.toggle("primary", !danger);
+      els.dialogOk.classList.toggle("maple-primary", !danger);
+    }
+    if (els.dialogCancel) els.dialogCancel.textContent = cancelText;
+    setOverlayOpen(els.dialogOverlay, true);
+    sfx.play("uiClick");
+    if (showInput) {
+      setTimeout(() => {
+        els.dialogInput?.focus();
+        els.dialogInput?.select();
+      }, 40);
+    } else {
+      els.dialogOk?.focus();
+    }
+  });
+}
+
+function closeDialog(result) {
+  const r = dialogResolver;
+  dialogResolver = null;
+  setOverlayOpen(els.dialogOverlay, false);
+  if (r) r(result);
+}
+
+function promptNick(defaultName = "冒險者") {
+  return openDialog({
+    kicker: "新存檔",
+    title: "冒險者暱稱",
+    message: "幫這筆存檔取個名字吧",
+    showInput: true,
+    defaultValue: defaultName,
+    okText: "開新局",
+    cancelText: "取消",
+  }).then((v) => {
+    if (v == null) return null;
+    const name = String(v).trim().slice(0, 12);
+    return name || defaultName;
+  });
+}
+
+function confirmDialog(title, message, { okText = "確定", danger = false } = {}) {
+  return openDialog({
+    kicker: "確認",
+    title,
+    message,
+    showInput: false,
+    okText,
+    cancelText: "取消",
+    danger,
+  });
 }
 
 const HELP_SEEN_KEY = "deadline-defense-help-seen-v1";
@@ -416,10 +530,8 @@ function renderStageList() {
     });
     els.stageList.appendChild(btn);
   });
-  renderArenaList();
   syncNickInput();
   refreshHomeMeta(progress, nextIdx);
-  renderSaveSlots();
 }
 
 function getNextStageId(progress = loadProgress()) {
@@ -447,24 +559,35 @@ function refreshHomeMeta(progress = loadProgress(), nextIdx = 0) {
   }
 }
 
+/** 遠征 Boss — 橫向關卡卡（接近貓咪大戰爭選關感） */
 function renderArenaList() {
   if (!els.arenaList) return;
   const today = getArenaBossId();
   els.arenaList.innerHTML = "";
-  ARENA_BOSS_ROTATION.forEach((bossId) => {
+  ARENA_BOSS_ROTATION.forEach((bossId, i) => {
     const boss = BOSSES[bossId];
+    if (!boss) return;
     const meta = ARENA_BOSS_META[bossId] || {};
     const isToday = bossId === today;
+    const tier = meta.tier || "?";
+    const stars =
+      tier === "SSS" ? "★★★★★" : tier === "SS" ? "★★★★☆" : tier === "S+" ? "★★★☆☆" : "★★☆☆☆";
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = `arena-card-btn${isToday ? " is-today" : ""}`;
+    btn.className = `raid-stage-card${isToday ? " is-today" : ""}${tier === "SSS" ? " is-sss" : ""}`;
     btn.innerHTML = `
-      <span class="arena-card-emoji">${meta.emoji || "⚔️"}</span>
-      <strong>${boss.nameZh}</strong>
-      <small>${meta.regionZh || boss.regionZh || ""}</small>
-      <span class="arena-card-tier${meta.tier === "SSS" ? " sss" : ""}">${meta.tier || "?"}${isToday ? " · 今日" : ""}</span>
+      <span class="raid-stage-no">${String(i + 1).padStart(2, "0")}</span>
+      <span class="raid-stage-emoji">${meta.emoji || "🐉"}</span>
+      <span class="raid-stage-body">
+        <strong>${escapeHtml(boss.nameZh)}</strong>
+        <small>${escapeHtml(meta.regionZh || boss.regionZh || "")} · ${stars}</small>
+        <em class="raid-stage-blurb">${escapeHtml(meta.blurb || "3 波速決 · 寫入排行")}</em>
+      </span>
+      <span class="raid-stage-go">
+        <span class="raid-tier${tier === "SSS" ? " sss" : ""}">${escapeHtml(tier)}${isToday ? " · 今日" : ""}</span>
+        <span class="raid-go-label">出戰 ▶</span>
+      </span>
     `;
-    btn.title = meta.blurb || boss.nameZh;
     btn.addEventListener("click", () => {
       void sfx.unlock();
       sfx.play("uiClick");
@@ -491,6 +614,23 @@ function saveNickFromInput() {
   sfx.play("uiOk");
 }
 
+async function openOrCreateSlot(i, slot) {
+  if (slot.empty) {
+    const name = await promptNick(`冒險者 ${i + 1}`);
+    if (name == null) return false;
+    createOrOpenSlot(i, name);
+  } else {
+    switchToSlot(i);
+  }
+  syncNickInput();
+  refreshHomeMeta();
+  if (wizardStep >= 3 && wizardMode === "campaign") renderStageList();
+  else if (wizardStep >= 3 && wizardMode === "raid") renderArenaList();
+  showToast(`存檔 ${i + 1}`);
+  sfx.play("uiOk");
+  return true;
+}
+
 function renderSaveSlots() {
   if (!els.saveSlotList) return;
   ensureSaveSlotsMigrated();
@@ -512,7 +652,7 @@ function renderSaveSlots() {
       </span>
       <span class="save-slot-actions">
         <button type="button" class="btn primary maple-primary" data-act="open" data-i="${i}">
-          ${slot.empty ? "開新局" : i === active ? "重整" : "讀取"}
+          ${slot.empty ? "開新局" : i === active ? "使用中" : "讀取"}
         </button>
         ${
           slot.empty
@@ -526,28 +666,19 @@ function renderSaveSlots() {
         ev.stopPropagation();
         const act = btn.getAttribute("data-act");
         const idx = Number(btn.getAttribute("data-i"));
-        withAudio(() => {
+        withAudio(async () => {
           if (act === "open") {
-            if (slot.empty) {
-              const name = prompt("冒險者暱稱？", `冒險者 ${idx + 1}`) || `冒險者 ${idx + 1}`;
-              createOrOpenSlot(idx, name);
-            } else {
-              switchToSlot(idx);
-            }
-            syncNickInput();
-            refreshHomeMeta();
-            renderStageList();
-            showToast(`已切換存檔 ${idx + 1}`);
-            sfx.play("uiOk");
+            await openOrCreateSlot(idx, slot);
           } else if (act === "del") {
-            if (!confirm(`確定刪除存檔 ${idx + 1}？此操作無法復原。`)) return;
+            const ok = await confirmDialog(
+              `刪除存檔 ${idx + 1}？`,
+              "此操作無法復原，進度與楓葉都會消失。",
+              { okText: "刪除", danger: true }
+            );
+            if (!ok) return;
             deleteSlot(idx);
-            if (getActiveSlotIndex() === idx || slot.empty === false) {
-              /* deleteSlot already handled */
-            }
             syncNickInput();
             refreshHomeMeta();
-            renderStageList();
             renderSaveSlots();
             showToast(`已刪除存檔 ${idx + 1}`);
             sfx.play("uiClick");
@@ -555,25 +686,50 @@ function renderSaveSlots() {
         });
       });
     });
-    // click row = load
     row.addEventListener("click", (ev) => {
       if (ev.target.closest("button")) return;
-      withAudio(() => {
-        if (slot.empty) {
-          const name = prompt("冒險者暱稱？", `冒險者 ${i + 1}`) || `冒險者 ${i + 1}`;
-          createOrOpenSlot(i, name);
-        } else {
-          switchToSlot(i);
-        }
-        syncNickInput();
-        refreshHomeMeta();
-        renderStageList();
-        showToast(`存檔 ${i + 1}`);
-        sfx.play("uiOk");
+      withAudio(async () => {
+        await openOrCreateSlot(i, slot);
       });
     });
     els.saveSlotList.appendChild(row);
   });
+}
+
+const WIZARD_META = {
+  1: { title: "選擇存檔", sub: "第 1／3 步 · 冒險者資料" },
+  2: { title: "選擇模式", sub: "第 2／3 步 · 戰役或遠征" },
+  3: {
+    campaign: { title: "選擇關卡", sub: "第 3／3 步 · 地區戰役" },
+    raid: { title: "選擇 Boss", sub: "第 3／3 步 · 遠征出戰" },
+  },
+};
+
+function setWizardStep(step, mode = wizardMode) {
+  wizardStep = step;
+  if (mode) wizardMode = mode;
+
+  const meta =
+    step === 3
+      ? WIZARD_META[3][wizardMode] || WIZARD_META[3].campaign
+      : WIZARD_META[step] || WIZARD_META[1];
+  if (els.campaignStepTitle) els.campaignStepTitle.textContent = meta.title;
+  if (els.campaignStepSub) els.campaignStepSub.textContent = meta.sub;
+
+  els.wizardDots?.forEach((d) => {
+    const n = Number(d.dataset.step);
+    d.classList.toggle("is-active", n === step);
+    d.classList.toggle("is-done", n < step);
+  });
+
+  if (els.wizardStepSave) els.wizardStepSave.hidden = step !== 1;
+  if (els.wizardStepMode) els.wizardStepMode.hidden = step !== 2;
+  if (els.wizardStepStages) els.wizardStepStages.hidden = !(step === 3 && wizardMode === "campaign");
+  if (els.wizardStepRaid) els.wizardStepRaid.hidden = !(step === 3 && wizardMode === "raid");
+
+  if (step === 1) renderSaveSlots();
+  if (step === 3 && wizardMode === "campaign") renderStageList();
+  if (step === 3 && wizardMode === "raid") renderArenaList();
 }
 
 const GUIDE_PAGES = {
@@ -621,7 +777,7 @@ const GUIDE_PAGES = {
       <li><strong>Space</strong> 暫停 · <strong>Enter</strong> 開始波次 · <strong>H / ?</strong> 說明</li>
       <li>1–4 選出戰卡 · M 靜音</li>
     </ul>
-    <div class="guide-tip">💡 「開始遊戲」可切換 3 個存檔；排行榜為本機多暱稱競分。</div>
+    <div class="guide-tip">💡 「開始遊戲」為三步：存檔 → 模式（地區／遠征）→ 選關出戰。</div>
   `,
 };
 
@@ -746,22 +902,35 @@ function openTitleScreen() {
   if (game) ui.onState(game.getPublicState());
 }
 
-/** 開始遊戲 → 存檔 + 地區戰役 */
-function openCampaignPanel() {
+/** 開始遊戲 → 三階段精靈（存檔 → 模式 → 關卡/Boss） */
+function openCampaignPanel(startStep = 1) {
   screen = "stage";
   closeCharacterChrome();
   document.body.classList.remove("in-play");
   document.body.classList.add("home-open");
   hideAllOverlays();
   flushActiveSlot();
-  renderSaveSlots();
-  renderStageList();
   setCampaignPanelOpen(true);
   setOverlayOpen(els.stageOverlay, true);
+  setWizardStep(startStep);
   void sfx.unlock();
   if (!sfx.muted) sfx.startBgm("menu");
   sfx.play("uiClick");
   if (game) ui.onState(game.getPublicState());
+}
+
+function handleCampaignBack() {
+  if (wizardStep === 3) {
+    setWizardStep(2);
+    sfx.play("uiClick");
+    return;
+  }
+  if (wizardStep === 2) {
+    setWizardStep(1);
+    sfx.play("uiClick");
+    return;
+  }
+  openTitleScreen();
 }
 
 /** 相容舊呼叫：回主選單 */
@@ -1871,7 +2040,10 @@ els.btnChars?.addEventListener("click", () =>
 els.btnCharBack?.addEventListener("click", () =>
   withAudio(() => {
     sfx.play("uiClick");
-    openCampaignPanel();
+    // 回第 3 步（關卡或 Boss 列表）
+    const backMode = String(pendingStageId || "").startsWith("arena-") ? "raid" : "campaign";
+    openCampaignPanel(3);
+    setWizardStep(3, backMode);
   })
 );
 els.btnCharConfirm?.addEventListener("click", () =>
@@ -1925,15 +2097,68 @@ els.btnRank?.addEventListener("click", () =>
 );
 els.btnStartGame?.addEventListener("click", () =>
   withAudio(() => {
-    openCampaignPanel();
+    openCampaignPanel(1);
   })
 );
 els.btnCampaignBack?.addEventListener("click", () =>
   withAudio(() => {
-    sfx.play("uiClick");
-    openTitleScreen();
+    handleCampaignBack();
   })
 );
+els.btnWizardNextMode?.addEventListener("click", () =>
+  withAudio(() => {
+    flushActiveSlot();
+    setWizardStep(2);
+    sfx.play("uiClick");
+  })
+);
+els.btnModeCampaign?.addEventListener("click", () =>
+  withAudio(() => {
+    wizardMode = "campaign";
+    setWizardStep(3, "campaign");
+    sfx.play("uiSelect");
+  })
+);
+els.btnModeRaid?.addEventListener("click", () =>
+  withAudio(() => {
+    wizardMode = "raid";
+    setWizardStep(3, "raid");
+    sfx.play("uiSelect");
+  })
+);
+els.dialogOk?.addEventListener("click", () =>
+  withAudio(() => {
+    const showInput = els.dialogInputWrap && !els.dialogInputWrap.hidden;
+    if (showInput) {
+      closeDialog(els.dialogInput?.value ?? "");
+    } else {
+      closeDialog(true);
+    }
+    sfx.play("uiOk");
+  })
+);
+els.dialogCancel?.addEventListener("click", () =>
+  withAudio(() => {
+    const showInput = els.dialogInputWrap && !els.dialogInputWrap.hidden;
+    closeDialog(showInput ? null : false);
+    sfx.play("uiClick");
+  })
+);
+els.dialogInput?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    els.dialogOk?.click();
+  } else if (e.key === "Escape") {
+    e.preventDefault();
+    els.dialogCancel?.click();
+  }
+});
+els.dialogOverlay?.addEventListener("click", (e) => {
+  if (e.target === els.dialogOverlay) {
+    const showInput = els.dialogInputWrap && !els.dialogInputWrap.hidden;
+    closeDialog(showInput ? null : false);
+  }
+});
 els.btnContinue?.addEventListener("click", () =>
   withAudio(() => {
     sfx.play("uiClick");
@@ -2036,6 +2261,14 @@ els.btnRepickChars?.addEventListener("click", (ev) => {
 
 window.addEventListener("keydown", (e) => {
   sfx.unlock();
+  // 自訂對話框
+  if (els.dialogOverlay?.classList.contains("is-open")) {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      els.dialogCancel?.click();
+    }
+    return;
+  }
   // 說明浮層開著：Esc / Enter 關閉
   if (els.helpOverlay?.classList.contains("is-open")) {
     if (e.key === "Escape" || e.key === "Enter") {

@@ -114,14 +114,14 @@
               </div>
             </div>
 
-            <!-- Campaign: saves + stages (opened from 開始遊戲) -->
+            <!-- Campaign: 3-step wizard (存檔 → 模式 → 關卡/Boss) -->
             <div id="campaign-panel" class="campaign-panel" hidden>
-              <div class="home-shell maple-panel maple-ornament campaign-shell">
+              <div class="home-shell maple-panel maple-ornament campaign-shell campaign-wizard">
                 <header class="campaign-head">
-                  <button type="button" id="btn-campaign-back" class="btn">← 主選單</button>
+                  <button type="button" id="btn-campaign-back" class="btn">← 返回</button>
                   <div class="campaign-head-titles">
-                    <h2>選擇戰役</h2>
-                    <p class="muted">存檔 · 地區 · 遠征</p>
+                    <h2 id="campaign-step-title">選擇存檔</h2>
+                    <p class="muted" id="campaign-step-sub">第 1／3 步</p>
                   </div>
                   <div class="home-leaves campaign-leaves" title="楓葉">
                     <span>🍁</span>
@@ -129,39 +129,93 @@
                   </div>
                 </header>
 
-                <section class="home-section save-section">
+                <div class="wizard-steps" aria-hidden="true">
+                  <span class="wizard-dot" data-step="1">1 存檔</span>
+                  <span class="wizard-line"></span>
+                  <span class="wizard-dot" data-step="2">2 模式</span>
+                  <span class="wizard-line"></span>
+                  <span class="wizard-dot" data-step="3">3 出戰</span>
+                </div>
+
+                <!-- Step 1: save -->
+                <section class="home-section save-section wizard-pane" id="wizard-step-save" data-wizard="1">
                   <div class="home-section-head">
                     <h2>📁 冒險者存檔</h2>
-                    <p class="muted">最多 3 筆 · 本機儲存</p>
+                    <p class="muted">選一個存檔繼續 · 最多 3 筆</p>
                   </div>
                   <div id="save-slot-list" class="save-slot-list"></div>
                   <div class="home-player maple-inset">
                     <div class="home-avatar" aria-hidden="true">🍁</div>
                     <div class="home-player-meta">
-                      <label class="home-nick-label" for="nick-input">目前存檔暱稱</label>
+                      <label class="home-nick-label" for="nick-input">目前暱稱</label>
                       <div class="nick-row home-nick">
                         <input id="nick-input" type="text" maxlength="12" placeholder="冒險者" autocomplete="nickname" />
                         <button type="button" id="btn-save-nick" class="btn primary maple-primary">儲存</button>
                       </div>
                     </div>
                   </div>
+                  <div class="wizard-actions">
+                    <button type="button" id="btn-wizard-next-mode" class="btn primary maple-primary title-btn-primary wizard-next">
+                      下一步：選擇模式 →
+                    </button>
+                  </div>
                 </section>
 
-                <section class="home-section">
+                <!-- Step 2: mode -->
+                <section class="home-section wizard-pane" id="wizard-step-mode" data-wizard="2" hidden>
+                  <div class="home-section-head">
+                    <h2>🎮 選擇模式</h2>
+                    <p class="muted">地區推進 或 遠征 Boss</p>
+                  </div>
+                  <div class="mode-pick-grid">
+                    <button type="button" class="mode-pick-card" id="btn-mode-campaign" data-mode="campaign">
+                      <span class="mode-pick-icon">🌍</span>
+                      <strong>地區戰役</strong>
+                      <small>維多利亞港 → 時間神殿<br />通關解鎖 · 10 波／關</small>
+                      <span class="mode-pick-tag">主線</span>
+                    </button>
+                    <button type="button" class="mode-pick-card mode-pick-raid" id="btn-mode-raid" data-mode="raid">
+                      <span class="mode-pick-icon">🐉</span>
+                      <strong>遠征 Boss</strong>
+                      <small>五大遠征 · 速決 3 波<br />本機排行競分</small>
+                      <span class="mode-pick-tag raid">遠征</span>
+                    </button>
+                  </div>
+                </section>
+
+                <!-- Step 3a: stages -->
+                <section class="home-section wizard-pane" id="wizard-step-stages" data-wizard="3" data-mode="campaign" hidden>
                   <div class="home-section-head">
                     <h2>🌍 地區戰役</h2>
-                    <p class="muted">通關解鎖下一關 · 第 5／10 波有 Boss</p>
+                    <p class="muted">點選關卡出戰</p>
                   </div>
                   <div id="stage-list" class="stage-grid"></div>
                 </section>
 
-                <section class="home-section arena-section">
+                <!-- Step 3b: bosses (BC-style cards) -->
+                <section class="home-section wizard-pane arena-section" id="wizard-step-raid" data-wizard="3" data-mode="raid" hidden>
                   <div class="home-section-head">
-                    <h2>⚔️ 遠征競賽場</h2>
-                    <p class="muted">五大 Boss · 3 波速決 · 寫入本機排行</p>
+                    <h2>🐉 遠征 Boss</h2>
+                    <p class="muted">選 Boss 出戰 · 難度越高獎勵越豐</p>
                   </div>
-                  <div id="arena-list" class="arena-grid"></div>
+                  <div id="arena-list" class="raid-stage-list"></div>
                 </section>
+              </div>
+            </div>
+          </div>
+
+          <!-- In-game maple dialog (replaces browser prompt/confirm) -->
+          <div id="dialog-overlay" class="overlay dialog-overlay" hidden>
+            <div class="dialog-card maple-panel maple-ornament" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+              <p class="overlay-kicker" id="dialog-kicker">提示</p>
+              <h2 id="dialog-title">標題</h2>
+              <p class="muted" id="dialog-message"></p>
+              <div id="dialog-input-wrap" class="dialog-input-wrap" hidden>
+                <input id="dialog-input" type="text" maxlength="12" autocomplete="nickname" />
+              </div>
+              <div class="overlay-actions dialog-actions">
+                <button type="button" id="dialog-cancel" class="btn">取消</button>
+                <button type="button" id="dialog-ok" class="btn primary maple-primary">確定</button>
               </div>
             </div>
           </div>
