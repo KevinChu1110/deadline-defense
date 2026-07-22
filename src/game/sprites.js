@@ -697,10 +697,16 @@ function portraitSrcId(typeId) {
   return PORTRAIT_FALLBACK[typeId] || typeId;
 }
 
+/* ⚠️ 載入失敗一定要記下來。原本 onerror 只 delete(loading)、沒有任何失敗標記，
+   而 drawSpecialists 每幀都會對每個職業呼叫 getSpecialistPortrait()，拿不到就
+   再 preload 一次 —— 圖片 404 時等於 60fps × 場上人數 個 new Image() 與網路請求。 */
+const lpcPortraitFailed = new Set();
+
 export function preloadLpcPortraits(ids = []) {
   for (const id of ids) {
     const srcId = portraitSrcId(id);
     if (lpcPortraitCache.has(id) || lpcPortraitLoading.has(id)) continue;
+    if (lpcPortraitFailed.has(id)) continue;
     // Reuse cached image of fallback source
     if (srcId !== id && lpcPortraitCache.has(srcId)) {
       lpcPortraitCache.set(id, lpcPortraitCache.get(srcId));
@@ -717,6 +723,7 @@ export function preloadLpcPortraits(ids = []) {
       };
       img.onerror = () => {
         lpcPortraitLoading.delete(id);
+        lpcPortraitFailed.add(id);  // 永久跳過，不要每幀重試
         resolve(null);
       };
       img.src = `/portraits/${srcId}.png`;

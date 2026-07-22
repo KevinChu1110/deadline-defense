@@ -60,33 +60,36 @@ export function drawScene(ctx, state) {
   if (state.bcMode && state.bc) {
     drawBcBattlefield(ctx, state, theme);
   } else {
-    drawMapBackground(ctx, width, height, theme);
+    // 背景與路徑都是靜態的 → 只在關卡/主題/尺寸變動時重畫，平時每幀各一次 drawImage
+    const pathStyle = pathStyleForTheme(theme);
+    const layers = ensureStaticLayers(width, height, theme, paths, (pctx) => {
+      Object.entries(paths).forEach(([key, points]) => {
+        drawPath(pctx, points, {
+          color:
+            key === "event"
+              ? pathStyle.event
+              : key === "pathC"
+                ? pathStyle.pathC
+                : pathStyle.main,
+          lane:
+            key === "event"
+              ? pathStyle.eventLane
+              : key === "pathC"
+                ? pathStyle.pathCLane
+                : pathStyle.mainLane,
+          label: key === "event" ? "B路" : key === "pathC" ? "C路" : "A路",
+          labelColor:
+            key === "event" ? "#fbbf24" : key === "pathC" ? "#f472b6" : theme.accent || "#fde68a",
+        });
+      });
+    });
+
+    ctx.drawImage(layers.bg, 0, 0);
     if (state.hazardState) {
       drawHazards(ctx, state.hazardState, stage.map, state.now || 0);
     }
-
     ctx.imageSmoothingEnabled = false;
-    const pathEntries = Object.entries(paths);
-    const pathStyle = pathStyleForTheme(theme);
-    pathEntries.forEach(([key, points]) => {
-      drawPath(ctx, points, {
-        color:
-          key === "event"
-            ? pathStyle.event
-            : key === "pathC"
-              ? pathStyle.pathC
-              : pathStyle.main,
-        lane:
-          key === "event"
-            ? pathStyle.eventLane
-            : key === "pathC"
-              ? pathStyle.pathCLane
-              : pathStyle.mainLane,
-        label: key === "event" ? "B路" : key === "pathC" ? "C路" : "A路",
-        labelColor:
-          key === "event" ? "#fbbf24" : key === "pathC" ? "#f472b6" : theme.accent || "#fde68a",
-      });
-    });
+    ctx.drawImage(layers.path, 0, 0);
     drawPads(ctx, pads, padsOccupied, hoverPad, !!state.placingType);
     if (buffs.coreSlowRadius > 0) {
       drawCoreSlowAura(ctx, core, buffs.coreSlowRadius, state.now);
@@ -344,7 +347,54 @@ function drawPlacingBanner(ctx, width, height, def) {
   ctx.restore();
 }
 
-function drawMapBackground(ctx, width, height, theme = MAP_THEMES.victoria) {
+/* ══════════════════════════════════════════════════════════════
+   靜態圖層快取
+   背景（漸層 + 80 顆雜點 + 全部樹/石/雲/齒輪）與路徑（每條路每幀走四次點陣）
+   在同一關卡內完全不會變，卻原本每一幀都重畫一次。改成先畫進離屏 canvas，
+   每幀只 drawImage 一次。
+   快取鍵包含主題、畫布尺寸與路徑結構 —— 換關/換主題/改尺寸都會自動失效。
+   ══════════════════════════════════════════════════════════════ */
+const _layerCache = { key: "", bg: null, path: null };
+
+function makeLayer(width, height) {
+  if (typeof OffscreenCanvas !== "undefined") return new OffscreenCanvas(width, height);
+  const c = document.createElement("canvas");
+  c.width = width;
+  c.height = height;
+  return c;
+}
+
+function layerKey(width, height, theme, paths) {
+  const sig = Object.entries(paths)
+    .map(([k, v]) => `${k}:${v?.length || 0}:${v?.[0]?.x ?? "-"},${v?.[0]?.y ?? "-"}`)
+    .join("|");
+  // bgImage 是非同步載入的，載完要重畫一次才會出現在快取裡
+  const bg = theme.bgImage || "";
+  const bgReady = bg ? (ensureMapBg(bg)?.complete ? "1" : "0") : "-";
+  return `${theme.id}|${width}x${height}|${bg}${bgReady}|${sig}`;
+}
+
+function ensureStaticLayers(width, height, theme, paths, drawPathsInto) {
+  const key = layerKey(width, height, theme, paths);
+  if (_layerCache.key === key && _layerCache.bg && _layerCache.path) return _layerCache;
+
+  const bgLayer = makeLayer(width, height);
+  const bctx = bgLayer.getContext("2d");
+  bctx.imageSmoothingEnabled = true;
+  drawMapBackgroundDirect(bctx, width, height, theme);
+
+  const pathLayer = makeLayer(width, height);
+  const pctx = pathLayer.getContext("2d");
+  pctx.imageSmoothingEnabled = false;
+  drawPathsInto(pctx);
+
+  _layerCache.key = key;
+  _layerCache.bg = bgLayer;
+  _layerCache.path = pathLayer;
+  return _layerCache;
+}
+
+function drawMapBackgroundDirect(ctx, width, height, theme = MAP_THEMES.victoria) {
   paintThemeBase(ctx, width, height, theme);
 
   const src = theme.bgImage || (theme.id === "victoria" ? "/maps/bg_victoria.jpg" : null);

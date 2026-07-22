@@ -1018,6 +1018,11 @@ export class Game {
 
     // Freeze combat on result/reward — do NOT thrash full UI re-renders (breaks clicks).
     if (this.result) return;
+    /* ⚠️ 手動暫停原本只是把 dt 設成 0，整個 update 照跑：spawn 迴圈、敵人迴圈、
+       O(職業數×敵人數) 的選目標、投射物迴圈全部繼續執行；而且因為 s.cooldown 不再
+       遞減，暫停瞬間 cooldown 剛好歸零的職業會在暫停中射出一發並結算傷害與楓幣。
+       暫停就該真的停下來。 */
+    if (this.paused) return;
     if (this.pausedForReward) {
       if (!this._uiAcc) this._uiAcc = 0;
       this._uiAcc += rawDt;
