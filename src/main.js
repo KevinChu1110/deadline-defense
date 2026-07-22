@@ -1021,9 +1021,9 @@ function renderCharacterGrid() {
     empty.textContent = "此篩選沒有職業，試試「全部」";
     els.charGrid.appendChild(empty);
   } else {
-    for (const id of ids) {
-      els.charGrid.appendChild(buildCharPickButton(id));
-    }
+    ids.forEach((id, i) => {
+      els.charGrid.appendChild(buildCharPickButton(id, i));
+    });
   }
 
   // Keep focus valid
@@ -1041,7 +1041,7 @@ function renderCharacterGrid() {
   renderUpgradePanel(focusCardId || ids[0] || null);
 }
 
-function buildCharPickButton(id) {
+function buildCharPickButton(id, index = 0) {
   const d = SPECIALISTS[id];
   const selected = draftLoadout.includes(id);
   const focused = focusCardId === id;
@@ -1058,6 +1058,7 @@ function buildCharPickButton(id) {
     (selected ? " selected" : "") +
     (focused ? " focused" : "") +
     (!deployable ? " locked" : "");
+  btn.style.setProperty("--bob-delay", `${(index % 8) * 0.12}s`);
   btn.setAttribute("aria-pressed", selected ? "true" : "false");
   btn.setAttribute("role", "listitem");
   if (!deployable) btn.title = lockHint;
@@ -1141,13 +1142,23 @@ function buildCharPickButton(id) {
   }
 
   btn.append(avatarWrap, body);
+  // hover 微音效（節流）
+  let hoverArmed = true;
+  btn.addEventListener("pointerenter", () => {
+    if (!hoverArmed || !deployable) return;
+    hoverArmed = false;
+    sfx.play("uiHover");
+    setTimeout(() => {
+      hoverArmed = true;
+    }, 180);
+  });
   btn.addEventListener("click", () => {
     void sfx.unlock();
     if (focusCardId === id) {
       toggleDraftJob(id);
     } else {
       focusCardId = id;
-      sfx.play("uiClick");
+      sfx.play("uiSelect");
       renderCharacterGrid();
     }
   });

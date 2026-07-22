@@ -190,18 +190,24 @@
             </div>
           </div>
 
-          <!-- Character select (full friendly picker) -->
-          <div id="char-overlay" class="overlay" hidden>
-            <div class="char-shell maple-panel">
+          <!-- Character select (Maple-style character window) -->
+          <div id="char-overlay" class="overlay char-overlay" hidden>
+            <div class="char-shell maple-panel maple-ornament char-window">
+              <div class="char-window-titlebar">
+                <span class="char-window-dots" aria-hidden="true"></span>
+                <span class="char-window-title">角色視窗 · 編隊</span>
+                <span class="char-window-dots" aria-hidden="true"></span>
+              </div>
               <header class="char-top">
                 <div class="char-top-left">
-                  <p class="overlay-kicker">⚔️ 編隊</p>
+                  <p class="overlay-kicker">⚔️ EQUIP / PARTY</p>
                   <h2>選擇出戰職業</h2>
+                  <p class="char-top-hint muted">點選查看 · 再點加入出戰 · 滑鼠移上有動效</p>
                 </div>
                 <div class="char-top-meta">
                   <span class="leaves-pill">🍁 <strong id="leaves-balance">0</strong></span>
                   <span class="loadout-count-pill">
-                    <strong id="loadout-count">0</strong>/<strong id="loadout-max-label">4</strong>
+                    出戰 <strong id="loadout-count">0</strong>/<strong id="loadout-max-label">4</strong>
                   </span>
                 </div>
               </header>
@@ -212,8 +218,12 @@
               </div>
 
               <div class="char-main">
-                <div id="char-grid" class="char-grid" role="list"></div>
-                <aside id="char-detail" class="char-detail maple-frame">
+                <div class="char-grid-pane maple-inset">
+                  <div class="char-pane-label">職業一覽</div>
+                  <div id="char-grid" class="char-grid" role="list"></div>
+                </div>
+                <aside id="char-detail" class="char-detail char-stat-pane maple-frame">
+                  <div class="char-pane-label">能力 / 升級</div>
                   <div id="upgrade-panel" class="upgrade-panel empty-detail">
                     <div id="upgrade-detail">
                       <p class="muted center-hint">點選職業卡查看詳情與升級</p>
