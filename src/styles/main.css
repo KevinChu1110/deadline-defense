@@ -3897,6 +3897,27 @@ body.in-play .panel-left {
   display: none;
 }
 
+/* ⚠️ 上面那條把左欄整個 display:none，於是 .stage 的 grid 自動排列會讓後面兩個
+   item 各往左位移一格：畫布掉進第一欄（240px 的窄欄）、右側欄吃掉 minmax(0,1fr)
+   變成全寬蓋住整個戰場。明確指定欄位就不會跟著位移。 */
+.canvas-wrap {
+  grid-column: 2;
+}
+
+.panel-right {
+  grid-column: 3;
+}
+
+/* 單欄堆疊時要放掉固定欄位，否則會長出多餘的隱式欄（順序改由 order 控制）。
+   這段必須放在上面兩條之後 —— 同特異度時後寫的贏，寫在前面會被蓋掉。 */
+@media (max-width: 1100px) {
+  .panel-left,
+  .canvas-wrap,
+  .panel-right {
+    grid-column: auto;
+  }
+}
+
 body.in-play.mode-bc .stage {
   grid-template-columns: 0 minmax(0, 1fr) minmax(240px, 300px);
 }
