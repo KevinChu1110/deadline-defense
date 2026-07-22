@@ -360,6 +360,51 @@ export function exportSlotsAsBridge() {
   return payload;
 }
 
+/**
+ * `/api/me`（server accountSummary）→ bridge payload
+ *
+ * 貼短碼那條路是「沒登入時的備援」。已經 Discord 登入的話，API 是直接讀 Bot 的
+ * player-data.json，資料本來就是即時的 —— 不需要玩家去 Discord 打指令再複製貼上。
+ *
+ * accountSummary 已經照等級由高到低排好，這裡只把 active 角色提到最前面
+ * （對應存檔 1），再取前 3 個。欄位名稱兩邊一致，不用改名。
+ */
+export function payloadFromAccountSummary(me) {
+  if (!me || typeof me !== "object") {
+    throw new Error("讀不到帳號資料");
+  }
+  let chars = (me.characters || []).filter(Boolean);
+  if (!chars.length) throw new Error("這個 Discord 帳號還沒有角色");
+
+  const activeId = me.activeCharId;
+  if (activeId && chars.some((c) => c.charId === activeId)) {
+    chars = [
+      chars.find((c) => c.charId === activeId),
+      ...chars.filter((c) => c.charId !== activeId),
+    ];
+  }
+  chars = chars.slice(0, SLOT_COUNT);
+
+  return {
+    v: BRIDGE_VERSION,
+    source: "live-api",
+    exportedAt: Date.now(),
+    discordId: String(me.discordId || ""),
+    username: me.username || "冒險者",
+    account: { mapleLeaves: Math.max(0, Number(me.mapleLeaves) || 0) },
+    characters: chars.map((c) => ({
+      charId: c.charId,
+      name: c.name,
+      class: c.class,
+      level: Math.max(1, Number(c.level) || 1),
+      jobCode: Number(c.jobCode) || 0,
+      levelStats: c.levelStats || {},
+      totalExp: Number(c.totalExp) || 0,
+    })),
+    activeCharId: activeId || chars[0]?.charId,
+  };
+}
+
 export function previewImport(payload) {
   return (payload.characters || []).slice(0, SLOT_COUNT).map((ch, i) => ({
     slot: i + 1,

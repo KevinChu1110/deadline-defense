@@ -321,11 +321,35 @@
             <div class="dialog-card maple-panel maple-ornament discord-import-card" role="dialog" aria-modal="true">
               <p class="overlay-kicker">Discord 同步</p>
               <h2>匯入玩家進度</h2>
-              <p class="muted" style="text-align:left;margin-bottom:8px">
-                貼上 Bot 匯出的 <strong>MDEF1.…</strong> 短碼或完整 JSON。<br />
-                最多 <strong>3 個角色</strong> 會依序寫入存檔 1～3（會覆蓋該槽）。
-              </p>
-              <textarea id="discord-import-text" class="discord-import-ta" rows="6" placeholder="MDEF1.eyJ2IjoxLC..."></textarea>
+
+              <!-- 已登入：直接讀 API（資料即時，不用去 Discord 複製短碼） -->
+              <div id="discord-import-live" hidden>
+                <p class="muted" style="text-align:left;margin-bottom:8px">
+                  已登入 <strong id="discord-import-live-name">—</strong>，
+                  可直接同步 Discord 上的最新角色。<br />
+                  最多 <strong>3 個角色</strong> 會依序寫入存檔 1～3（會覆蓋該槽）。
+                </p>
+                <div class="overlay-actions dialog-actions" style="margin-bottom:10px">
+                  <button type="button" id="btn-discord-import-live" class="btn primary maple-primary">
+                    ⚡ 立即同步最新進度
+                  </button>
+                </div>
+                <p class="muted" style="text-align:left;margin:0 0 6px">
+                  <button type="button" id="btn-discord-import-manual" class="linklike">
+                    改用手動貼短碼 ▾
+                  </button>
+                </p>
+              </div>
+
+              <!-- 未登入（或手動展開）：舊的貼短碼路徑 -->
+              <div id="discord-import-manual">
+                <p class="muted" style="text-align:left;margin-bottom:8px">
+                  貼上 Bot <code>/同步</code> 產生的 <strong>MDEF1.…</strong> 短碼或完整 JSON。<br />
+                  最多 <strong>3 個角色</strong> 會依序寫入存檔 1～3（會覆蓋該槽）。
+                </p>
+                <textarea id="discord-import-text" class="discord-import-ta" rows="6" placeholder="MDEF1.eyJ2IjoxLC..."></textarea>
+              </div>
+
               <div id="discord-import-preview" class="discord-import-preview muted" hidden></div>
               <div class="overlay-actions dialog-actions">
                 <button type="button" id="btn-discord-import-cancel" class="btn">取消</button>

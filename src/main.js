@@ -52,6 +52,7 @@ import {
   exportSlotsAsBridge,
   encodeBridgeCode,
   previewImport,
+  payloadFromAccountSummary,
 } from "./data/discord-bridge.js";
 import * as artaleHub from "./artale-hub.js";
 import { createActionRaid } from "./game/action-raid.js";
@@ -214,6 +215,11 @@ const els = {
   discordImportOverlay: document.querySelector("#discord-import-overlay"),
   discordImportText: document.querySelector("#discord-import-text"),
   discordImportPreview: document.querySelector("#discord-import-preview"),
+  discordImportLive: document.querySelector("#discord-import-live"),
+  discordImportLiveName: document.querySelector("#discord-import-live-name"),
+  discordImportManual: document.querySelector("#discord-import-manual"),
+  btnDiscordImportLive: document.querySelector("#btn-discord-import-live"),
+  btnDiscordImportManual: document.querySelector("#btn-discord-import-manual"),
   btnDiscordImportCancel: document.querySelector("#btn-discord-import-cancel"),
   btnDiscordImportPreview: document.querySelector("#btn-discord-import-preview"),
   btnDiscordImportConfirm: document.querySelector("#btn-discord-import-confirm"),
@@ -1171,15 +1177,77 @@ function closeSettingsOverlay() {
   sfx.play("uiClick");
 }
 
+/**
+ * 已登入就走 API 直讀（即時），沒登入才要貼短碼。
+ * API 是直接讀 Bot 的 player-data.json，所以登入狀態下根本不需要玩家去
+ * Discord 打 /同步 再複製貼上。
+ */
 function openDiscordImport() {
   if (els.discordImportText) els.discordImportText.value = "";
   if (els.discordImportPreview) {
     els.discordImportPreview.hidden = true;
     els.discordImportPreview.innerHTML = "";
   }
+
+  const logged = !!hubState.me;
+  if (els.discordImportLive) els.discordImportLive.hidden = !logged;
+  if (els.discordImportManual) els.discordImportManual.hidden = logged;
+  if (logged && els.discordImportLiveName) {
+    els.discordImportLiveName.textContent = hubState.me.username || "冒險者";
+  }
+  // 未登入時「預覽/確認匯入」才有意義（要有貼上的內容）
+  if (els.btnDiscordImportPreview) els.btnDiscordImportPreview.hidden = logged;
+  if (els.btnDiscordImportConfirm) els.btnDiscordImportConfirm.hidden = logged;
+  // 上次可能被展開過手動路徑，每次開窗都要收回去
+  if (els.btnDiscordImportManual) els.btnDiscordImportManual.hidden = !logged;
+
   setOverlayOpen(els.discordImportOverlay, true);
   sfx.play("uiClick");
+  if (!logged) setTimeout(() => els.discordImportText?.focus(), 50);
+}
+
+/** 手動展開貼短碼（已登入但想貼別人的碼 / API 掛掉時的退路） */
+function showDiscordImportManual() {
+  if (els.discordImportManual) els.discordImportManual.hidden = false;
+  if (els.btnDiscordImportPreview) els.btnDiscordImportPreview.hidden = false;
+  if (els.btnDiscordImportConfirm) els.btnDiscordImportConfirm.hidden = false;
+  if (els.btnDiscordImportManual) els.btnDiscordImportManual.hidden = true;
+  sfx.play("uiClick");
   setTimeout(() => els.discordImportText?.focus(), 50);
+}
+
+/** 一鍵同步：重新打 API 拿最新資料（不用 hubState 那份可能已經過期的快照） */
+async function doLiveSync() {
+  const btn = els.btnDiscordImportLive;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "同步中…";
+  }
+  try {
+    const me = await artaleHub.loadMe();
+    const payload = payloadFromAccountSummary(me);
+    const { written } = importBridgeToSlots(payload);
+    hubState.me = me;
+    syncNickInput();
+    refreshHomeMeta();
+    renderSaveSlots();
+    closeDiscordImport();
+    showToast(
+      `已同步 ${written.length} 個角色：` +
+        written.map((w) => `${w.name}(槽${w.slot + 1})`).join("、")
+    );
+    sfx.play("waveClear");
+  } catch (e) {
+    sfx.play("error");
+    showToast(e?.message || "同步失敗，可改用手動貼短碼");
+    // API 出問題就把手動路徑攤開來，玩家不會卡死
+    showDiscordImportManual();
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "⚡ 立即同步最新進度";
+    }
+  }
 }
 
 function closeDiscordImport() {
@@ -3053,6 +3121,8 @@ els.btnDiscordExport?.addEventListener("click", () => withAudio(doDiscordExport)
 els.btnDiscordImportCancel?.addEventListener("click", () => withAudio(closeDiscordImport));
 els.btnDiscordImportPreview?.addEventListener("click", () => withAudio(doDiscordPreview));
 els.btnDiscordImportConfirm?.addEventListener("click", () => withAudio(doDiscordImport));
+els.btnDiscordImportLive?.addEventListener("click", () => withAudio(doLiveSync));
+els.btnDiscordImportManual?.addEventListener("click", () => withAudio(showDiscordImportManual));
 els.btnGuideClose?.addEventListener("click", () =>
   withAudio(() => {
     closeGuideOverlay();

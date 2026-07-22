@@ -5913,3 +5913,18 @@ body.mode-bc .wave-cta {
   justify-content: center;
   gap: 10px;
 }
+
+/* 匯入視窗：「改用手動貼短碼」的文字按鈕（已登入時預設收折） */
+.linklike {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  opacity: 0.75;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.linklike:hover {
+  opacity: 1;
+}
