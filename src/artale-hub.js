@@ -214,6 +214,20 @@ export function classLabel(id) {
   return CLASS_ZH[id] || id || "？";
 }
 
+/** 開發工具：?dev=1、localStorage artale-dev=1、或本機 */
+export function showDevTools() {
+  try {
+    const q = new URLSearchParams(location.search);
+    if (q.get("dev") === "1") return true;
+    if (localStorage.getItem("artale-dev") === "1") return true;
+    const h = location.hostname || "";
+    if (h === "localhost" || h === "127.0.0.1") return true;
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
 export function renderHubShell(els, state) {
   const root = els.artaleHub;
   if (!root) return;
@@ -237,35 +251,28 @@ export function renderHubShell(els, state) {
     equipFilter = "all",
   } = state;
 
+  const dev = showDevTools();
+
   if (!me) {
-    root.innerHTML = `
-      <div class="hub-login maple-panel maple-ornament">
-        <p class="overlay-kicker">ARTALE WEB · M1</p>
-        <h2>Discord 登入主城</h2>
-        <p class="muted hub-lead">
-          用 Discord 帳號載入 Bot 角色資料。<br/>
-          首次登入會自動建立初心者角色（若 Bot 尚無此 ID）。
-        </p>
-        <div class="hub-api-status ${apiOk === true ? "ok" : apiOk === false ? "bad" : ""}">
-          API：${apiOk === true ? "已連線" : apiOk === false ? "連線失敗" : "檢查中…"}
-          ${oauthOk === true ? " · OAuth 已設定" : oauthOk === false ? " · OAuth 未設定／未知" : ""}
-        </div>
-        ${error ? `<p class="hub-error">${escapeHtml(error)}</p>` : ""}
+    const canDiscord = apiOk !== false && oauthOk !== false;
+    const statusLine =
+      apiOk === false
+        ? `<p class="hub-error">目前無法連線伺服器，請稍後再試。</p>`
+        : apiOk === null
+          ? `<p class="muted hub-oauth-hint">連線中…</p>`
+          : oauthOk === false
+            ? `<p class="muted hub-oauth-hint">Discord 登入暫不可用，請稍後再試${dev ? "（或使用下方開發登入）" : ""}。</p>`
+            : "";
 
-        <button type="button" class="btn primary maple-primary hub-discord-btn" id="hub-btn-discord"
-          ${apiOk === false || oauthOk === false ? "disabled" : ""}>
-          🎮 使用 Discord 登入
-        </button>
-        <p class="muted hub-oauth-hint">
-          ${
-            oauthOk === false
-              ? "SIT 尚未設定 Discord OAuth Client — 請用下方「開發用 ID 登入」。API 走 ngrok，前端在 Netlify。"
-              : "Discord OAuth 已設定。API 在 ngrok，網頁在 Netlify。"
-          }
-        </p>
-
+    const devBlock = dev
+      ? `
         <details class="hub-dev-details">
-          <summary>開發用：ID 登入（本機）</summary>
+          <summary>開發工具</summary>
+          <p class="muted" style="font-size:0.75rem;margin:0 0 8px">僅本機或 ?dev=1 顯示</p>
+          <div class="hub-api-status ${apiOk === true ? "ok" : apiOk === false ? "bad" : ""}">
+            API ${apiOk === true ? "OK" : apiOk === false ? "FAIL" : "…"}
+            · OAuth ${oauthOk === true ? "OK" : oauthOk === false ? "OFF" : "…"}
+          </div>
           <label class="hub-field">
             <span>搜尋冒險家</span>
             <div class="hub-row">
@@ -278,10 +285,30 @@ export function renderHubShell(els, state) {
             <span>Discord ID</span>
             <div class="hub-row">
               <input id="hub-discord-id" type="text" placeholder="6980…" value="${escapeHtml(getLinkedDiscordId())}" />
-              <button type="button" class="btn primary maple-primary" id="hub-btn-load">開發登入</button>
+              <button type="button" class="btn primary maple-primary" id="hub-btn-load">ID 登入</button>
             </div>
           </label>
-        </details>
+        </details>`
+      : "";
+
+    root.innerHTML = `
+      <div class="hub-login maple-panel maple-ornament">
+        <p class="overlay-kicker">ARTALE · 主城</p>
+        <h2>歡迎回來，冒險家</h2>
+        <p class="muted hub-lead">
+          使用 Discord 登入，同步你的角色、裝備與進度。<br/>
+          首次登入會自動建立初心者角色。
+        </p>
+        ${statusLine}
+        ${error ? `<p class="hub-error">${escapeHtml(error)}</p>` : ""}
+
+        <button type="button" class="btn primary maple-primary hub-discord-btn" id="hub-btn-discord"
+          ${canDiscord ? "" : "disabled"}>
+          🎮 使用 Discord 登入
+        </button>
+        <p class="muted hub-oauth-hint">登入後可換裝、衝星、洗潛能，並挑戰 Boss 突襲。</p>
+
+        ${devBlock}
 
         <div class="hub-footer-actions">
           <button type="button" class="btn" id="hub-btn-back-title">← 回主選單</button>
@@ -302,9 +329,9 @@ export function renderHubShell(els, state) {
         <div class="hub-top-user">
           ${avatar}
           <div>
-            <p class="overlay-kicker">ARTALE 主城</p>
+            <p class="overlay-kicker">主城</p>
             <h2>${escapeHtml(me.username)}</h2>
-            <p class="muted">🍁 ${me.mapleLeaves} · 💰 ${(me.coins ?? 0).toLocaleString()} · 角色 ${me.characters?.length || 0}</p>
+            <p class="muted">🍁 楓葉 ${me.mapleLeaves} · 💰 楓幣 ${(me.coins ?? 0).toLocaleString()} · ${me.characters?.length || 0} 名角色</p>
           </div>
         </div>
         <div class="hub-top-actions">
@@ -776,7 +803,7 @@ function renderTab(tab, me, active, ui = {}) {
         name: "殘暴炎魔",
         tier: "S+",
         region: "冰原雪域",
-        blurb: "M3 v1 首隻 · 可讀 telegraph · 三階段",
+        blurb: "三階段戰 · 注意地上 telegraph",
         open: true,
       },
       {
@@ -784,14 +811,14 @@ function renderTab(tab, me, active, ui = {}) {
         name: "暗黑龍王",
         tier: "SS",
         region: "神木村",
-        blurb: "更高血量 · 建議 Lv.50+",
+        blurb: "更高難度 · 建議先磨裝",
         open: true,
       },
     ];
     return `
       <div class="hub-combat-card highlight">
-        <h3>Boss 突襲 · 動作戰鬥</h3>
-        <p>橫向站場：移動／跳躍／普攻／技能。傷害吃角色等級＋武器＋星力簡化快照。</p>
+        <h3>Boss 突襲</h3>
+        <p>橫向動作戰：左右移動、跳躍、普攻與技能。裝備與星力會影響輸出。</p>
         <div class="hub-raid-boss-grid">
           ${bosses
             .map(
@@ -805,15 +832,16 @@ function renderTab(tab, me, active, ui = {}) {
             )
             .join("")}
         </div>
-        <p class="muted" style="margin-top:8px;font-size:0.78rem">操作：←→ 移動 · Space 跳 · J/Z 普攻 · K/X 技能 · Esc 離開</p>
+        <p class="muted" style="margin-top:8px;font-size:0.78rem">←→ 移動 · 空白鍵跳躍 · J 普攻 · K 技能 · Esc 離開</p>
       </div>
       <div class="hub-combat-card">
         <h3>無止境</h3>
-        <p class="muted">M4</p>
+        <p class="muted">持續挑戰、競速排行——即將開放</p>
         <button type="button" class="btn" disabled>即將開放</button>
       </div>
       <div class="hub-combat-card subtle">
         <h3>神木防衛戰</h3>
+        <p class="muted">塔防小遊戲 · 守護神木</p>
         <button type="button" class="btn" id="hub-btn-open-defense">進入防衛戰</button>
       </div>`;
   }
@@ -827,10 +855,8 @@ function renderTab(tab, me, active, ui = {}) {
         <div class="hub-stat"><small>楓幣</small><strong>${(me.coins ?? 0).toLocaleString()}</strong></div>
       </div>
       <p class="hub-roadmap muted">
-        ✅ M0 讀取 Bot 資料<br/>
-        ✅ M1 Discord OAuth 登入<br/>
-        ✅ M2 換裝 · 星力台 · 潛能台<br/>
-        ✅ M3 動作突襲 v1　▢ M4 無止境
+        在上方分頁管理<strong>角色、裝備、星力、潛能</strong>，或前往<strong>突襲</strong>挑戰 Boss。<br/>
+        進度與 Discord Bot 共用同一份冒險資料。
       </p>
     </div>`;
 }
