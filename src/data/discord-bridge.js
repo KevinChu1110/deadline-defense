@@ -85,6 +85,22 @@ export function levelToUnlockedStages(level) {
 }
 
 /**
+ * 存檔要顯示的角色名。
+ *
+ * ⚠️ Bot 的角色物件多半**沒有 `name` 欄位**（只有 class/level/jobCode），
+ * server 的 accountSummary 會 fallback 成帳號名 —— 結果三個存檔全叫同一個
+ * Discord 暱稱，完全分不出誰是誰。這裡改用職業中文名當名字。
+ */
+export function charDisplayName(char, username = "冒險者") {
+  const jobId = resolveWebJobId(char?.class);
+  const jobName = SPECIALISTS[jobId]?.nameZh || jobId;
+  const raw = String(char?.name || "").trim();
+  // name 缺漏、或只是被填成帳號名 → 用職業名才分得出三個槽
+  if (!raw || raw === String(username || "").trim()) return jobName;
+  return raw;
+}
+
+/**
  * 從 Bot 角色 + 帳號 → 網頁單一存檔 live keys 物件
  * @returns {Record<string,string>} localStorage key → JSON string
  */
@@ -104,7 +120,13 @@ export function characterToSlotBlob(char, account = {}, username = "冒險者") 
   // 學會：該職 + 初心者；若是高轉也標記相近線（簡化：只 mark 自己）
   const learned = { beginner: true, [jobId]: true };
 
-  const nick = String(char.name || username || "冒險者").trim().slice(0, 12);
+  // ⚠️ 存檔列表顯示的名字最後是由 summarizeLive() 從這個暱稱重算的
+  //    （switchToSlot 會再 flush 一次覆蓋 meta），所以等級要寫進暱稱才看得到。
+  //    角色本身有名字時就尊重它，不硬加等級。
+  const base = charDisplayName(char, username);
+  const hasRealName = base === String(char.name || "").trim() && base !== "";
+  const lv = Number(char.level) || 1;
+  const nick = (hasRealName ? base : `${base} Lv${lv}`).slice(0, 12);
 
   const progress = {
     unlocked,
@@ -254,7 +276,8 @@ export function importBridgeToSlots(payload, opts = {}) {
       meta.slots[slotIndex] = {
         index: slotIndex,
         empty: false,
-        name: ch.name,
+        // 帶上等級，三個槽才一眼分得出主力是哪個
+        name: `${charDisplayName(ch, payload.username)} Lv${Number(ch.level) || 1}`,
         unlocked: levelToUnlockedStages(ch.level),
         clearedCount: 0,
         leaves: Math.max(120, Number(payload.account?.mapleLeaves) || 0),
@@ -292,7 +315,10 @@ export function importBridgeToSlots(payload, opts = {}) {
     const idx = chars.findIndex((c) => c.charId === payload.activeCharId);
     if (idx >= 0) prefer = idx;
   }
-  switchToSlot(written[prefer]?.slot ?? 0);
+  // ⚠️ saveCurrent:false 不可省略。live keys 這時還是匯入前的舊狀態，
+  //    照 switchToSlot 預設會先回存到目前 active 槽，把剛剛寫好的 blob 蓋掉
+  //    （實際事故：同步 3 個角色後存檔 1 變回「空存檔」，等級最高的主角色不見）。
+  switchToSlot(written[prefer]?.slot ?? 0, { saveCurrent: false });
   return { written };
 }
 
@@ -408,7 +434,7 @@ export function payloadFromAccountSummary(me) {
 export function previewImport(payload) {
   return (payload.characters || []).slice(0, SLOT_COUNT).map((ch, i) => ({
     slot: i + 1,
-    name: ch.name,
+    name: charDisplayName(ch, payload.username),
     class: ch.class,
     webJob: resolveWebJobId(ch.class),
     webJobName: SPECIALISTS[resolveWebJobId(ch.class)]?.nameZh || resolveWebJobId(ch.class),

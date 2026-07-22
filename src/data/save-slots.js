@@ -227,11 +227,18 @@ export function flushActiveSlot() {
 
 /**
  * 切換存檔：先存目前，再載入目標
+ *
+ * @param {number} index
+ * @param {{ saveCurrent?: boolean }} [opts]
+ *   saveCurrent=false 時跳過「把 live keys 回存目前槽」那一步。
+ *   ⚠️ 匯入 Discord 進度時一定要關掉：匯入是直接把 blob 寫進各槽，
+ *   此時 live keys 還是匯入前的舊狀態，照常回存會把剛寫好的槽蓋掉
+ *   （實際事故：同步 3 個角色後，存檔 1 被舊的空狀態洗掉變「空存檔」）。
  */
-export function switchToSlot(index) {
+export function switchToSlot(index, opts = {}) {
   ensureSaveSlotsMigrated();
   const i = Math.max(0, Math.min(SLOT_COUNT - 1, Number(index) || 0));
-  flushActiveSlot();
+  if (opts.saveCurrent !== false) flushActiveSlot();
   const blob = readBlob(i);
   if (blob) {
     applyBlobToLive(blob);
