@@ -225,8 +225,16 @@ body {
 }
 
 #game {
-  width: min(100%, 960px);
+  /* 畫布是 960×540（16:9）。原本寫死 `min(100%, 960px)` 有兩個問題：
+     - 桌機：容器再寬也卡在 960px，兩側白白留一大片
+     - 手機：只看寬度，390px 手機上高度只剩約 190px（螢幕高度的 23%），
+       上下卻還空著 —— 縮放應該同時受限於「可用高度」才對
+     改成用 aspect-ratio 鎖比例，寬高兩邊都不超出容器，取較小者。 */
+  aspect-ratio: 16 / 9;
+  width: auto;
   height: auto;
+  max-width: 100%;
+  max-height: 100%;
   display: block;
   border-radius: 10px;
   cursor: crosshair;
@@ -5948,4 +5956,128 @@ body.mode-bc .wave-cta {
 }
 .linklike:hover {
   opacity: 1;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   手機遊玩體驗（2026-07-23）
+   實測 390px 直向：畫布只有 337×192（螢幕高度 23%）、頂欄 203px、
+   頁面 963px 需要捲動。決策是「直向提示旋轉、橫向給接近桌機的分欄」。
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── 直向旋轉提示 ── */
+#rotate-hint {
+  display: none;
+}
+
+@media (orientation: portrait) and (max-width: 860px) {
+  body.in-play #rotate-hint {
+    display: grid;
+    place-items: center;
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    background: rgba(24, 16, 8, 0.94);
+    padding: 24px;
+  }
+
+  /* 提示蓋著時把底下的遊戲畫面停在原地，避免玩家盲點 */
+  body.in-play #app {
+    pointer-events: none;
+  }
+}
+
+.rotate-hint-card {
+  text-align: center;
+  color: #f7f4ea;
+  display: grid;
+  gap: 10px;
+  max-width: 280px;
+}
+
+.rotate-hint-card strong {
+  font-size: 1.25rem;
+  letter-spacing: 0.05em;
+}
+
+.rotate-hint-card p {
+  margin: 0;
+  opacity: 0.75;
+  font-size: 0.9rem;
+}
+
+.rotate-hint-icon {
+  font-size: 3.5rem;
+  animation: rotate-hint-tilt 1.8s ease-in-out infinite;
+}
+
+@keyframes rotate-hint-tilt {
+  0%, 45% { transform: rotate(0deg); }
+  60%, 100% { transform: rotate(-90deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rotate-hint-icon { animation: none; }
+}
+
+/* ── 手機橫向：接近桌機的左右分欄 ──
+   用 max-height 而非 max-width 判斷「矮螢幕」，才不會把橫放的平板/小筆電
+   誤判進來。這段必須放在檔案最後：上面 max-width:1100px 那段把 .stage 壓成
+   單欄，同特異度時後寫的才會贏。 */
+@media (orientation: landscape) and (max-height: 620px) {
+  #app {
+    padding: 4px;
+    gap: 4px;
+  }
+
+  .top-bar {
+    padding: 4px 8px;
+    gap: 6px;
+  }
+
+  /* 橫向時垂直空間最珍貴：狀態列只留必要數字 */
+  .top-bar .hud-meter-label small,
+  .brand small {
+    display: none;
+  }
+
+  .stage {
+    grid-template-columns: minmax(0, 1fr) clamp(150px, 24vw, 220px);
+    gap: 6px;
+  }
+
+  .canvas-wrap {
+    grid-column: 1;
+    padding: 2px;
+  }
+
+  .panel-right {
+    grid-column: 2;
+    padding: 6px;
+    overflow-y: auto;
+  }
+
+  .panel-right .panel-block {
+    padding: 6px 8px;
+  }
+
+  /* 底部字幕列在橫向手機純粹是浪費高度 */
+  .bottom-bar {
+    display: none;
+  }
+}
+
+/* ── 觸控目標 ──
+   實測「開新局」只有 50×25px、靜音鈕 37px 高，遠低於 44px 的可點擊建議值。
+   只針對觸控裝置放大，滑鼠環境維持原本緊湊的排版。 */
+@media (pointer: coarse) {
+  .btn,
+  .maple-btn,
+  .save-slot-actions .btn {
+    min-height: 44px;
+  }
+
+  .save-slot-actions .btn {
+    min-width: 64px;
+    padding-inline: 12px;
+  }
 }
