@@ -131,11 +131,16 @@ export function parseCookies(req) {
 }
 
 export function sessionCookie(sid, { clear = false } = {}) {
+  const secure =
+    process.env.COOKIE_SECURE === "1" ||
+    process.env.COOKIE_SECURE === "true"
+      ? "; Secure"
+      : "";
   if (clear) {
-    return `artale_sid=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
+    return `artale_sid=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`;
   }
   const maxAge = 7 * 24 * 60 * 60;
-  return `artale_sid=${encodeURIComponent(sid)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}`;
+  return `artale_sid=${encodeURIComponent(sid)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`;
 }
 
 export function corsHeaders(req) {

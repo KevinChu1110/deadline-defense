@@ -4,6 +4,14 @@
 
 const SESSION_KEY = "artale-web-discord-id";
 
+/** 相容 Vite base（本機 `/`、SIT `/defense/`） */
+export function apiUrl(p) {
+  const base = import.meta.env.BASE_URL || "/";
+  const clean = String(p || "").replace(/^\//, "");
+  if (base === "/") return `/${clean}`;
+  return `${base.replace(/\/?$/, "/")}${clean}`;
+}
+
 export function getLinkedDiscordId() {
   try {
     return localStorage.getItem(SESSION_KEY) || "";
@@ -22,7 +30,7 @@ export function setLinkedDiscordId(id) {
 }
 
 async function api(path, opts = {}) {
-  const res = await fetch(path, {
+  const res = await fetch(apiUrl(path), {
     credentials: "include",
     headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
     ...opts,
@@ -53,8 +61,8 @@ export async function devLogin(discordId, username) {
 
 /** 導向 Discord OAuth（全頁） */
 export function startDiscordOAuth() {
-  // 走同源 /api → vite proxy → API（Set-Cookie 在 callback 由 API 直接 302 到前端）
-  window.location.href = "/api/auth/discord";
+  // 走同源 /api → vite proxy 或 nginx /defense/ → API
+  window.location.href = apiUrl("/api/auth/discord");
 }
 
 export async function searchPlayers(q) {

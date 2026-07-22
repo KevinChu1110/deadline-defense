@@ -1,6 +1,10 @@
 import { defineConfig } from "vite";
 
+// 正式環境（sit-kevin nginx /defense/）設 VITE_BASE=/defense/
+const base = process.env.VITE_BASE || "/";
+
 export default defineConfig({
+  base,
   server: {
     port: 5173,
     open: true,

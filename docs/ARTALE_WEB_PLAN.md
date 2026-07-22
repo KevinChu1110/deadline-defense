@@ -71,3 +71,21 @@ npm run dev
 ```
 
 開啟後主選單 → **進入主城**。
+
+## SIT 部署（sit-kevin）
+
+對外網址（關筆電也在）：
+
+- 遊戲：https://maplestory-word.duckdns.org/defense/
+- API 健康：https://maplestory-word.duckdns.org/defense/api/health
+
+```bash
+# 本機 monorepo 執行
+cd deadline-defense
+./deploy.sh          # build + rsync + PM2 artale-web-api + nginx /defense/
+./deploy.sh --fast   # 略過 vite build
+```
+
+- PM2 名稱：`artale-web-api`
+- 遠端目錄：`~/artale-web`
+- 資料：`PLAYER_DATA_PATH=~/artale-bot/player-data.json`（與 Discord Bot 共用）

@@ -2,8 +2,9 @@
  * Artale Web API
  *
  *   npm run dev:api
- *   環境變數見 server/.env.example
+ *   環境變數見 server/env.example
  */
+import "./load-env.js"; // 必須最先：填 process.env 後再載 store/auth
 import http from "http";
 import fs from "fs";
 import path from "path";
@@ -32,31 +33,59 @@ import * as auth from "./auth.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// 載入 server/.env（簡易，無 dotenv 依賴）
-try {
-  const envPath = path.resolve(__dirname, "../.env");
-  if (fs.existsSync(envPath)) {
-    for (const line of fs.readFileSync(envPath, "utf8").split("\n")) {
-      const t = line.trim();
-      if (!t || t.startsWith("#")) continue;
-      const i = t.indexOf("=");
-      if (i < 0) continue;
-      const k = t.slice(0, i).trim();
-      let v = t.slice(i + 1).trim();
-      if (
-        (v.startsWith('"') && v.endsWith('"')) ||
-        (v.startsWith("'") && v.endsWith("'"))
-      ) {
-        v = v.slice(1, -1);
-      }
-      if (process.env[k] == null) process.env[k] = v;
-    }
-  }
-} catch {
-  /* ignore */
-}
-
 const PORT = Number(process.env.PORT) || 8787;
+const HOST = process.env.HOST || "0.0.0.0";
+const STATIC_DIR = process.env.STATIC_DIR
+  ? path.resolve(process.env.STATIC_DIR)
+  : path.resolve(__dirname, "../../dist");
+
+const MIME = {
+  ".html": "text/html; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".json": "application/json",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
+  ".svg": "image/svg+xml",
+  ".ico": "image/x-icon",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+  ".mp3": "audio/mpeg",
+  ".map": "application/json",
+};
+
+function tryServeStatic(res, pathname) {
+  if (!STATIC_DIR || !fs.existsSync(STATIC_DIR)) return false;
+  let rel = pathname === "/" ? "/index.html" : pathname;
+  // 禁止 path traversal
+  const file = path.normalize(path.join(STATIC_DIR, rel));
+  if (!file.startsWith(STATIC_DIR)) return false;
+
+  const sendFile = (fp) => {
+    const ext = path.extname(fp).toLowerCase();
+    const type = MIME[ext] || "application/octet-stream";
+    res.writeHead(200, {
+      "Content-Type": type,
+      "Cache-Control":
+        ext === ".html" ? "no-cache" : "public, max-age=86400",
+    });
+    fs.createReadStream(fp).pipe(res);
+    return true;
+  };
+
+  if (fs.existsSync(file) && fs.statSync(file).isFile()) {
+    return sendFile(file);
+  }
+  // SPA fallback（非 API）
+  if (!pathname.startsWith("/api")) {
+    const index = path.join(STATIC_DIR, "index.html");
+    if (fs.existsSync(index)) return sendFile(index);
+  }
+  return false;
+}
 
 function json(res, status, body, req, extraHeaders = {}) {
   const data = JSON.stringify(body);
@@ -405,6 +434,11 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, out, req);
     }
 
+    // 靜態前端（production dist）
+    if (req.method === "GET" || req.method === "HEAD") {
+      if (tryServeStatic(res, pathname)) return;
+    }
+
     json(res, 404, { error: "not found", path: pathname }, req);
   } catch (e) {
     console.error(e);
@@ -412,9 +446,12 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => {
-  console.log(`[artale-api] http://127.0.0.1:${PORT}`);
+server.listen(PORT, HOST, () => {
+  console.log(`[artale-api] http://${HOST}:${PORT}`);
   console.log(`[artale-api] data: ${getDataPath()}`);
+  console.log(
+    `[artale-api] static: ${fs.existsSync(STATIC_DIR) ? STATIC_DIR : "(none)"}`
+  );
   console.log(
     `[artale-api] oauth: ${auth.oauthConfigured() ? "configured" : "NOT set (dev-login OK)"}`
   );
