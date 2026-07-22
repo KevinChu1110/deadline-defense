@@ -4658,3 +4658,63 @@ body.mode-bc .wave-cta {
     padding: 6px;
   }
 }
+
+/* Discord bridge */
+.discord-bridge-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 0 8px;
+}
+
+.discord-bridge-bar .btn {
+  font-weight: 800;
+  min-height: 40px;
+}
+
+.discord-bridge-hint {
+  font-size: 0.78rem;
+  margin: 0 0 10px;
+  line-height: 1.4;
+}
+
+.discord-import-card {
+  width: min(94vw, 440px) !important;
+  text-align: left !important;
+}
+
+.discord-import-card h2 {
+  text-align: center;
+}
+
+.discord-import-ta {
+  width: 100%;
+  min-height: 120px;
+  margin: 8px 0 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 2px solid #8b5a2b;
+  background: #fffef8;
+  font: inherit;
+  font-size: 0.82rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.discord-import-ta:focus {
+  outline: none;
+  border-color: #2f7a3a;
+  box-shadow: 0 0 0 3px rgba(47, 122, 58, 0.22);
+}
+
+.discord-import-preview {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(139, 90, 43, 0.25);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  text-align: left;
+}

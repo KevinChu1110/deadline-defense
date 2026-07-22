@@ -202,8 +202,19 @@
                 <section class="home-section save-section wizard-pane" id="wizard-step-save" data-wizard="1">
                   <div class="home-section-head">
                     <h2>📁 冒險者存檔</h2>
-                    <p class="muted">選一個存檔繼續 · 最多 3 筆</p>
+                    <p class="muted">3 槽 ＝ Discord 最多 3 個角色</p>
                   </div>
+                  <div class="discord-bridge-bar">
+                    <button type="button" id="btn-discord-import" class="btn primary maple-primary">
+                      ⬇ 匯入 Discord 進度
+                    </button>
+                    <button type="button" id="btn-discord-export" class="btn">
+                      ⬆ 匯出進度碼
+                    </button>
+                  </div>
+                  <p class="muted discord-bridge-hint">
+                    在 Discord 請管理員執行匯出，或自行用 Bot 的防衛戰匯出碼，貼到下方匯入。
+                  </p>
                   <div id="save-slot-list" class="save-slot-list"></div>
                   <div class="home-player maple-inset">
                     <div class="home-avatar" aria-hidden="true">🍁</div>
@@ -268,6 +279,25 @@
                   </div>
                   <div id="arena-list" class="raid-stage-list"></div>
                 </section>
+              </div>
+            </div>
+          </div>
+
+          <!-- Discord import -->
+          <div id="discord-import-overlay" class="overlay dialog-overlay" hidden>
+            <div class="dialog-card maple-panel maple-ornament discord-import-card" role="dialog" aria-modal="true">
+              <p class="overlay-kicker">Discord 同步</p>
+              <h2>匯入玩家進度</h2>
+              <p class="muted" style="text-align:left;margin-bottom:8px">
+                貼上 Bot 匯出的 <strong>MDEF1.…</strong> 短碼或完整 JSON。<br />
+                最多 <strong>3 個角色</strong> 會依序寫入存檔 1～3（會覆蓋該槽）。
+              </p>
+              <textarea id="discord-import-text" class="discord-import-ta" rows="6" placeholder="MDEF1.eyJ2IjoxLC..."></textarea>
+              <div id="discord-import-preview" class="discord-import-preview muted" hidden></div>
+              <div class="overlay-actions dialog-actions">
+                <button type="button" id="btn-discord-import-cancel" class="btn">取消</button>
+                <button type="button" id="btn-discord-import-preview" class="btn">預覽</button>
+                <button type="button" id="btn-discord-import-confirm" class="btn primary maple-primary">確認匯入</button>
               </div>
             </div>
           </div>

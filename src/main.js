@@ -47,6 +47,13 @@ import {
   getArenaBossId,
 } from "./data/bosses.js";
 import {
+  parseBridgePayload,
+  importBridgeToSlots,
+  exportSlotsAsBridge,
+  encodeBridgeCode,
+  previewImport,
+} from "./data/discord-bridge.js";
+import {
   listSaveSlots,
   switchToSlot,
   createOrOpenSlot,
@@ -200,6 +207,14 @@ const els = {
   dialogInput: document.querySelector("#dialog-input"),
   dialogCancel: document.querySelector("#dialog-cancel"),
   dialogOk: document.querySelector("#dialog-ok"),
+  btnDiscordImport: document.querySelector("#btn-discord-import"),
+  btnDiscordExport: document.querySelector("#btn-discord-export"),
+  discordImportOverlay: document.querySelector("#discord-import-overlay"),
+  discordImportText: document.querySelector("#discord-import-text"),
+  discordImportPreview: document.querySelector("#discord-import-preview"),
+  btnDiscordImportCancel: document.querySelector("#btn-discord-import-cancel"),
+  btnDiscordImportPreview: document.querySelector("#btn-discord-import-preview"),
+  btnDiscordImportConfirm: document.querySelector("#btn-discord-import-confirm"),
 };
 
 /** Campaign wizard: 1 save → 2 mode → 3 stages|raid */
@@ -247,6 +262,7 @@ function hideAllOverlays() {
   setOverlayOpen(els.guideOverlay, false);
   setOverlayOpen(els.dialogOverlay, false);
   setOverlayOpen(els.settingsOverlay, false);
+  setOverlayOpen(els.discordImportOverlay, false);
 }
 
 /**
@@ -974,6 +990,93 @@ function openSettingsOverlay() {
 function closeSettingsOverlay() {
   setOverlayOpen(els.settingsOverlay, false);
   sfx.play("uiClick");
+}
+
+function openDiscordImport() {
+  if (els.discordImportText) els.discordImportText.value = "";
+  if (els.discordImportPreview) {
+    els.discordImportPreview.hidden = true;
+    els.discordImportPreview.innerHTML = "";
+  }
+  setOverlayOpen(els.discordImportOverlay, true);
+  sfx.play("uiClick");
+  setTimeout(() => els.discordImportText?.focus(), 50);
+}
+
+function closeDiscordImport() {
+  setOverlayOpen(els.discordImportOverlay, false);
+  sfx.play("uiClick");
+}
+
+function doDiscordPreview() {
+  const raw = els.discordImportText?.value || "";
+  const res = parseBridgePayload(raw);
+  if (!res.ok) {
+    sfx.play("error");
+    showToast(res.error);
+    if (els.discordImportPreview) {
+      els.discordImportPreview.hidden = false;
+      els.discordImportPreview.innerHTML = `<span style="color:#b33a2e">${escapeHtml(res.error)}</span>`;
+    }
+    return null;
+  }
+  const rows = previewImport(res.data);
+  if (els.discordImportPreview) {
+    els.discordImportPreview.hidden = false;
+    els.discordImportPreview.innerHTML =
+      `<strong>${escapeHtml(res.data.username || "")}</strong> · 楓葉 ${res.data.account?.mapleLeaves ?? 0}<br/>` +
+      rows
+        .map(
+          (r) =>
+            `存檔 ${r.slot}：${escapeHtml(r.name)} · ${escapeHtml(r.webJobName)} · Lv.${r.level} → ★${r.cardStars} · 解鎖 ${r.unlockedStages} 關`
+        )
+        .join("<br/>");
+  }
+  sfx.play("uiOk");
+  return res.data;
+}
+
+function doDiscordImport() {
+  const data = doDiscordPreview();
+  if (!data) return;
+  try {
+    const { written } = importBridgeToSlots(data);
+    syncNickInput();
+    refreshHomeMeta();
+    renderSaveSlots();
+    closeDiscordImport();
+    showToast(
+      `已匯入 ${written.length} 個角色：` +
+        written.map((w) => `${w.name}(槽${w.slot + 1})`).join("、")
+    );
+    sfx.play("waveClear");
+  } catch (e) {
+    sfx.play("error");
+    showToast(e?.message || "匯入失敗");
+  }
+}
+
+function doDiscordExport() {
+  try {
+    const payload = exportSlotsAsBridge();
+    const code = encodeBridgeCode(payload);
+    if (els.discordImportText) {
+      // reuse overlay to show export
+      openDiscordImport();
+      els.discordImportText.value = code;
+      if (els.discordImportPreview) {
+        els.discordImportPreview.hidden = false;
+        els.discordImportPreview.textContent =
+          "已產生進度碼（上方）。可複製貼到備註；反向同步 Bot 尚在規劃。";
+      }
+    }
+    void navigator.clipboard?.writeText(code);
+    showToast("進度碼已複製到剪貼簿");
+    sfx.play("uiOk");
+  } catch {
+    sfx.play("error");
+    showToast("匯出失敗");
+  }
 }
 
 function getNextStageId(progress = loadProgress()) {
@@ -2741,6 +2844,11 @@ els.loadoutPresets?.addEventListener("click", (ev) => {
     applyLoadoutPresetById(id);
   });
 });
+els.btnDiscordImport?.addEventListener("click", () => withAudio(openDiscordImport));
+els.btnDiscordExport?.addEventListener("click", () => withAudio(doDiscordExport));
+els.btnDiscordImportCancel?.addEventListener("click", () => withAudio(closeDiscordImport));
+els.btnDiscordImportPreview?.addEventListener("click", () => withAudio(doDiscordPreview));
+els.btnDiscordImportConfirm?.addEventListener("click", () => withAudio(doDiscordImport));
 els.btnGuideClose?.addEventListener("click", () =>
   withAudio(() => {
     closeGuideOverlay();
