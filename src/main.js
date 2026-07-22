@@ -899,8 +899,27 @@ function renderUpgradePanel(typeId) {
   const deployable = canDeployJob(typeId);
   const lockHint = getUnlockHint(typeId);
   const tier = d.jobTier ?? 4;
+  const portrait = getSpecialistPortrait(typeId, d);
+  let portraitSrc = "";
+  if (portrait instanceof HTMLImageElement && portrait.src) {
+    portraitSrc = portrait.currentSrc || portrait.src;
+  }
+  const portraitHtml = portraitSrc
+    ? `<div class="detail-portrait-stage">
+        <div class="detail-portrait-wrap">
+          <img class="detail-portrait" src="${portraitSrc}" alt="${d.nameZh}" draggable="false" />
+          <span class="detail-portrait-shadow" aria-hidden="true"></span>
+        </div>
+        <div class="detail-portrait-base" aria-hidden="true"></div>
+      </div>`
+    : `<div class="detail-portrait-stage">
+        <div class="detail-portrait-wrap" style="display:grid;place-items:center;font-size:2.4rem">${d.emoji || "？"}</div>
+        <div class="detail-portrait-base" aria-hidden="true"></div>
+      </div>`;
+
   els.upgradeDetail.innerHTML = `
     <div class="detail-hero">
+      ${portraitHtml}
       <div class="detail-title-row">
         <img class="detail-job-icon" src="${getJobIcon(typeId, d.family)}" alt="" draggable="false" />
         <div class="detail-title">${d.nameZh}</div>
@@ -1064,6 +1083,11 @@ function buildCharPickButton(id, index = 0) {
   if (!deployable) btn.title = lockHint;
 
   const hero = getSpecialistPortrait(id, d);
+
+  // 站台 + 人物（像角色視窗）
+  const stage = document.createElement("div");
+  stage.className = "char-stage";
+
   const avatarWrap = document.createElement("div");
   avatarWrap.className = "char-avatar-wrap";
   let avatarEl;
@@ -1091,7 +1115,12 @@ function buildCharPickButton(id, index = 0) {
       "display:grid;place-items:center;width:100%;height:100%;font-size:1.6rem;background:#e8e0d0";
   }
   avatarEl.className = "char-avatar";
-  avatarWrap.append(avatarEl);
+
+  const footShadow = document.createElement("span");
+  footShadow.className = "char-foot-shadow";
+  footShadow.setAttribute("aria-hidden", "true");
+
+  avatarWrap.append(avatarEl, footShadow);
   if (deployable) {
     const icon = document.createElement("img");
     icon.className = "job-weapon-icon";
@@ -1104,6 +1133,11 @@ function buildCharPickButton(id, index = 0) {
     };
     avatarWrap.append(icon);
   }
+
+  const stageBase = document.createElement("div");
+  stageBase.className = "char-stage-base";
+  stageBase.setAttribute("aria-hidden", "true");
+  stage.append(avatarWrap, stageBase);
 
   const body = document.createElement("div");
   body.className = "char-pick-body";
@@ -1129,6 +1163,14 @@ function buildCharPickButton(id, index = 0) {
     <div class="job-skill-one">${shortStatus}</div>
   `;
 
+  // hover 星光
+  for (const cls of ["s1", "s2", "s3"]) {
+    const spark = document.createElement("span");
+    spark.className = `char-spark ${cls}`;
+    spark.setAttribute("aria-hidden", "true");
+    btn.appendChild(spark);
+  }
+
   if (selected) {
     const badge = document.createElement("span");
     badge.className = "pick-badge";
@@ -1141,8 +1183,9 @@ function buildCharPickButton(id, index = 0) {
     btn.appendChild(badge);
   }
 
-  btn.append(avatarWrap, body);
-  // hover 微音效（節流）
+  btn.append(stage, body);
+
+  // hover 微音效 + 輕微 3D tilt（節流）
   let hoverArmed = true;
   btn.addEventListener("pointerenter", () => {
     if (!hoverArmed || !deployable) return;
@@ -1151,6 +1194,18 @@ function buildCharPickButton(id, index = 0) {
     setTimeout(() => {
       hoverArmed = true;
     }, 180);
+  });
+  btn.addEventListener("pointermove", (ev) => {
+    if (!deployable) return;
+    const r = btn.getBoundingClientRect();
+    const px = (ev.clientX - r.left) / r.width - 0.5;
+    const py = (ev.clientY - r.top) / r.height - 0.5;
+    btn.style.setProperty("--tilt-y", `${px * 10}deg`);
+    btn.style.setProperty("--tilt-x", `${-py * 8}deg`);
+  });
+  btn.addEventListener("pointerleave", () => {
+    btn.style.setProperty("--tilt-x", "0deg");
+    btn.style.setProperty("--tilt-y", "0deg");
   });
   btn.addEventListener("click", () => {
     void sfx.unlock();

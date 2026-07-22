@@ -1607,26 +1607,41 @@ body.home-open .bottom-bar #status-line {
 
 .char-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
   gap: 12px;
   overflow: auto;
-  padding: 12px;
+  padding: 14px 12px;
   align-content: start;
   -webkit-overflow-scrolling: touch;
-  max-height: min(52vh, 480px);
+  max-height: min(52vh, 500px);
   background:
-    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255, 248, 220, 0.5), transparent 70%),
-    rgba(255, 250, 236, 0.55);
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255, 248, 220, 0.55), transparent 70%),
+    linear-gradient(180deg, rgba(255, 252, 240, 0.65), rgba(236, 220, 180, 0.45));
 }
 
-/* Idle float + hover life */
+/* Idle float + hover life (Maple char-select feel) */
 @keyframes char-idle-bob {
   0%,
   100% {
-    transform: translateY(0);
+    transform: translateY(0) scaleY(1);
+  }
+  40% {
+    transform: translateY(-5px) scaleY(1.02);
+  }
+  55% {
+    transform: translateY(-3px) scaleY(0.98);
+  }
+}
+
+@keyframes char-shadow-breathe {
+  0%,
+  100% {
+    transform: translateX(-50%) scaleX(1);
+    opacity: 0.45;
   }
   50% {
-    transform: translateY(-4px);
+    transform: translateX(-50%) scaleX(0.78);
+    opacity: 0.28;
   }
 }
 
@@ -1642,51 +1657,107 @@ body.home-open .bottom-bar #status-line {
 
 @keyframes char-shine-sweep {
   0% {
-    transform: translateX(-120%) rotate(18deg);
+    transform: translateX(-130%) rotate(18deg);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
   }
   100% {
-    transform: translateX(220%) rotate(18deg);
+    transform: translateX(230%) rotate(18deg);
+    opacity: 0;
   }
 }
 
 @keyframes char-glow-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 2px rgba(47, 122, 58, 0.35), 0 8px 18px rgba(90, 58, 24, 0.18);
+    box-shadow:
+      0 0 0 2px rgba(196, 146, 26, 0.45),
+      0 10px 22px rgba(90, 58, 24, 0.22),
+      0 0 18px rgba(255, 210, 100, 0.35);
   }
   50% {
-    box-shadow: 0 0 0 3px rgba(196, 160, 90, 0.55), 0 10px 22px rgba(196, 92, 38, 0.2);
+    box-shadow:
+      0 0 0 3px rgba(255, 210, 100, 0.7),
+      0 14px 28px rgba(196, 92, 38, 0.22),
+      0 0 28px rgba(255, 220, 120, 0.5);
+  }
+}
+
+@keyframes char-ring-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes char-weapon-bounce {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  40% {
+    transform: translateY(-3px) rotate(-8deg);
+  }
+  70% {
+    transform: translateY(-1px) rotate(4deg);
+  }
+}
+
+@keyframes char-sparkle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  80% {
+    opacity: 0.2;
+    transform: scale(0.7);
   }
 }
 
 .char-pick {
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
   position: relative;
   z-index: 0;
   isolation: isolate;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
-  padding: 12px 8px 10px;
-  border-radius: 12px;
-  border: 2px solid rgba(107, 68, 35, 0.4);
+  gap: 4px;
+  padding: 10px 8px 8px;
+  border-radius: 14px;
+  border: 2px solid rgba(107, 68, 35, 0.42);
   background:
-    linear-gradient(180deg, #fffdf6 0%, #f3e6c8 55%, #e6d4a8 100%);
+    linear-gradient(180deg, #fffef8 0%, #f4e8c8 48%, #e4d0a0 100%);
   color: inherit;
   cursor: pointer;
   font: inherit;
   text-align: center;
-  min-height: 158px;
+  min-height: 176px;
   max-width: 100%;
   overflow: hidden;
   touch-action: manipulation;
-  box-shadow: 0 3px 0 rgba(90, 58, 24, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  perspective: 600px;
+  transform-style: preserve-3d;
+  box-shadow:
+    0 3px 0 rgba(90, 58, 24, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    inset 0 -8px 16px rgba(139, 90, 43, 0.06);
   transition:
     border-color 0.18s ease,
     box-shadow 0.18s ease,
-    transform 0.18s ease,
+    transform 0.16s ease,
     background 0.18s ease;
-  animation: char-card-float 3.2s ease-in-out infinite;
+  animation: char-card-float 3.4s ease-in-out infinite;
   animation-delay: var(--bob-delay, 0s);
 }
 
@@ -1694,77 +1765,181 @@ body.home-open .bottom-bar #status-line {
 .char-pick::after {
   content: "";
   position: absolute;
-  top: -20%;
+  top: -25%;
   left: 0;
-  width: 40%;
-  height: 140%;
+  width: 42%;
+  height: 150%;
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.35),
+    rgba(255, 255, 255, 0.08),
+    rgba(255, 255, 255, 0.55),
+    rgba(255, 255, 255, 0.08),
     transparent
   );
-  transform: translateX(-120%) rotate(18deg);
+  transform: translateX(-130%) rotate(18deg);
   pointer-events: none;
   opacity: 0;
-  z-index: 3;
+  z-index: 4;
+}
+
+/* 角落星光（hover 才亮） */
+.char-pick .char-spark {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff9d0 0%, #ffd060 40%, transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  z-index: 5;
+  box-shadow: 0 0 6px rgba(255, 220, 100, 0.8);
+}
+
+.char-pick .char-spark.s1 {
+  top: 10px;
+  left: 12px;
+}
+.char-pick .char-spark.s2 {
+  top: 18px;
+  right: 14px;
+}
+.char-pick .char-spark.s3 {
+  bottom: 42px;
+  left: 16px;
 }
 
 .char-pick:hover,
 .char-pick.focused {
-  z-index: 3;
-  border-color: #c4921a;
-  transform: translateY(-6px) scale(1.04);
-  animation: char-glow-pulse 1.1s ease-in-out infinite;
+  z-index: 4;
+  border-color: #d4a020;
+  transform:
+    translateY(-8px) scale(1.05)
+    rotateX(var(--tilt-x, 0deg))
+    rotateY(var(--tilt-y, 0deg));
+  animation: char-glow-pulse 1s ease-in-out infinite;
   background:
-    linear-gradient(180deg, #fffef8 0%, #f8ecc8 50%, #efd8a0 100%);
+    linear-gradient(180deg, #fffefc 0%, #fbf0d0 45%, #f0d890 100%);
 }
 
 .char-pick:hover::after,
 .char-pick.focused::after {
   opacity: 1;
-  animation: char-shine-sweep 0.85s ease-out;
+  animation: char-shine-sweep 0.9s ease-out;
+}
+
+.char-pick:hover .char-spark,
+.char-pick.focused .char-spark {
+  animation: char-sparkle 1.2s ease-in-out infinite;
+}
+
+.char-pick:hover .char-spark.s2,
+.char-pick.focused .char-spark.s2 {
+  animation-delay: 0.25s;
+}
+
+.char-pick:hover .char-spark.s3,
+.char-pick.focused .char-spark.s3 {
+  animation-delay: 0.5s;
+}
+
+.char-pick:hover .char-stage,
+.char-pick.focused .char-stage {
+  transform: scale(1.04);
 }
 
 .char-pick:hover .char-avatar-wrap,
 .char-pick.focused .char-avatar-wrap {
-  border-color: #c4921a;
-  box-shadow: 0 0 0 2px rgba(196, 146, 26, 0.35), 0 4px 12px rgba(90, 58, 24, 0.2);
-  transform: scale(1.08);
+  border-color: #d4a020;
+  box-shadow:
+    0 0 0 2px rgba(212, 160, 32, 0.4),
+    0 6px 16px rgba(90, 58, 24, 0.22),
+    0 0 16px rgba(255, 210, 100, 0.35);
+  transform: scale(1.1);
 }
 
 .char-pick:hover .char-avatar,
 .char-pick.focused .char-avatar {
-  animation-duration: 0.65s;
-  filter: brightness(1.06) saturate(1.08);
+  animation-duration: 0.55s;
+  filter: brightness(1.08) saturate(1.12) drop-shadow(0 2px 4px rgba(90, 58, 24, 0.25));
+}
+
+.char-pick:hover .char-foot-shadow,
+.char-pick.focused .char-foot-shadow {
+  animation-duration: 0.55s;
+}
+
+.char-pick:hover .job-weapon-icon,
+.char-pick.focused .job-weapon-icon {
+  animation: char-weapon-bounce 0.7s ease-in-out infinite;
+  box-shadow: 0 0 0 1px rgba(212, 160, 32, 0.5), 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
 .char-pick.selected {
   z-index: 2;
   border-color: #2f7a3a;
-  background: linear-gradient(180deg, #e8f5dc 0%, #c8e0b0 55%, #a8c888 100%);
-  box-shadow: 0 0 0 2px rgba(47, 122, 58, 0.35), 0 4px 0 rgba(45, 90, 40, 0.2);
+  background: linear-gradient(180deg, #eef8e0 0%, #cfe8b4 55%, #b0d088 100%);
+  box-shadow:
+    0 0 0 2px rgba(47, 122, 58, 0.4),
+    0 4px 0 rgba(45, 90, 40, 0.22),
+    inset 0 0 20px rgba(120, 180, 90, 0.15);
   animation: none;
   transform: translateY(-2px);
 }
 
 .char-pick.selected:hover {
-  animation: char-glow-pulse 1.1s ease-in-out infinite;
-  transform: translateY(-6px) scale(1.03);
+  animation: char-glow-pulse 1s ease-in-out infinite;
+  transform:
+    translateY(-8px) scale(1.04)
+    rotateX(var(--tilt-x, 0deg))
+    rotateY(var(--tilt-y, 0deg));
+}
+
+/* 角色站台區（像角色視窗人物台） */
+.char-stage {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 0 2px;
+  transition: transform 0.2s ease;
 }
 
 .char-avatar-wrap {
   position: relative;
-  width: 72px;
-  height: 72px;
+  width: 80px;
+  height: 80px;
   flex-shrink: 0;
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
   background:
-    radial-gradient(circle at 50% 20%, #fff8e8, #e8dcc0 70%);
-  border: 2px solid rgba(107, 68, 35, 0.45);
-  box-shadow: inset 0 2px 6px rgba(255, 255, 255, 0.5);
+    radial-gradient(ellipse 70% 55% at 50% 30%, #fffaf0 0%, #f0e4c4 55%, #d8c898 100%);
+  border: 2px solid rgba(107, 68, 35, 0.48);
+  box-shadow:
+    inset 0 2px 8px rgba(255, 255, 255, 0.55),
+    inset 0 -4px 10px rgba(139, 90, 43, 0.12);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+/* 旋轉金環（hover 顯示） */
+.char-avatar-wrap::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 16px;
+  border: 2px dashed transparent;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.char-pick:hover .char-avatar-wrap::before,
+.char-pick.focused .char-avatar-wrap::before {
+  border-color: rgba(212, 160, 32, 0.55);
+  opacity: 1;
+  animation: char-ring-spin 6s linear infinite;
 }
 
 .char-pick .char-avatar,
@@ -1778,29 +1953,64 @@ body.home-open .bottom-bar #status-line {
   border: none;
   display: block;
   object-fit: cover;
-  object-position: center top;
-  animation: char-idle-bob 2.4s ease-in-out infinite;
+  object-position: center 12%;
+  animation: char-idle-bob 2.5s ease-in-out infinite;
   animation-delay: var(--bob-delay, 0s);
   will-change: transform;
+  transform-origin: center bottom;
+}
+
+/* 腳底陰影 — 跟著呼吸 */
+.char-foot-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 48px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(60, 40, 20, 0.4) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  animation: char-shadow-breathe 2.5s ease-in-out infinite;
+  animation-delay: var(--bob-delay, 0s);
+}
+
+.char-stage-base {
+  width: 64px;
+  height: 8px;
+  margin-top: -2px;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse at 50% 40%, #c4a060 0%, #8b6a38 55%, #5a4020 100%);
+  box-shadow:
+    0 2px 0 #4a3018,
+    inset 0 1px 0 rgba(255, 230, 160, 0.45);
+  opacity: 0.9;
 }
 
 .job-weapon-icon {
   position: absolute;
   right: 2px;
   bottom: 2px;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   image-rendering: pixelated;
-  border-radius: 4px;
-  background: rgba(250, 246, 236, 0.95);
-  border: 1px solid rgba(122, 98, 72, 0.4);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  border-radius: 5px;
+  background: rgba(250, 246, 236, 0.96);
+  border: 1px solid rgba(122, 98, 72, 0.45);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
+  transition: box-shadow 0.15s ease;
 }
 
 .char-pick.locked .job-weapon-icon {
   display: none;
+}
+
+.char-pick.locked .char-stage-base {
+  filter: grayscale(0.5);
+  opacity: 0.55;
 }
 
 .char-pick-body {
@@ -2004,10 +2214,11 @@ body.home-open .bottom-bar #status-line {
 
 .loadout-slot {
   appearance: none;
-  min-height: 72px;
+  min-height: 80px;
   border-radius: 12px;
   border: 2px dashed rgba(139, 90, 43, 0.4);
-  background: rgba(255, 255, 255, 0.35);
+  background:
+    linear-gradient(180deg, rgba(255, 252, 240, 0.55), rgba(232, 216, 176, 0.4));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2018,20 +2229,48 @@ body.home-open .bottom-bar #status-line {
   color: inherit;
   cursor: pointer;
   touch-action: manipulation;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .loadout-slot.filled {
   border-style: solid;
   border-color: var(--accent);
-  background: rgba(120, 160, 110, 0.16);
+  background: linear-gradient(180deg, #e8f5dc, #c8e0b0);
+  box-shadow: 0 2px 0 rgba(45, 90, 40, 0.18);
+}
+
+.loadout-slot.filled:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 0 0 2px rgba(47, 122, 58, 0.35), 0 6px 14px rgba(60, 40, 20, 0.15);
 }
 
 .loadout-slot canvas,
 .loadout-slot img {
-  width: 40px;
-  height: 40px;
-  image-rendering: pixelated;
-  object-fit: contain;
+  width: 44px;
+  height: 44px;
+  image-rendering: auto;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: 8px;
+  border: 1px solid rgba(107, 68, 35, 0.35);
+  animation: char-idle-bob 2.6s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.loadout-slot .slot-cap {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #3a2818;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.loadout-slot .slot-empty {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: rgba(107, 68, 35, 0.45);
 }
 
 .credits-mini {
@@ -2111,23 +2350,37 @@ body.home-open .bottom-bar #status-line {
 
 .char-pick.locked {
   opacity: 0.72;
-  filter: grayscale(0.3);
+  filter: grayscale(0.35);
   animation: none;
 }
 
 .char-pick.locked:hover {
-  transform: translateY(-2px) scale(1.01);
+  transform: translateY(-3px) scale(1.01);
   animation: none;
-  box-shadow: 0 0 0 2px rgba(107, 68, 35, 0.2);
+  box-shadow: 0 0 0 2px rgba(107, 68, 35, 0.22);
+  border-color: rgba(107, 68, 35, 0.5);
 }
 
 .char-pick.locked .char-avatar {
-  filter: brightness(0.9);
+  filter: brightness(0.88);
   animation: none;
 }
 
 .char-pick.locked:hover .char-avatar {
-  filter: brightness(0.95);
+  filter: brightness(0.94);
+}
+
+.char-pick.locked .char-foot-shadow {
+  animation: none;
+  opacity: 0.25;
+}
+
+.char-pick.locked:hover .char-spark {
+  display: none;
+}
+
+.char-pick.locked:hover .char-avatar-wrap::before {
+  display: none;
 }
 
 /* 出戰 dock 更像裝備欄 */
@@ -2149,6 +2402,64 @@ body.home-open .bottom-bar #status-line {
   border-radius: 10px;
   padding: 8px;
   border: 1px solid rgba(107, 68, 35, 0.25);
+}
+
+/* 詳情面板大頭像 — 角色視窗主角色感 */
+.detail-portrait-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 4px auto 8px;
+  width: 112px;
+}
+
+.detail-portrait-wrap {
+  position: relative;
+  width: 104px;
+  height: 104px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 3px solid #8b5a2b;
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 28%, #fffaf0, #e8d8a8 70%);
+  box-shadow:
+    0 0 0 2px rgba(196, 160, 90, 0.5),
+    0 6px 16px rgba(60, 40, 20, 0.18),
+    inset 0 2px 8px rgba(255, 255, 255, 0.5);
+}
+
+.detail-portrait {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 12%;
+  display: block;
+  animation: char-idle-bob 2.2s ease-in-out infinite;
+  transform-origin: center bottom;
+  image-rendering: auto;
+}
+
+.detail-portrait-base {
+  width: 72px;
+  height: 9px;
+  margin-top: 2px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, #c4a060 0%, #6b4423 80%);
+  box-shadow: 0 2px 0 #3a2412;
+}
+
+.detail-portrait-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  width: 56px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(60, 40, 20, 0.35), transparent 70%);
+  transform: translateX(-50%);
+  animation: char-shadow-breathe 2.2s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .pick-badge.lock-badge {
@@ -2358,13 +2669,32 @@ body.char-select-open {
   }
 
   .char-pick {
-    min-height: 136px;
-    padding: 10px 6px 6px;
+    min-height: 148px;
+    padding: 8px 5px 6px;
   }
 
   .char-avatar-wrap {
-    width: 56px;
-    height: 56px;
+    width: 60px;
+    height: 60px;
+  }
+
+  .char-stage-base {
+    width: 48px;
+    height: 6px;
+  }
+
+  .char-foot-shadow {
+    width: 36px;
+    height: 8px;
+  }
+
+  .detail-portrait-wrap {
+    width: 84px;
+    height: 84px;
+  }
+
+  .detail-portrait-stage {
+    width: 92px;
   }
 
   .char-main {
