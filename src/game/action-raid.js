@@ -1,6 +1,7 @@
 /**
  * M3 動作突襲 v1 — 橫向站場
- * 操作：←→/AD 移動 · Space/W 跳 · J/Z 普攻 · K/X 技能 · Esc 退出
+ * 操作：←→/AD 移動 · Space/W 跳 · J/Z 普攻 · K/X 技能 · L/Shift 閃避(i-frame) · Esc 退出
+ * 手機：canvas 觸控四鍵（方向/跳/攻/技/閃）
  */
 
 const W = 960;
@@ -45,9 +46,24 @@ export function createActionRaid(opts) {
     invuln: 0,
     attackCd: 0,
     skillCd: 0,
+    dashCd: 0,
+    dashT: 0, // 閃避位移中的剩餘時間
+    dashDir: 1,
+    dashHitDone: false,
     anim: "idle",
     animT: 0,
   };
+
+  // 閃避類型依職業：遠程後撤 / 盜賊瞬移穿透 / 近戰衝撞帶判定
+  const dashType =
+    profile.style === "ranged"
+      ? "backstep"
+      : profile.family === "thief"
+        ? "blink"
+        : "lunge";
+  const dashCdMax = profile.family === "thief" ? 1.3 : 1.6; // 盜賊被動:閃避CD-20%
+  const DASH_TIME = 0.18;
+  const DASH_IFRAME = 0.32;
 
   const bossState = {
     x: 720,
@@ -79,7 +95,7 @@ export function createActionRaid(opts) {
 
   const onKeyDown = (e) => {
     const k = e.key.toLowerCase();
-    if (["arrowleft", "arrowright", "arrowup", " ", "a", "d", "w", "j", "k", "z", "x"].includes(k) || e.code === "Space") {
+    if (["arrowleft", "arrowright", "arrowup", " ", "a", "d", "w", "j", "k", "z", "x", "l"].includes(k) || e.code === "Space") {
       e.preventDefault();
     }
     keys.add(e.code);
@@ -95,6 +111,61 @@ export function createActionRaid(opts) {
   };
   window.addEventListener("keydown", onKeyDown);
   window.addEventListener("keyup", onKeyUp);
+
+  // ── 手機觸控層 ──
+  // 觸控按鈕（canvas 座標）。左側方向、右側 跳/普攻/技能/閃避。
+  const TOUCH_BTNS = [
+    { key: "left", x: 70, y: H - 78, r: 40, label: "◀" },
+    { key: "right", x: 170, y: H - 78, r: 40, label: "▶" },
+    { key: "dash", x: W - 250, y: H - 60, r: 34, label: "閃" },
+    { key: "jump", x: W - 170, y: H - 96, r: 38, label: "跳" },
+    { key: "atk", x: W - 90, y: H - 118, r: 42, label: "攻" },
+    { key: "skill", x: W - 64, y: H - 42, r: 36, label: "技" },
+  ];
+  const touch = { move: 0, jump: false, atk: false, skill: false, dashEdge: false };
+  const pointerBtn = new Map(); // pointerId → key
+  let touchMode = window.matchMedia?.("(pointer: coarse)")?.matches || false;
+
+  function canvasXY(e) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: ((e.clientX - rect.left) / rect.width) * W,
+      y: ((e.clientY - rect.top) / rect.height) * H,
+    };
+  }
+  function hitBtn(x, y) {
+    for (const b of TOUCH_BTNS) {
+      if (Math.hypot(x - b.x, y - b.y) <= b.r + 6) return b.key;
+    }
+    return null;
+  }
+  function recomputeTouch() {
+    const held = new Set(pointerBtn.values());
+    touch.move = (held.has("right") ? 1 : 0) - (held.has("left") ? 1 : 0);
+    touch.jump = held.has("jump");
+    touch.atk = held.has("atk");
+    touch.skill = held.has("skill");
+  }
+  const onPointerDown = (e) => {
+    if (e.pointerType === "mouse" && !touchMode) return;
+    touchMode = true;
+    const { x, y } = canvasXY(e);
+    const key = hitBtn(x, y);
+    if (!key) return;
+    e.preventDefault();
+    pointerBtn.set(e.pointerId, key);
+    if (key === "dash") touch.dashEdge = true; // 邊緣觸發，update 消費
+    recomputeTouch();
+  };
+  const onPointerUp = (e) => {
+    if (!pointerBtn.has(e.pointerId)) return;
+    pointerBtn.delete(e.pointerId);
+    recomputeTouch();
+  };
+  canvas.addEventListener("pointerdown", onPointerDown, { passive: false });
+  canvas.addEventListener("pointerup", onPointerUp);
+  canvas.addEventListener("pointercancel", onPointerUp);
+  canvas.addEventListener("pointerleave", onPointerUp);
 
   function pressed(code, alt) {
     return keys.has(code) || (alt && keys.has(alt));
@@ -214,6 +285,35 @@ export function createActionRaid(opts) {
         hurtBoss(final, crit);
       }
     }
+  }
+
+  function doDash(inputDir) {
+    if (player.dashCd > 0 || player.dashT > 0 || ended) return;
+    player.dashCd = dashCdMax;
+    player.dashT = DASH_TIME;
+    player.invuln = Math.max(player.invuln, DASH_IFRAME); // 無敵幀：閃避核心
+    player.anim = "dash";
+    player.animT = 0.24;
+    player.dashHitDone = false;
+    let dir;
+    if (dashType === "backstep") {
+      dir = player.x < bossState.x ? -1 : 1; // 遠離 Boss
+    } else {
+      dir = inputDir || player.face; // 近戰/瞬移：往輸入方向，否則面向
+    }
+    player.dashDir = dir;
+    player.face = dashType === "backstep" ? -dir : dir;
+    const spd = dashType === "blink" ? 860 : dashType === "backstep" ? 560 : 660;
+    player.vx = dir * spd;
+    zones.push({
+      x: player.x - 30,
+      y: player.y - player.h,
+      w: 60,
+      h: player.h,
+      life: 0.2,
+      color: dashType === "blink" ? "rgba(167,139,250,0.4)" : "rgba(226,232,240,0.35)",
+      alpha: 0.5,
+    });
   }
 
   function pickBossAttack() {
@@ -341,6 +441,7 @@ export function createActionRaid(opts) {
     // timers
     player.attackCd = Math.max(0, player.attackCd - dt);
     player.skillCd = Math.max(0, player.skillCd - dt);
+    player.dashCd = Math.max(0, player.dashCd - dt);
     player.invuln = Math.max(0, player.invuln - dt);
     if (player.animT > 0) {
       player.animT -= dt;
@@ -348,11 +449,32 @@ export function createActionRaid(opts) {
     }
     bossState.flash = Math.max(0, bossState.flash - dt);
 
-    // input
+    // 輸入方向（鍵盤 + 觸控）
     let move = 0;
     if (pressed("ArrowLeft", "a") || keys.has("KeyA")) move -= 1;
     if (pressed("ArrowRight", "d") || keys.has("KeyD")) move += 1;
-    if (move !== 0) {
+    move += touch.move;
+    move = Math.max(-1, Math.min(1, move));
+
+    // 閃避觸發（鍵盤 L/Shift/K閃 或 觸控閃避鈕）
+    const dashKey =
+      keys.has("KeyL") || keys.has("l") || keys.has("ShiftLeft") || keys.has("ShiftRight");
+    if ((dashKey || touch.dashEdge) && player.dashCd <= 0 && player.dashT <= 0) {
+      doDash(move);
+    }
+    touch.dashEdge = false;
+
+    if (player.dashT > 0) {
+      // 閃避位移中：鎖定衝刺速度、忽略一般移動；lunge 帶一次判定
+      player.dashT -= dt;
+      player.vx = player.dashDir * (dashType === "blink" ? 860 : dashType === "backstep" ? 560 : 660);
+      if (dashType === "lunge" && !player.dashHitDone) {
+        if (Math.abs(player.x - bossState.x) < 90 + bossState.w * 0.25) {
+          hurtBoss(Math.round(profile.basicMin * 0.6), false);
+          player.dashHitDone = true;
+        }
+      }
+    } else if (move !== 0) {
       player.face = move;
       player.vx = move * profile.moveSpeed;
       if (player.anim === "idle") player.anim = "run";
@@ -366,14 +488,15 @@ export function createActionRaid(opts) {
       pressed("ArrowUp", "w") ||
       keys.has("KeyW") ||
       keys.has("Space") ||
-      keys.has(" ");
+      keys.has(" ") ||
+      touch.jump;
     if (jumpPressed && player.onGround) {
       player.vy = -profile.jump;
       player.onGround = false;
     }
 
-    if (pressed("KeyJ", "j") || keys.has("KeyZ") || keys.has("z")) doBasic();
-    if (pressed("KeyK", "k") || keys.has("KeyX") || keys.has("x")) doSkill();
+    if (pressed("KeyJ", "j") || keys.has("KeyZ") || keys.has("z") || touch.atk) doBasic();
+    if (pressed("KeyK", "k") || keys.has("KeyX") || keys.has("x") || touch.skill) doSkill();
 
     // physics player
     player.vy += GRAVITY * dt;
@@ -605,24 +728,49 @@ export function createActionRaid(opts) {
     );
     ctx.textAlign = "left";
 
-    // skill CD ring hint
-    if (player.skillCd > 0) {
-      ctx.fillStyle = "rgba(0,0,0,0.4)";
-      ctx.beginPath();
-      ctx.arc(W - 48, H - 48, 22, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "#c084fc";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(
-        W - 48,
-        H - 48,
-        22,
-        -Math.PI / 2,
-        -Math.PI / 2 + (1 - player.skillCd / profile.skillCd) * Math.PI * 2
-      );
-      ctx.stroke();
+    // 閃避 CD 指示（左下 HP 條右側小圖示）
+    const dashReady = player.dashCd <= 0;
+    ctx.fillStyle = dashReady ? "rgba(94,234,212,0.9)" : "rgba(120,120,120,0.55)";
+    ctx.font = "bold 11px system-ui";
+    ctx.fillText(
+      dashReady ? "⚡ 閃避 就緒 (L/Shift)" : `閃避 ${player.dashCd.toFixed(1)}s`,
+      250,
+      H - 30
+    );
+
+    // 操作提示（無觸控時顯示鍵位）
+    if (!touchMode) {
+      ctx.fillStyle = "rgba(255,248,220,0.6)";
+      ctx.font = "10px system-ui";
+      ctx.fillText("←→移動 · Space跳 · J普攻 · K技能 · L/Shift閃避", 250, H - 44);
     }
+  }
+
+  function drawTouchControls() {
+    if (!touchMode) return;
+    const held = new Set(pointerBtn.values());
+    for (const b of TOUCH_BTNS) {
+      const on = held.has(b.key);
+      const dashLocked = b.key === "dash" && player.dashCd > 0;
+      ctx.save();
+      ctx.globalAlpha = 0.32;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+      ctx.fillStyle = on ? "#fde68a" : dashLocked ? "#555" : "#e2e8f0";
+      ctx.fill();
+      ctx.globalAlpha = 0.9;
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "rgba(0,0,0,0.4)";
+      ctx.stroke();
+      ctx.fillStyle = on ? "#1a1a1a" : "#2a2a2a";
+      ctx.font = `bold ${Math.round(b.r * 0.7)}px system-ui`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(b.label, b.x, b.y + 1);
+      ctx.restore();
+    }
+    ctx.textBaseline = "alphabetic";
+    ctx.textAlign = "left";
   }
 
   function draw() {
@@ -653,6 +801,7 @@ export function createActionRaid(opts) {
       ctx.restore();
     }
     drawHud();
+    drawTouchControls();
 
     if (ended) {
       ctx.fillStyle = "rgba(0,0,0,0.45)";
@@ -681,6 +830,10 @@ export function createActionRaid(opts) {
     cancelAnimationFrame(raf);
     window.removeEventListener("keydown", onKeyDown);
     window.removeEventListener("keyup", onKeyUp);
+    canvas.removeEventListener("pointerdown", onPointerDown);
+    canvas.removeEventListener("pointerup", onPointerUp);
+    canvas.removeEventListener("pointercancel", onPointerUp);
+    canvas.removeEventListener("pointerleave", onPointerUp);
     if (!silent && !ended) {
       // force cleanup without result
     }

@@ -947,7 +947,7 @@ function renderTab(tab, me, active, ui = {}) {
             )
             .join("")}
         </div>
-        <p class="muted" style="margin-top:8px;font-size:0.78rem">←→ 移動 · 空白鍵跳躍 · J 普攻 · K 技能 · Esc 離開</p>
+        <p class="muted" style="margin-top:8px;font-size:0.78rem">←→ 移動 · 空白鍵跳 · J 普攻 · K 技能 · <strong>L/Shift 閃避（無敵幀）</strong> · Esc 離開 · 手機用畫面觸控鍵</p>
       </div>
       <div class="hub-combat-card">
         <h3>無止境</h3>

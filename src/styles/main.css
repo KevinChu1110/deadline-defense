@@ -6150,6 +6150,9 @@ body.mode-bc .wave-cta {
   display: block;
   background: #1a1020;
   image-rendering: auto;
+  /* 手機觸控鍵：禁止瀏覽器把觸控當成捲動/縮放，否則按鈕無效 */
+  touch-action: none;
+  user-select: none;
 }
 
 .action-raid-result {
