@@ -134,3 +134,34 @@ export function getWorldChapters() {
     stages: _flat.filter((s) => s.continent === cont.code),
   }));
 }
+
+// ── 大陸制解鎖：清前一大陸這個比例 → 解鎖下一大陸；大陸內全開自由挑 ──
+const CONTINENT_UNLOCK_RATIO = 0.6;
+
+function clearedCount(stages, progress) {
+  const c = progress?.cleared || {};
+  return stages.reduce((n, s) => n + (c[s.id] ? 1 : 0), 0);
+}
+
+/** 解鎖某大陸需要「前一大陸清幾關」→ {cleared, need, total, prevZh} */
+export function continentUnlockReq(code, progress) {
+  const chapters = getWorldChapters();
+  const ci = chapters.findIndex((c) => c.code === code);
+  if (ci <= 0) return { cleared: 0, need: 0, total: 0, prevZh: "" };
+  const prev = chapters[ci - 1];
+  return {
+    cleared: clearedCount(prev.stages, progress),
+    need: Math.ceil(prev.stages.length * CONTINENT_UNLOCK_RATIO),
+    total: prev.stages.length,
+    prevZh: prev.nameZh,
+  };
+}
+
+/** 大陸是否解鎖：第一個恆開；否則前一大陸清 ≥60% */
+export function isContinentUnlocked(code, progress) {
+  const chapters = getWorldChapters();
+  const ci = chapters.findIndex((c) => c.code === code);
+  if (ci <= 0) return true;
+  const r = continentUnlockReq(code, progress);
+  return r.cleared >= r.need;
+}

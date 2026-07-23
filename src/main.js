@@ -32,7 +32,7 @@ import {
 import { LOADOUT_PRESETS, loadStars } from "./data/meta-progress.js";
 import { sfx } from "./audio/sfx.js";
 import { STAGES, loadProgress, isStageUnlocked, getStageByIndex } from "./data/stages.js";
-import { getWorldChapters } from "./data/world-stages.js";
+import { getWorldChapters, continentUnlockReq } from "./data/world-stages.js";
 import { getItem } from "./data/items.js";
 import {
   getNickname,
@@ -1070,15 +1070,27 @@ function renderStageList() {
         (ch.code === selectedContinent ? " is-active" : "") +
         (!unlocked ? " is-locked" : "") +
         (hasNext ? " has-next" : "");
-      btn.disabled = !unlocked;
+      // 鎖住的大陸不 disable —— 允許點擊跳出「還差幾關」提示（disabled 會吃掉 click）
       const colors = STAGE_ACCENTS[ch.code.toUpperCase()] || STAGE_ACCENTS.VICTORIA;
       btn.style.setProperty("--wn-a", colors[0]);
       btn.style.setProperty("--wn-b", colors[1]);
+      let prog;
+      if (!unlocked) {
+        const req = continentUnlockReq(ch.code, progress);
+        prog = `🔒 前區 ${req.cleared}/${req.need}`;
+        btn.title = `通關「${req.prevZh}」${req.need} 關即解鎖（已 ${req.cleared}）`;
+      } else {
+        prog = `${clears}/${ch.stages.length}${hasNext ? " ▶" : clears === ch.stages.length ? " ✓" : ""}`;
+      }
       btn.innerHTML = `
         <span class="cc-name">${!unlocked ? "🔒 " : ""}${escapeHtml(ch.nameZh)}</span>
-        <span class="cc-prog">${clears}/${ch.stages.length}${hasNext ? " ▶" : clears === ch.stages.length ? " ✓" : ""}</span>`;
+        <span class="cc-prog">${prog}</span>`;
       btn.addEventListener("click", () => {
-        if (!unlocked) return;
+        if (!unlocked) {
+          const req = continentUnlockReq(ch.code, progress);
+          showToast(`🔒 通關「${req.prevZh}」${req.need} 關解鎖（已 ${req.cleared}/${req.need}）`);
+          return;
+        }
         selectedContinent = ch.code;
         sfx.play("uiClick");
         renderStageList();

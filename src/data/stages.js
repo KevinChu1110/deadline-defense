@@ -1,5 +1,5 @@
 import { buildArenaStage, ARENA_BOSS_ROTATION } from "./bosses.js";
-import { buildWorldStages, getWorldStageById } from "./world-stages.js";
+import { buildWorldStages, getWorldStageById, isContinentUnlocked } from "./world-stages.js";
 
 // 世界地圖：14 大陸 / 448 關（真實 MapleStory 地圖，取代原手刻 10 關）
 export const STAGES = buildWorldStages();
@@ -46,13 +46,16 @@ export function saveProgress(progress) {
 export function markStageCleared(stageId) {
   const progress = loadProgress();
   progress.cleared[stageId] = true;
-  const stage = getStageById(stageId);
-  const nextUnlock = (stage?.index ?? 0) + 2;
-  progress.unlocked = Math.max(progress.unlocked, Math.min(STAGES.length, nextUnlock));
+  // ⚠️ 大陸制：解鎖由「該大陸清 60%」推動（isContinentUnlocked 讀 cleared），
+  //    這裡不再線性 +2 推進 unlocked，否則會繞過大陸閘門變回一關一關開。
   saveProgress(progress);
   return progress;
 }
 
 export function isStageUnlocked(stageIndex, progress = loadProgress()) {
-  return stageIndex < progress.unlocked;
+  // 相容：等級匯入/舊線性解鎖仍認（index < unlocked）
+  if (stageIndex < (progress.unlocked || 1)) return true;
+  // 大陸制：該關所屬大陸解鎖 → 大陸內全開自由挑
+  const s = STAGES[stageIndex];
+  return s ? isContinentUnlocked(s.continent, progress) : false;
 }
