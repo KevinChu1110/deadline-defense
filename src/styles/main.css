@@ -6444,3 +6444,14 @@ body.mode-bc .wave-cta {
 @media (max-width: 380px) {
   .title-icon-btn { font-size: 0.76rem; padding: 8px 10px; }
 }
+
+/* 主城鈕降為次要（新玩家沒 Discord 帳號點進去是死路，不該是最強 primary） */
+.title-btn-note {
+  font-size: 0.68rem;
+  font-weight: 600;
+  opacity: 0.7;
+  margin-left: 4px;
+}
+.title-btn-hub {
+  background: rgba(247, 244, 234, 0.55);
+}

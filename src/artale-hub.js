@@ -1057,6 +1057,10 @@ export function bindHubEvents(els, ctx) {
       const slot = btn.getAttribute("data-sf-go");
       const subIdx = Number(btn.getAttribute("data-sub-idx") || 0);
       const st = getState?.() || {};
+      // ⚠️ await 期間 disable，否則玩家可狂點 → 重複送衝星請求、重複扣楓幣、重複炸裝
+      btn.disabled = true;
+      const _orig = btn.textContent;
+      btn.textContent = "衝星中…";
       try {
         const out = await attemptStarforce(slot, subIdx, !!st.safeguard);
         const r = out.result || {};
@@ -1082,6 +1086,10 @@ export function bindHubEvents(els, ctx) {
         });
       } catch (e) {
         onState?.({ ...st, tab: "star", error: e.message, starFlash: "" });
+      } finally {
+        // onState 通常會重繪整個 hub 換掉這顆 btn；若沒重繪（例如出錯）就還原
+        btn.disabled = false;
+        btn.textContent = _orig;
       }
     });
   });
@@ -1122,6 +1130,9 @@ export function bindHubEvents(els, ctx) {
       const slot = btn.getAttribute("data-slot");
       const subIdx = Number(btn.getAttribute("data-sub-idx") || 0);
       const st = getState?.() || {};
+      btn.disabled = true; // await 期間防狂點重複扣道具/楓幣
+      const _origP = btn.textContent;
+      btn.textContent = "…";
       try {
         const out = await usePotential(slot, subIdx, action);
         onState?.({
@@ -1135,6 +1146,9 @@ export function bindHubEvents(els, ctx) {
         });
       } catch (e) {
         onState?.({ ...st, tab: "pot", error: e.message });
+      } finally {
+        btn.disabled = false;
+        btn.textContent = _origP;
       }
     });
   });
@@ -1145,6 +1159,9 @@ export function bindHubEvents(els, ctx) {
       if (btn.disabled) return;
       const toKey = btn.getAttribute("data-pot-craft");
       const st = getState?.() || {};
+      btn.disabled = true; // await 期間防狂點重複合成
+      const _origC = btn.textContent;
+      btn.textContent = "合成中…";
       try {
         const out = await craftPotential(toKey, 1);
         onState?.({
@@ -1157,6 +1174,9 @@ export function bindHubEvents(els, ctx) {
         });
       } catch (e) {
         onState?.({ ...st, tab: "pot", potPanel: "craft", error: e.message });
+      } finally {
+        btn.disabled = false;
+        btn.textContent = _origC;
       }
     });
   });

@@ -169,19 +169,21 @@
                   <span class="leaf-deco">🍁</span> 楓之谷防衛戰 <span class="leaf-deco">🍁</span>
                 </h1>
                 <p class="home-sub title-sub">多地區戰役 · 冒險家轉職 · 遠征 Boss</p>
-                <!-- 三大主行動 = 產品三支柱：養成展場 / 主玩法 / 社群活動 -->
+                <!-- 三大主行動。⚠️「神木防衛戰」才是新玩家的入口(內建 coach、免登入)，
+                     設為 primary 首選；「進入主城」需 Discord 登入，新手點進去是死路，
+                     所以降為次要並標註需登入。 -->
                 <nav class="title-menu-btns" aria-label="主選單">
-                  <button type="button" id="btn-enter-hub" class="btn title-btn title-btn-primary">
+                  <button type="button" id="btn-start-game" class="btn title-btn title-btn-primary">
                     <span class="btn-shine" aria-hidden="true"></span>
-                    🏛 進入主城
-                  </button>
-                  <button type="button" id="btn-start-game" class="btn title-btn title-btn-continue">
                     🛡 神木防衛戰
                   </button>
                   <button type="button" id="btn-weekly" class="btn title-btn title-btn-weekly">
                     ⚔️ 每週挑戰
                   </button>
-                  <button type="button" id="btn-continue" class="btn title-btn" hidden>
+                  <button type="button" id="btn-enter-hub" class="btn title-btn title-btn-hub">
+                    🏛 進入主城 <small class="title-btn-note">需 Discord 登入</small>
+                  </button>
+                  <button type="button" id="btn-continue" class="btn title-btn title-btn-continue" hidden>
                     ↻ 繼續防衛戰
                   </button>
                 </nav>

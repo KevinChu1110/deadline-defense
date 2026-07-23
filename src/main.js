@@ -1267,6 +1267,17 @@ function showDiscordImportManual() {
 
 /** 一鍵同步：重新打 API 拿最新資料（不用 hubState 那份可能已經過期的快照） */
 async function doLiveSync() {
+  // ⚠️ 同步會覆蓋存檔 1~3。本機已有非空存檔時先確認 —— 這是不可逆的資料損失，
+  //    比刪除還危險（刪除有確認，覆蓋反而沒有）。空存檔就不用煩玩家。
+  const hasProgress = (listSaveSlots() || []).some((s) => s && !s.empty);
+  if (hasProgress) {
+    const ok = await confirmDialog(
+      "用 Discord 進度覆蓋本機存檔？",
+      "會以你 Discord 的角色覆蓋存檔 1~3，本機現有進度將消失，無法復原。",
+      { okText: "覆蓋同步", danger: true }
+    );
+    if (!ok) return;
+  }
   const btn = els.btnDiscordImportLive;
   if (btn) {
     btn.disabled = true;
@@ -1336,9 +1347,19 @@ function doDiscordPreview() {
   return res.data;
 }
 
-function doDiscordImport() {
+async function doDiscordImport() {
   const data = doDiscordPreview();
   if (!data) return;
+  // 覆蓋前確認（同 doLiveSync）：本機有非空存檔才問
+  const hasProgress = (listSaveSlots() || []).some((s) => s && !s.empty);
+  if (hasProgress) {
+    const ok = await confirmDialog(
+      "匯入會覆蓋本機存檔？",
+      "會以貼上的進度覆蓋存檔 1~3，本機現有進度將消失，無法復原。",
+      { okText: "覆蓋匯入", danger: true }
+    );
+    if (!ok) return;
+  }
   try {
     const { written } = importBridgeToSlots(data);
     syncNickInput();
