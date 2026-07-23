@@ -31,6 +31,7 @@ import {
   updateEnemy,
   updateSpecialist,
   updateProjectile,
+  retargetPierce,
   isTargetable,
   applyHit,
   scoreTarget,
@@ -1217,7 +1218,8 @@ export class Game {
     for (const p of this.projectiles) {
       updateProjectile(p, dt, enemiesById);
       if (p.hit) {
-        const target = enemiesById.get(p.targetId);
+        // 用 _hitTargetId（這一擊真正命中的怪），不是 targetId —— 穿透彈可能已改瞄準下一隻
+        const target = enemiesById.get(p._hitTargetId || p.targetId);
         if (target) {
           const wasBoss = !!target.def.boss;
           const owner = this.specialists.find((s) => s.id === p.ownerId);
@@ -1242,16 +1244,21 @@ export class Game {
           });
           this.fx.push(...buildHitVfx(target, p, owner));
           // splash
+          // ⚠️ 原本濺射直接 `e.hp -= …`，完全繞過 applyHit 的 boss 免疫、護甲、
+          //    reviveOnce、splitOnDeath —— 會復活的怪被濺死就不復活、會分裂的不分裂、
+          //    Boss 在物理無效期間照樣被濺射打死。改成走 applyHit（帶 splashMult）。
           if (p.splashR > 0) {
+            const splashHitBuffs = { ...hitBuffs, splashMult: p.splashMult || 0.4 };
             for (const e of this.enemies) {
               if (!e.alive || e.id === target.id) continue;
               if (Math.hypot(e.x - target.x, e.y - target.y) <= p.splashR) {
-                e.hp -= (p.damage || 10) * (p.splashMult || 0.4) * (syn.damageMult || 1);
+                const splashKilled = applyHit(e, p, this.now, splashHitBuffs, {
+                  allies: this.specialists,
+                  owner,
+                  splash: true,
+                });
                 e.hitFlash = 0.1;
-                if (e.hp <= 0) {
-                  e.alive = false;
-                  this.addMesos(mesosForKill(e.def), { x: e.x, y: e.y });
-                }
+                if (splashKilled) this.addMesos(mesosForKill(e.def), { x: e.x, y: e.y });
               }
             }
           }
@@ -1328,9 +1335,17 @@ export class Game {
           }
         }
         p.hit = false;
+        // 這一擊已結算完 → 現在才對「下一次穿透命中」套用衰減，並改瞄準下一個目標
+        // （retarget 延到這裡是為了讓上面能用 _hitTargetId 拿到正確的命中目標）
         if (p._pierceContinue) {
           p._pierceContinue = false;
-          // keep alive for pierce
+          if (p._applyFalloffAfterHit) {
+            p._applyFalloffAfterHit = false;
+            p.damage *= p.pierceFalloff || 0.7;
+          }
+          if (!retargetPierce(p, enemiesById)) p.alive = false;
+        } else {
+          p._applyFalloffAfterHit = false;
         }
       }
     }

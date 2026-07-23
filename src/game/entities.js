@@ -462,8 +462,13 @@ export function applyHit(enemy, projectile, now, buffs = {}, ctx = {}) {
     }
   }
 
+  // splashMult：濺射走同一支結算（享有 boss 免疫/護甲/復活/分裂），但傷害打折
   let dmg =
-    projectile.damage * (buffs.damageMult || 1) * stackMult * softDamageMult(enemy, skill, now, buffs);
+    projectile.damage *
+    (buffs.damageMult || 1) *
+    (buffs.splashMult || 1) *
+    stackMult *
+    softDamageMult(enemy, skill, now, buffs);
 
   // 職業被詛咒時輸出下降
   const owner = ctx.allies?.find?.((s) => s.id === ownerId) || ctx.owner;
@@ -605,31 +610,45 @@ export function scoreTarget(enemy, specialist, now) {
   return score;
 }
 
+// 穿透彈重新選定「還沒打過」的最近目標，並把速度轉向它。回傳是否找到。
+export function retargetPierce(p, enemiesById) {
+  let best = null;
+  let bestD = 80;
+  for (const e of enemiesById.values()) {
+    if (!e.alive || p.hitIds?.has(e.id)) continue;
+    const d = Math.hypot(e.x - p.x, e.y - p.y);
+    if (d < bestD) {
+      bestD = d;
+      best = e;
+    }
+  }
+  if (!best) return false;
+  p.targetId = best.id;
+  const ang = Math.atan2(best.y - p.y, best.x - p.x);
+  const sp = Math.hypot(p.vx, p.vy) || 300;
+  p.vx = Math.cos(ang) * sp;
+  p.vy = Math.sin(ang) * sp;
+  return true;
+}
+
 export function updateProjectile(p, dt, enemiesById) {
   if (!p.alive) return;
   const target = enemiesById.get(p.targetId);
   if (!target || !target.alive) {
     // pierce: try retarget along velocity
-    if ((p.pierceLeft || 0) > 0) {
-      let best = null;
-      let bestD = 80;
-      for (const e of enemiesById.values()) {
-        if (!e.alive || p.hitIds?.has(e.id)) continue;
-        const d = Math.hypot(e.x - p.x, e.y - p.y);
-        if (d < bestD) {
-          bestD = d;
-          best = e;
-        }
-      }
-      if (best) {
-        p.targetId = best.id;
-        const ang = Math.atan2(best.y - p.y, best.x - p.x);
-        const sp = Math.hypot(p.vx, p.vy) || 300;
-        p.vx = Math.cos(ang) * sp;
-        p.vy = Math.sin(ang) * sp;
-        return;
-      }
-    }
+    if ((p.pierceLeft || 0) > 0 && retargetPierce(p, enemiesById)) return;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.life = (p.life ?? 0.35) - dt;
+    if (p.life <= 0) p.alive = false;
+    return;
+  }
+
+  // ⚠️ 穿透 bug：命中時原本把 p.x/p.y 設成 target 座標、targetId 不變，下一幀
+  //    dist=0 立刻再命中同一隻，而主分支又沒查 hitIds，於是穿透變成「對單體連打
+  //    pierceLeft 下」而不是「穿過去打後面」。這裡先擋掉已命中過的目標。
+  if (p.hitIds?.has(target.id)) {
+    if ((p.pierceLeft || 0) > 0 && retargetPierce(p, enemiesById)) return;
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     p.life = (p.life ?? 0.35) - dt;
@@ -647,12 +666,16 @@ export function updateProjectile(p, dt, enemiesById) {
     p.hit = true;
     if (!p.hitIds) p.hitIds = new Set();
     p.hitIds.add(target.id);
+    // ⚠️ Game 端是用 enemiesById.get(p.targetId) 拿命中目標來 applyHit。若在這裡
+    //    就 retargetPierce 把 targetId 改成下一隻，傷害會打到錯的怪。所以把「這一擊
+    //    真正命中的目標」記到 _hitTargetId，retarget 延到 Game 結算完再做。
+    p._hitTargetId = target.id;
     if ((p.pierceLeft || 0) > 0) {
       p.pierceLeft -= 1;
-      p.damage *= p.pierceFalloff || 0.7;
-      p.hit = true; // process hit once in Game, then continue if pierce
+      // falloff 同理延後：Game 是在 updateProjectile 之後才 applyHit，在這裡先乘
+      // 等於「第一次命中就被打折」。標記起來，Game 結算完這一擊再套。
+      p._applyFalloffAfterHit = true;
       p._pierceContinue = p.pierceLeft > 0;
-      if (!p._pierceContinue) p.alive = false;
     } else {
       p.alive = false;
     }
