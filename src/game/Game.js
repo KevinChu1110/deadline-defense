@@ -125,10 +125,16 @@ export class Game {
   }
 
   _preloadAssets() {
-    const files = [
-      ...new Set(Object.values(ENEMIES).map((e) => e.sprite).filter(Boolean)),
-    ];
-    preloadMobs(files).catch(() => {});
+    // 只預載「這一關會出現的怪」的 sprite —— 世界有 270+ 種怪，全載會拖垮開場。
+    const ids = new Set();
+    for (const wave of this.stage?.waves || []) {
+      for (const g of wave.groups || []) {
+        for (const u of g.units || []) ids.add(Array.isArray(u) ? u[0] : u);
+      }
+    }
+    const files = [...ids].map((id) => ENEMIES[id]?.sprite).filter(Boolean);
+    // 保底：Boss/常見怪
+    preloadMobs([...new Set(files)]).catch(() => {});
   }
 
   loadStage(stageId, opts = {}) {

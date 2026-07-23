@@ -1,7 +1,8 @@
-import { CAMPAIGN_STAGES } from "./campaign.js";
 import { buildArenaStage, ARENA_BOSS_ROTATION } from "./bosses.js";
+import { buildWorldStages, getWorldStageById } from "./world-stages.js";
 
-export const STAGES = CAMPAIGN_STAGES;
+// 世界地圖：14 大陸 / 448 關（真實 MapleStory 地圖，取代原手刻 10 關）
+export const STAGES = buildWorldStages();
 
 const PROGRESS_KEY = "deadline-defense-progress-v1";
 
@@ -12,7 +13,7 @@ export function getStageById(id) {
     if (bossId === "boss_horntail") bossId = "boss_hainurs";
     return buildArenaStage(ARENA_BOSS_ROTATION.includes(bossId) ? bossId : undefined);
   }
-  return STAGES.find((s) => s.id === id) || STAGES[0];
+  return getWorldStageById(id) || STAGES[0];
 }
 
 export function getStageByIndex(index) {

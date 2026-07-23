@@ -1,0 +1,10318 @@
+[
+ {
+  "id": 100100,
+  "name": "Snail",
+  "level": 1,
+  "hp": 8,
+  "exp": 3,
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [
+   40000,
+   40001,
+   100030000,
+   100040000,
+   100040100,
+   101010100,
+   101010101,
+   101020000,
+   101030000,
+   101030200,
+   101030300,
+   101040000,
+   40002,
+   102030000,
+   103020100,
+   103020200,
+   103030200,
+   104000200,
+   104000300,
+   104000400,
+   104010000,
+   104010002,
+   104020000,
+   50000,
+   104040001,
+   105030000,
+   105040100,
+   105040200,
+   105090300,
+   1000000,
+   1000002,
+   1000003,
+   1000004,
+   1010004,
+   1020001
+  ],
+  "element": {
+   "poison": "strong"
+  },
+  "meso": 4,
+  "mesoMax": 6
+ },
+ {
+  "id": 9400202,
+  "name": "Golden Slime",
+  "level": 1,
+  "hp": 100,
+  "exp": 1,
+  "pdef": 400,
+  "mdef": 400,
+  "mapIds": [],
+  "meso": 9,
+  "mesoMax": 14,
+  "mesoEst": true
+ },
+ {
+  "id": 100101,
+  "name": "Blue Snail",
+  "level": 2,
+  "hp": 15,
+  "exp": 4,
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [
+   40001,
+   40002,
+   1010004,
+   1020001,
+   100010000,
+   100030000,
+   100030001,
+   101030000,
+   101040000,
+   102010000,
+   102030000,
+   102050000,
+   50000,
+   103010000,
+   103020000,
+   103020100,
+   103020200,
+   103030000,
+   103030100,
+   103030200,
+   104000100,
+   104000200,
+   104010000,
+   50001,
+   104010001,
+   104010002,
+   104020000,
+   104030000,
+   104040000,
+   104040001,
+   104040002,
+   106000000,
+   106010000,
+   1000000,
+   1000001,
+   1000002,
+   1000004,
+   1000005,
+   1000006
+  ],
+  "meso": 8,
+  "mesoMax": 12
+ },
+ {
+  "id": 120100,
+  "name": "Shroom",
+  "level": 2,
+  "hp": 20,
+  "exp": 5,
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [
+   50000,
+   1000000,
+   103030000,
+   103030100,
+   104010002,
+   104030001,
+   104040000,
+   106010000,
+   1000001,
+   1000003,
+   1000006,
+   100010000,
+   100030000,
+   103020000,
+   103020100,
+   103020200
+  ],
+  "meso": 8,
+  "mesoMax": 12
+ },
+ {
+  "id": 9400551,
+  "name": "Bob",
+  "level": 2,
+  "hp": 777,
+  "exp": 7,
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "meso": 30,
+  "mesoMax": 45,
+  "mesoEst": true
+ },
+ {
+  "id": 9400552,
+  "name": "Zoo Snail",
+  "level": 2,
+  "hp": 777,
+  "exp": 7,
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "meso": 30,
+  "mesoMax": 45,
+  "mesoEst": true
+ },
+ {
+  "id": 130100,
+  "name": "Stump",
+  "level": 4,
+  "hp": 40,
+  "exp": 8,
+  "pdef": 0,
+  "mdef": 10,
+  "mapIds": [
+   50001,
+   1000000,
+   101010102,
+   101020000,
+   101030000,
+   101030100,
+   101030200,
+   101030300,
+   101030400,
+   101030401,
+   101040000,
+   101040002,
+   1000001,
+   102010000,
+   102020000,
+   102020100,
+   102020200,
+   102030000,
+   102040000,
+   102050000,
+   103010000,
+   103020100,
+   103020200,
+   1000002,
+   104000200,
+   104000400,
+   104020000,
+   104030000,
+   104040000,
+   104040001,
+   104040002,
+   105030000,
+   1010004,
+   1020000,
+   100040000,
+   100050000,
+   101010000,
+   101010101
+  ],
+  "element": {
+   "fire": "weak"
+  },
+  "meso": 12,
+  "mesoMax": 18
+ },
+ {
+  "id": 130101,
+  "name": "Red Snail",
+  "level": 4,
+  "hp": 40,
+  "exp": 8,
+  "pdef": 3,
+  "mdef": 10,
+  "mapIds": [
+   50001,
+   1000001,
+   100030000,
+   100030001,
+   101030000,
+   101030100,
+   101030200,
+   101030300,
+   101030400,
+   101040000,
+   102020000,
+   102020100,
+   1000002,
+   102020200,
+   102030000,
+   102040000,
+   103020000,
+   103020100,
+   103020200,
+   103030000,
+   103030100,
+   103030200,
+   104000100,
+   1000004,
+   104000200,
+   104010000,
+   104010001,
+   104010002,
+   104020000,
+   104030000,
+   104030001,
+   104040000,
+   104040001,
+   104040002,
+   1000005,
+   106000000,
+   106010000,
+   1000006,
+   1010004,
+   1020000,
+   1020001,
+   100010000
+  ],
+  "element": {
+   "fire": "weak"
+  },
+  "meso": 12,
+  "mesoMax": 18
+ },
+ {
+  "id": 210100,
+  "name": "Slime",
+  "level": 6,
+  "hp": 50,
+  "exp": 10,
+  "pdef": 5,
+  "mdef": 10,
+  "mapIds": [
+   1000005,
+   1010004,
+   100040004,
+   100040100,
+   100050000,
+   101010000,
+   101010100,
+   101010101,
+   101010102,
+   101020000,
+   101020002,
+   101020003,
+   1020000,
+   101020006,
+   101020007,
+   101020008,
+   103020000,
+   103020100,
+   103020200,
+   103030000,
+   103030100,
+   103030200,
+   104000100,
+   100010000,
+   104000200,
+   104000300,
+   104000400,
+   104010000,
+   104010002,
+   104020000,
+   104030000,
+   104040000,
+   104040001,
+   104040002,
+   100030000,
+   105030000,
+   105040000,
+   105040100,
+   105040200,
+   105040301,
+   105040302,
+   105040305,
+   106010000,
+   106010100,
+   107000001,
+   100030001,
+   107000500,
+   107000501,
+   100040000,
+   100040001,
+   100040002,
+   100040003
+  ],
+  "element": {
+   "lightning": "weak"
+  },
+  "meso": 12,
+  "mesoMax": 18
+ },
+ {
+  "id": 9300063,
+  "name": "Stirge",
+  "level": 6,
+  "hp": 60,
+  "exp": 22,
+  "pdef": 5,
+  "mdef": 20,
+  "mapIds": [],
+  "meso": 12,
+  "mesoMax": 18,
+  "mesoEst": true
+ },
+ {
+  "id": 9300082,
+  "name": "Stirge",
+  "level": 6,
+  "hp": 60,
+  "exp": 22,
+  "pdef": 5,
+  "mdef": 20,
+  "mapIds": [],
+  "meso": 12,
+  "mesoMax": 18,
+  "mesoEst": true
+ },
+ {
+  "id": 9400505,
+  "name": "Turkey",
+  "level": 6,
+  "hp": 50,
+  "exp": 11,
+  "pdef": 5,
+  "mdef": 10,
+  "mapIds": [],
+  "meso": 12,
+  "mesoMax": 18
+ },
+ {
+  "id": 9500100,
+  "name": "Slime",
+  "level": 6,
+  "hp": 50,
+  "exp": 10,
+  "pdef": 5,
+  "mdef": 10,
+  "mapIds": [],
+  "element": {
+   "lightning": "weak"
+  },
+  "meso": 12,
+  "mesoMax": 18
+ },
+ {
+  "id": 1210100,
+  "name": "Pig",
+  "level": 7,
+  "hp": 75,
+  "exp": 15,
+  "pdef": 5,
+  "mdef": 20,
+  "mapIds": [
+   1000006,
+   1020000,
+   100020109,
+   100020110,
+   100020111,
+   100020112,
+   100020113,
+   100020114,
+   100020115,
+   100020116,
+   100020117,
+   100020118,
+   100020000,
+   100020119,
+   100020120,
+   100020121,
+   100020122,
+   100020123,
+   100020124,
+   100020125,
+   100020126,
+   100020127,
+   100020128,
+   100020100,
+   100030000,
+   103020000,
+   103020100,
+   103020200,
+   103030000,
+   103030100,
+   103030200,
+   104000300,
+   104010000,
+   104010001,
+   100020103,
+   104010002,
+   104020000,
+   104030000,
+   106010000,
+   100020104,
+   100020105,
+   100020106,
+   100020107,
+   100020108
+  ],
+  "meso": 14,
+  "mesoMax": 21
+ },
+ {
+  "id": 9300058,
+  "name": "Pig",
+  "level": 7,
+  "hp": 75,
+  "exp": 15,
+  "pdef": 5,
+  "mdef": 20,
+  "mapIds": [],
+  "meso": 14,
+  "mesoMax": 21
+ },
+ {
+  "id": 9400241,
+  "name": "Pig",
+  "level": 7,
+  "hp": 75,
+  "exp": 15,
+  "pdef": 5,
+  "mdef": 20,
+  "mapIds": [],
+  "meso": 14,
+  "mesoMax": 21
+ },
+ {
+  "id": 9500101,
+  "name": "Pig",
+  "level": 7,
+  "hp": 75,
+  "exp": 15,
+  "pdef": 5,
+  "mdef": 20,
+  "mapIds": [],
+  "meso": 14,
+  "mesoMax": 21
+ },
+ {
+  "id": 1210102,
+  "name": "Orange Mushroom",
+  "level": 8,
+  "hp": 80,
+  "exp": 15,
+  "pdef": 0,
+  "mdef": 10,
+  "mapIds": [
+   50001,
+   1000001,
+   103020100,
+   103030000,
+   103030100,
+   103030200,
+   104010000,
+   104010002,
+   104020000,
+   104030001,
+   104040000,
+   104040001,
+   1000002,
+   104040002,
+   106010000,
+   100000002,
+   100010000,
+   100030000,
+   102040000,
+   102050000,
+   103010000,
+   103020000
+  ],
+  "meso": 16,
+  "mesoMax": 24
+ },
+ {
+  "id": 9300062,
+  "name": "Flyeye",
+  "level": 8,
+  "hp": 80,
+  "exp": 10,
+  "pdef": 5,
+  "mdef": 30,
+  "mapIds": [],
+  "meso": 16,
+  "mesoMax": 24
+ },
+ {
+  "id": 9300081,
+  "name": "Flyeye",
+  "level": 8,
+  "hp": 80,
+  "exp": 10,
+  "pdef": 5,
+  "mdef": 30,
+  "mapIds": [],
+  "meso": 16,
+  "mesoMax": 24
+ },
+ {
+  "id": 9420001,
+  "name": "Frog",
+  "level": 8,
+  "hp": 75,
+  "exp": 17,
+  "pdef": 5,
+  "mdef": 10,
+  "mapIds": [],
+  "meso": 15,
+  "mesoMax": 22,
+  "mesoEst": true
+ },
+ {
+  "id": 9500102,
+  "name": "Orange Mushroom",
+  "level": 8,
+  "hp": 80,
+  "exp": 15,
+  "pdef": 0,
+  "mdef": 10,
+  "mapIds": [],
+  "meso": 16,
+  "mesoMax": 24
+ },
+ {
+  "id": 1110101,
+  "name": "Dark Stump",
+  "level": 10,
+  "hp": 250,
+  "exp": 18,
+  "pdef": 20,
+  "mdef": 10,
+  "mapIds": [
+   101010000,
+   101010100,
+   101040002,
+   102010000,
+   102020100,
+   102020200,
+   102030000,
+   102050000,
+   105030000,
+   105040000,
+   106000000,
+   106000100,
+   101030000,
+   106000200,
+   106000300,
+   101030001,
+   101030200,
+   101030300,
+   101030400,
+   101030401,
+   101030402,
+   101040000
+  ],
+  "element": {
+   "fire": "weak"
+  },
+  "meso": 20,
+  "mesoMax": 30
+ },
+ {
+  "id": 1210101,
+  "name": "Ribbon Pig",
+  "level": 10,
+  "hp": 120,
+  "exp": 20,
+  "pdef": 10,
+  "mdef": 30,
+  "mapIds": [
+   100010000,
+   100020000,
+   104010000,
+   104010001,
+   104010002,
+   104020000,
+   104030000,
+   106010000,
+   100030000,
+   103020000,
+   103020100,
+   103020200,
+   103030000,
+   103030100,
+   103030200,
+   104000300
+  ],
+  "meso": 20,
+  "mesoMax": 30
+ },
+ {
+  "id": 2130100,
+  "name": "Dark Axe Stump",
+  "level": 10,
+  "hp": 550,
+  "exp": 38,
+  "pdef": 50,
+  "mdef": 20,
+  "mapIds": [
+   101030000,
+   101030001,
+   102010000,
+   102020200,
+   102020300,
+   102050000,
+   105030000,
+   105040302,
+   106000000,
+   106000100,
+   106000101,
+   106000110,
+   101030100,
+   106000120,
+   106000130,
+   106000140,
+   106000200,
+   106000300,
+   107000500,
+   222010000,
+   222010001,
+   222010002,
+   222010100,
+   101030200,
+   222010101,
+   222010102,
+   101030403,
+   101030404,
+   101030405,
+   101030406,
+   101040001,
+   101040002
+  ],
+  "element": {
+   "fire": "weak"
+  },
+  "meso": 41,
+  "mesoMax": 61,
+  "mesoEst": true
+ },
+ {
+  "id": 9300059,
+  "name": "Ribbon Pig",
+  "level": 10,
+  "hp": 120,
+  "exp": 20,
+  "pdef": 10,
+  "mdef": 30,
+  "mapIds": [],
+  "meso": 20,
+  "mesoMax": 30
+ },
+ {
+  "id": 9300156,
+  "name": "Black Magician's Disciple",
+  "level": 10,
+  "hp": 300,
+  "exp": 15,
+  "pdef": 5,
+  "mdef": 15,
+  "mapIds": [],
+  "meso": 30,
+  "mesoMax": 46,
+  "mesoEst": true
+ },
+ {
+  "id": 9400242,
+  "name": "Ribbon Pig",
+  "level": 10,
+  "hp": 120,
+  "exp": 20,
+  "pdef": 10,
+  "mdef": 30,
+  "mapIds": [],
+  "meso": 20,
+  "mesoMax": 30
+ },
+ {
+  "id": 9400513,
+  "name": "Candle Mob(2nd) ",
+  "level": 10,
+  "hp": 250,
+  "exp": 20,
+  "pdef": 20,
+  "mdef": 10,
+  "mapIds": [],
+  "meso": 20,
+  "mesoMax": 30
+ },
+ {
+  "id": 9400712,
+  "name": "Little Snowman",
+  "level": 10,
+  "hp": 10,
+  "exp": 16,
+  "pdef": 10,
+  "mdef": 30,
+  "mapIds": [],
+  "meso": 6,
+  "mesoMax": 9,
+  "mesoEst": true
+ },
+ {
+  "id": 9400713,
+  "name": "Item Killer",
+  "level": 10,
+  "hp": 120,
+  "exp": 20,
+  "pdef": 10,
+  "mdef": 30,
+  "mapIds": [],
+  "meso": 20,
+  "mesoMax": 30
+ },
+ {
+  "id": 9500144,
+  "name": "Coke Snail",
+  "level": 10,
+  "hp": 120,
+  "exp": 19,
+  "pdef": 10,
+  "mdef": 30,
+  "mapIds": [],
+  "meso": 20,
+  "mesoMax": 30
+ },
+ {
+  "id": 9500167,
+  "name": "Golden Pig",
+  "level": 10,
+  "hp": 120,
+  "exp": 20,
+  "pdef": 10,
+  "mdef": 30,
+  "mapIds": [],
+  "meso": 20,
+  "mesoMax": 30
+ },
+ {
+  "id": 9500195,
+  "name": "Jack-o-Lantern",
+  "level": 10,
+  "hp": 10,
+  "exp": 16,
+  "pdef": 10,
+  "mdef": 30,
+  "mapIds": [],
+  "meso": 6,
+  "mesoMax": 9,
+  "mesoEst": true
+ },
+ {
+  "id": 9500197,
+  "name": "Ghost",
+  "level": 10,
+  "hp": 10,
+  "exp": 33,
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "meso": 6,
+  "mesoMax": 9,
+  "mesoEst": true
+ },
+ {
+  "id": 9300064,
+  "name": "Goblin Fire",
+  "level": 11,
+  "hp": 155,
+  "exp": 22,
+  "pdef": 10,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 23,
+  "mesoMax": 34,
+  "mesoEst": true
+ },
+ {
+  "id": 9300083,
+  "name": "Goblin Fire",
+  "level": 11,
+  "hp": 155,
+  "exp": 22,
+  "pdef": 10,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 23,
+  "mesoMax": 34,
+  "mesoEst": true
+ },
+ {
+  "id": 9400511,
+  "name": "Yellow Eggy Popp",
+  "level": 11,
+  "hp": 250,
+  "exp": 22,
+  "pdef": 20,
+  "mdef": 10,
+  "mapIds": [],
+  "meso": 29,
+  "mesoMax": 43,
+  "mesoEst": true
+ },
+ {
+  "id": 1120100,
+  "name": "Octopus",
+  "level": 12,
+  "hp": 200,
+  "exp": 24,
+  "pdef": 10,
+  "mdef": 40,
+  "mapIds": [
+   102040000,
+   102040001,
+   102050000,
+   103010000,
+   103010001,
+   105040000,
+   105040100,
+   105040301,
+   107000500,
+   107000501
+  ],
+  "element": {
+   "lightning": "weak"
+  },
+  "meso": 24,
+  "mesoMax": 36
+ },
+ {
+  "id": 9500104,
+  "name": "Octopus",
+  "level": 12,
+  "hp": 200,
+  "exp": 24,
+  "pdef": 10,
+  "mdef": 40,
+  "mapIds": [],
+  "element": {
+   "lightning": "weak"
+  },
+  "meso": 24,
+  "mesoMax": 36
+ },
+ {
+  "id": 1110100,
+  "name": "Green Mushroom",
+  "level": 15,
+  "hp": 250,
+  "exp": 26,
+  "pdef": 12,
+  "mdef": 40,
+  "mapIds": [
+   100040000,
+   100040002,
+   101020008,
+   101030000,
+   101030300,
+   102010000,
+   102020200,
+   102030000,
+   102050000,
+   103000805,
+   103010000,
+   103020100,
+   100040003,
+   103020200,
+   103030100,
+   103030200,
+   104040000,
+   104040001,
+   104040002,
+   105030000,
+   105040000,
+   105040100,
+   105040301,
+   100040004,
+   105040302,
+   106010100,
+   100040100,
+   100050000,
+   101010102,
+   101020003,
+   101020006,
+   101020007
+  ],
+  "element": {
+   "poison": "immune"
+  },
+  "meso": 28,
+  "mesoMax": 42
+ },
+ {
+  "id": 1210103,
+  "name": "Bubbling",
+  "level": 15,
+  "hp": 240,
+  "exp": 26,
+  "pdef": 40,
+  "mdef": 50,
+  "mapIds": [
+   103000101,
+   103000902
+  ],
+  "meso": 24,
+  "mesoMax": 36
+ },
+ {
+  "id": 9400005,
+  "name": "Red Boogie",
+  "level": 15,
+  "hp": 275,
+  "exp": 30,
+  "pdef": 22,
+  "mdef": 0,
+  "mapIds": [],
+  "meso": 33,
+  "mesoMax": 49,
+  "mesoEst": true
+ },
+ {
+  "id": 9400570,
+  "name": "Anniversary Cake",
+  "level": 15,
+  "hp": 250,
+  "exp": 30,
+  "pdef": 12,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 28,
+  "mesoMax": 42
+ },
+ {
+  "id": 9420005,
+  "name": "White Rooster",
+  "level": 15,
+  "hp": 230,
+  "exp": 28,
+  "pdef": 11,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 30,
+  "mesoMax": 45,
+  "mesoEst": true
+ },
+ {
+  "id": 9500103,
+  "name": "Bubbling",
+  "level": 15,
+  "hp": 240,
+  "exp": 26,
+  "pdef": 40,
+  "mdef": 50,
+  "mapIds": [],
+  "meso": 24,
+  "mesoMax": 36
+ },
+ {
+  "id": 9500105,
+  "name": "Green Mushroom",
+  "level": 15,
+  "hp": 250,
+  "exp": 26,
+  "pdef": 12,
+  "mdef": 40,
+  "mapIds": [],
+  "element": {
+   "poison": "immune"
+  },
+  "meso": 28,
+  "mesoMax": 42
+ },
+ {
+  "id": 9500151,
+  "name": "Coke Slime",
+  "level": 15,
+  "hp": 240,
+  "exp": 26,
+  "pdef": 40,
+  "mdef": 50,
+  "mapIds": [],
+  "meso": 24,
+  "mesoMax": 36
+ },
+ {
+  "id": 9500184,
+  "name": "Rideword P",
+  "level": 15,
+  "hp": 15,
+  "exp": 20,
+  "pdef": 10,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 8,
+  "mesoMax": 12,
+  "mesoEst": true
+ },
+ {
+  "id": 9500185,
+  "name": "Rideword Y",
+  "level": 15,
+  "hp": 15,
+  "exp": 20,
+  "pdef": 10,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 8,
+  "mesoMax": 12,
+  "mesoEst": true
+ },
+ {
+  "id": 9500186,
+  "name": "Rideword B",
+  "level": 15,
+  "hp": 15,
+  "exp": 20,
+  "pdef": 10,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 8,
+  "mesoMax": 12,
+  "mesoEst": true
+ },
+ {
+  "id": 9500196,
+  "name": "Ghost",
+  "level": 15,
+  "hp": 15,
+  "exp": 16,
+  "pdef": 12,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 8,
+  "mesoMax": 12,
+  "mesoEst": true
+ },
+ {
+  "id": 9500191,
+  "name": "Green Phantom",
+  "level": 16,
+  "hp": 20,
+  "exp": 20,
+  "pdef": 12,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 9,
+  "mesoMax": 14,
+  "mesoEst": true
+ },
+ {
+  "id": 1130100,
+  "name": "Axe Stump",
+  "level": 17,
+  "hp": 300,
+  "exp": 30,
+  "pdef": 30,
+  "mdef": 10,
+  "mapIds": [
+   100040000,
+   101020000,
+   101040002,
+   102010000,
+   102020000,
+   102020100,
+   102020200,
+   102020300,
+   102030000,
+   102040000,
+   102050000,
+   106000000,
+   101030000,
+   106000100,
+   106000200,
+   101030001,
+   101030100,
+   101030200,
+   101030402,
+   101030403,
+   101030404,
+   101040000
+  ],
+  "meso": 32,
+  "mesoMax": 48
+ },
+ {
+  "id": 9420502,
+  "name": "Biner",
+  "level": 18,
+  "hp": 280,
+  "exp": 30,
+  "pdef": 30,
+  "mdef": 10,
+  "mapIds": [],
+  "meso": 35,
+  "mesoMax": 52,
+  "mesoEst": true
+ },
+ {
+  "id": 1140100,
+  "name": "Ghost Stump",
+  "level": 19,
+  "hp": 330,
+  "exp": 33,
+  "pdef": 40,
+  "mdef": 15,
+  "mapIds": [
+   101030101,
+   101030102
+  ],
+  "meso": 32,
+  "mesoMax": 48
+ },
+ {
+  "id": 9400538,
+  "name": "Street Slime",
+  "level": 19,
+  "hp": 320,
+  "exp": 35,
+  "pdef": 40,
+  "mdef": 50,
+  "mapIds": [],
+  "meso": 38,
+  "mesoMax": 57,
+  "mesoEst": true
+ },
+ {
+  "id": 2100100,
+  "name": "Desert Rabbit (F)",
+  "level": 20,
+  "hp": 350,
+  "exp": 32,
+  "pdef": 20,
+  "mdef": 20,
+  "mapIds": [
+   260010600,
+   260010700
+  ],
+  "meso": 36,
+  "mesoMax": 54
+ },
+ {
+  "id": 2220100,
+  "name": "Blue Mushroom",
+  "level": 20,
+  "hp": 350,
+  "exp": 32,
+  "pdef": 10,
+  "mdef": 60,
+  "mapIds": [
+   100030000,
+   100030001,
+   106010100,
+   106010101,
+   106010102,
+   106010103,
+   106010104,
+   106010105,
+   106010106,
+   100040004,
+   102040000,
+   102040001,
+   103010001,
+   103020000,
+   103020100,
+   103020200,
+   106010000
+  ],
+  "meso": 36,
+  "mesoMax": 54
+ },
+ {
+  "id": 2300100,
+  "name": "Stirge",
+  "level": 20,
+  "hp": 300,
+  "exp": 33,
+  "pdef": 20,
+  "mdef": 20,
+  "mapIds": [
+   103000102,
+   103000103,
+   103000104,
+   105050400,
+   105060000
+  ],
+  "meso": 32,
+  "mesoMax": 48
+ },
+ {
+  "id": 9400510,
+  "name": "Green Eggy Popp",
+  "level": 20,
+  "hp": 350,
+  "exp": 45,
+  "pdef": 45,
+  "mdef": 75,
+  "mapIds": [],
+  "meso": 36,
+  "mesoMax": 54
+ },
+ {
+  "id": 9400568,
+  "name": "Turkey Commando",
+  "level": 20,
+  "hp": 350,
+  "exp": 41,
+  "pdef": 10,
+  "mdef": 20,
+  "mapIds": [],
+  "meso": 36,
+  "mesoMax": 54
+ },
+ {
+  "id": 9500152,
+  "name": "Coke Mushroom",
+  "level": 20,
+  "hp": 350,
+  "exp": 32,
+  "pdef": 10,
+  "mdef": 60,
+  "mapIds": [],
+  "meso": 36,
+  "mesoMax": 54
+ },
+ {
+  "id": 9500187,
+  "name": "Busted Doll",
+  "level": 20,
+  "hp": 20,
+  "exp": 25,
+  "pdef": 10,
+  "mdef": 60,
+  "mapIds": [],
+  "meso": 10,
+  "mesoMax": 15,
+  "mesoEst": true
+ },
+ {
+  "id": 9500188,
+  "name": "Destroyed Doll",
+  "level": 20,
+  "hp": 20,
+  "exp": 25,
+  "pdef": 10,
+  "mdef": 60,
+  "mapIds": [],
+  "meso": 10,
+  "mesoMax": 15,
+  "mesoEst": true
+ },
+ {
+  "id": 9600001,
+  "name": "Rooster",
+  "level": 20,
+  "hp": 340,
+  "exp": 33,
+  "pdef": 10,
+  "mdef": 20,
+  "mapIds": [],
+  "meso": 38,
+  "mesoMax": 54
+ },
+ {
+  "id": 2100101,
+  "name": "Desert Rabbit (M)",
+  "level": 21,
+  "hp": 400,
+  "exp": 34,
+  "pdef": 25,
+  "mdef": 30,
+  "mapIds": [
+   260010600,
+   260010700
+  ],
+  "meso": 44,
+  "mesoMax": 65,
+  "mesoEst": true
+ },
+ {
+  "id": 2130103,
+  "name": "Jr. Necki",
+  "level": 21,
+  "hp": 285,
+  "exp": 38,
+  "pdef": 30,
+  "mdef": 30,
+  "mapIds": [
+   103000200,
+   103000201,
+   107000001,
+   107000100,
+   107000200,
+   107000300,
+   107000400,
+   107000401,
+   107000402,
+   107000403,
+   107000500,
+   107000501,
+   105040000,
+   105040100,
+   105040301,
+   105040302,
+   105040303,
+   105040304,
+   105040305,
+   107000000
+  ],
+  "meso": 33,
+  "mesoMax": 49
+ },
+ {
+  "id": 9400539,
+  "name": "Urban Fungus",
+  "level": 21,
+  "hp": 350,
+  "exp": 37,
+  "pdef": 10,
+  "mdef": 60,
+  "mapIds": [],
+  "meso": 41,
+  "mesoMax": 61,
+  "mesoEst": true
+ },
+ {
+  "id": 9400556,
+  "name": "Glutton Ghoul",
+  "level": 21,
+  "hp": 300,
+  "exp": 37,
+  "pdef": 20,
+  "mdef": 20,
+  "mapIds": [],
+  "meso": 38,
+  "mesoMax": 57,
+  "mesoEst": true
+ },
+ {
+  "id": 9400565,
+  "name": "Glutton Ghoul",
+  "level": 21,
+  "hp": 300,
+  "exp": 36,
+  "pdef": 20,
+  "mdef": 20,
+  "mapIds": [],
+  "meso": 38,
+  "mesoMax": 57,
+  "mesoEst": true
+ },
+ {
+  "id": 2100102,
+  "name": "Jr. Cactus",
+  "level": 22,
+  "hp": 450,
+  "exp": 37,
+  "pdef": 30,
+  "mdef": 30,
+  "mapIds": [
+   260010000,
+   260010001
+  ],
+  "element": {
+   "fire": "weak"
+  },
+  "meso": 47,
+  "mesoMax": 70,
+  "mesoEst": true
+ },
+ {
+  "id": 2110200,
+  "name": "Horny Mushroom",
+  "level": 22,
+  "hp": 300,
+  "exp": 35,
+  "pdef": 30,
+  "mdef": 0,
+  "mapIds": [
+   100040004,
+   100040110,
+   105040302,
+   105050000,
+   105050100,
+   105050200,
+   105050300,
+   105050400,
+   105060000,
+   105060100,
+   105070000,
+   105070001,
+   101020002,
+   105080000,
+   101020003,
+   101020006,
+   101020008,
+   105030000,
+   105040000,
+   105040200,
+   105040301
+  ],
+  "meso": 36,
+  "mesoMax": 54
+ },
+ {
+  "id": 2230108,
+  "name": "Pinboom",
+  "level": 22,
+  "hp": 400,
+  "exp": 36,
+  "pdef": 30,
+  "mdef": 30,
+  "mapIds": [
+   230030100,
+   230030200
+  ],
+  "meso": 40,
+  "mesoMax": 60
+ },
+ {
+  "id": 9400246,
+  "name": "Horny Mushroom",
+  "level": 22,
+  "hp": 300,
+  "exp": 35,
+  "pdef": 30,
+  "mdef": 0,
+  "mapIds": [],
+  "meso": 36,
+  "mesoMax": 54
+ },
+ {
+  "id": 9500106,
+  "name": "Horny Mushroom",
+  "level": 22,
+  "hp": 300,
+  "exp": 35,
+  "pdef": 30,
+  "mdef": 0,
+  "mapIds": [],
+  "meso": 36,
+  "mesoMax": 54
+ },
+ {
+  "id": 9600002,
+  "name": "Duck",
+  "level": 22,
+  "hp": 380,
+  "exp": 37,
+  "pdef": 20,
+  "mdef": 20,
+  "mapIds": [],
+  "meso": 43,
+  "mesoMax": 64
+ },
+ {
+  "id": 2100105,
+  "name": "Bellamoa",
+  "level": 23,
+  "hp": 500,
+  "exp": 42,
+  "pdef": 35,
+  "mdef": 40,
+  "mapIds": [
+   260010300,
+   260010301
+  ],
+  "element": {
+   "poison": "strong"
+  },
+  "meso": 44,
+  "mesoMax": 66
+ },
+ {
+  "id": 2230103,
+  "name": "Trixter",
+  "level": 23,
+  "hp": 450,
+  "exp": 42,
+  "pdef": 52,
+  "mdef": 65,
+  "mapIds": [
+   221021900,
+   221022000,
+   221022100,
+   221022300,
+   221022900,
+   221023000,
+   221023100,
+   221023700,
+   221023800
+  ],
+  "element": {
+   "fire": "weak",
+   "holy": "strong"
+  },
+  "meso": 47,
+  "mesoMax": 62
+ },
+ {
+  "id": 2230105,
+  "name": "Seacle",
+  "level": 23,
+  "hp": 500,
+  "exp": 42,
+  "pdef": 35,
+  "mdef": 45,
+  "mapIds": [
+   230030001,
+   230030100,
+   230030200
+  ],
+  "element": {
+   "fire": "weak",
+   "poison": "weak"
+  },
+  "meso": 44,
+  "mesoMax": 66
+ },
+ {
+  "id": 2230110,
+  "name": "Wooden Mask",
+  "level": 23,
+  "hp": 500,
+  "exp": 42,
+  "pdef": 30,
+  "mdef": 40,
+  "mapIds": [
+   101030101,
+   101030102,
+   101030103
+  ],
+  "meso": 44,
+  "mesoMax": 66
+ },
+ {
+  "id": 5200000,
+  "name": "Jr. Sentinel",
+  "level": 23,
+  "hp": 600,
+  "exp": 40,
+  "pdef": 30,
+  "mdef": 40,
+  "mapIds": [
+   200080200,
+   200080300,
+   200080400,
+   200080500,
+   200080600,
+   200081300,
+   200081400
+  ],
+  "meso": 60,
+  "mesoMax": 90
+ },
+ {
+  "id": 9300027,
+  "name": "Devil Slime",
+  "level": 23,
+  "hp": 1000,
+  "exp": 80,
+  "pdef": 30,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 70,
+  "mesoMax": 105,
+  "mesoEst": true
+ },
+ {
+  "id": 9410000,
+  "name": "Stray Dog",
+  "level": 23,
+  "hp": 400,
+  "exp": 40,
+  "pdef": 28,
+  "mdef": 45,
+  "mapIds": [],
+  "meso": 60,
+  "mesoMax": 60
+ },
+ {
+  "id": 9420506,
+  "name": "Batoo",
+  "level": 23,
+  "hp": 450,
+  "exp": 40,
+  "pdef": 20,
+  "mdef": 30,
+  "mapIds": [],
+  "meso": 44,
+  "mesoMax": 66
+ },
+ {
+  "id": 2100106,
+  "name": "Ear Plug Plead",
+  "level": 24,
+  "hp": 550,
+  "exp": 45,
+  "pdef": 35,
+  "mdef": 35,
+  "mapIds": [
+   260010300,
+   260010400,
+   260010500
+  ],
+  "element": {
+   "fire": "strong"
+  },
+  "meso": 53,
+  "mesoMax": 79,
+  "mesoEst": true
+ },
+ {
+  "id": 2110300,
+  "name": "Sand Rat",
+  "level": 24,
+  "hp": 600,
+  "exp": 55,
+  "pdef": 35,
+  "mdef": 40,
+  "mapIds": [
+   260020500,
+   260020600,
+   260020610
+  ],
+  "meso": 44,
+  "mesoMax": 66
+ },
+ {
+  "id": 2230101,
+  "name": "Zombie Mushroom",
+  "level": 24,
+  "hp": 500,
+  "exp": 42,
+  "pdef": 20,
+  "mdef": 30,
+  "mapIds": [
+   105050000,
+   105050100,
+   105050200,
+   105050300,
+   105050400,
+   105060000,
+   105060100,
+   105070000,
+   105070001,
+   105070002
+  ],
+  "element": {
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 44,
+  "mesoMax": 66
+ },
+ {
+  "id": 2230107,
+  "name": "Krappy",
+  "level": 24,
+  "hp": 500,
+  "exp": 45,
+  "pdef": 20,
+  "mdef": 30,
+  "mapIds": [
+   230030000,
+   230030100
+  ],
+  "element": {
+   "fire": "weak",
+   "poison": "weak"
+  },
+  "meso": 44,
+  "mesoMax": 66
+ },
+ {
+  "id": 2230111,
+  "name": "Rocky Mask",
+  "level": 24,
+  "hp": 600,
+  "exp": 45,
+  "pdef": 35,
+  "mdef": 40,
+  "mapIds": [
+   101030102,
+   101030103
+  ],
+  "meso": 44,
+  "mesoMax": 66
+ },
+ {
+  "id": 9400239,
+  "name": "Sand Rat",
+  "level": 24,
+  "hp": 600,
+  "exp": 55,
+  "pdef": 35,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 44,
+  "mesoMax": 66
+ },
+ {
+  "id": 9400245,
+  "name": "Zombie Mushroom",
+  "level": 24,
+  "hp": 500,
+  "exp": 42,
+  "pdef": 20,
+  "mdef": 30,
+  "mapIds": [],
+  "element": {
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 44,
+  "mesoMax": 66
+ },
+ {
+  "id": 9400248,
+  "name": "Sand Rat",
+  "level": 24,
+  "hp": 600,
+  "exp": 55,
+  "pdef": 35,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 44,
+  "mesoMax": 66
+ },
+ {
+  "id": 2100103,
+  "name": "Cactus",
+  "level": 25,
+  "hp": 550,
+  "exp": 47,
+  "pdef": 35,
+  "mdef": 40,
+  "mapIds": [
+   260010000,
+   260010100,
+   260010200
+  ],
+  "meso": 44,
+  "mesoMax": 66
+ },
+ {
+  "id": 2230102,
+  "name": "Wild Boar",
+  "level": 25,
+  "hp": 550,
+  "exp": 42,
+  "pdef": 20,
+  "mdef": 30,
+  "mapIds": [
+   101030001,
+   101030100,
+   101030200,
+   101040001,
+   101040003,
+   102020300,
+   106000000,
+   106000100,
+   106000200,
+   106000300
+  ],
+  "meso": 44,
+  "mesoMax": 66
+ },
+ {
+  "id": 2230106,
+  "name": "Cico",
+  "level": 25,
+  "hp": 550,
+  "exp": 42,
+  "pdef": 30,
+  "mdef": 40,
+  "mapIds": [
+   230030000,
+   230030001
+  ],
+  "element": {
+   "poison": "weak",
+   "fire": "strong"
+  },
+  "meso": 44,
+  "mesoMax": 66
+ },
+ {
+  "id": 9300157,
+  "name": "Scorpion",
+  "level": 25,
+  "hp": 1200,
+  "exp": 30,
+  "pdef": 50,
+  "mdef": 75,
+  "mapIds": [],
+  "meso": 78,
+  "mesoMax": 117,
+  "mesoEst": true
+ },
+ {
+  "id": 9400000,
+  "name": "Crow",
+  "level": 25,
+  "hp": 550,
+  "exp": 42,
+  "pdef": 30,
+  "mdef": 30,
+  "mapIds": [],
+  "element": {
+   "lightning": "weak"
+  },
+  "meso": 44,
+  "mesoMax": 66
+ },
+ {
+  "id": 9400540,
+  "name": "Killa Bee",
+  "level": 25,
+  "hp": 730,
+  "exp": 60,
+  "pdef": 40,
+  "mdef": 75,
+  "mapIds": [],
+  "meso": 61,
+  "mesoMax": 92,
+  "mesoEst": true
+ },
+ {
+  "id": 9400541,
+  "name": "Killa Bee",
+  "level": 25,
+  "hp": 730,
+  "exp": 60,
+  "pdef": 40,
+  "mdef": 75,
+  "mapIds": [],
+  "meso": 61,
+  "mesoMax": 92,
+  "mesoEst": true
+ },
+ {
+  "id": 9410001,
+  "name": "Stylish Stray Dog",
+  "level": 25,
+  "hp": 550,
+  "exp": 46,
+  "pdef": 30,
+  "mdef": 50,
+  "mapIds": [],
+  "meso": 44,
+  "mesoMax": 66
+ },
+ {
+  "id": 9420004,
+  "name": "Yellow Lizard",
+  "level": 25,
+  "hp": 500,
+  "exp": 46,
+  "pdef": 20,
+  "mdef": 30,
+  "mapIds": [],
+  "meso": 51,
+  "mesoMax": 77,
+  "mesoEst": true
+ },
+ {
+  "id": 9500153,
+  "name": "Coketump",
+  "level": 25,
+  "hp": 560,
+  "exp": 43,
+  "pdef": 35,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 54,
+  "mesoMax": 81,
+  "mesoEst": true
+ },
+ {
+  "id": 9600003,
+  "name": "Sheep",
+  "level": 25,
+  "hp": 550,
+  "exp": 42,
+  "pdef": 20,
+  "mdef": 30,
+  "mapIds": [],
+  "meso": 44,
+  "mesoMax": 66
+ },
+ {
+  "id": 2100107,
+  "name": "Scarf Plead",
+  "level": 27,
+  "hp": 700,
+  "exp": 50,
+  "pdef": 35,
+  "mdef": 40,
+  "mapIds": [
+   260010500,
+   260010501
+  ],
+  "element": {
+   "fire": "strong"
+  },
+  "meso": 62,
+  "mesoMax": 92,
+  "mesoEst": true
+ },
+ {
+  "id": 2230100,
+  "name": "Evil Eye",
+  "level": 27,
+  "hp": 720,
+  "exp": 50,
+  "pdef": 35,
+  "mdef": 70,
+  "mapIds": [
+   105060100,
+   105070000,
+   105070001,
+   105070100,
+   105070200,
+   105070300,
+   105070400
+  ],
+  "meso": 48,
+  "mesoMax": 72
+ },
+ {
+  "id": 9400508,
+  "name": "Mad Turkey",
+  "level": 27,
+  "hp": 720,
+  "exp": 55,
+  "pdef": 35,
+  "mdef": 70,
+  "mapIds": [],
+  "meso": 48,
+  "mesoMax": 72
+ },
+ {
+  "id": 9400547,
+  "name": "Boomer",
+  "level": 27,
+  "hp": 700,
+  "exp": 55,
+  "pdef": 45,
+  "mdef": 75,
+  "mapIds": [],
+  "meso": 62,
+  "mesoMax": 92,
+  "mesoEst": true
+ },
+ {
+  "id": 9400550,
+  "name": "Boomer",
+  "level": 27,
+  "hp": 700,
+  "exp": 55,
+  "pdef": 45,
+  "mdef": 75,
+  "mapIds": [],
+  "meso": 62,
+  "mesoMax": 92,
+  "mesoEst": true
+ },
+ {
+  "id": 2100104,
+  "name": "Royal Cactus",
+  "level": 28,
+  "hp": 750,
+  "exp": 55,
+  "pdef": 40,
+  "mdef": 40,
+  "mapIds": [
+   260010200,
+   260010201
+  ],
+  "element": {
+   "fire": "weak"
+  },
+  "meso": 64,
+  "mesoMax": 97,
+  "mesoEst": true
+ },
+ {
+  "id": 2230104,
+  "name": "Green Trixter",
+  "level": 28,
+  "hp": 780,
+  "exp": 55,
+  "pdef": 75,
+  "mdef": 75,
+  "mapIds": [
+   221022300,
+   221022900
+  ],
+  "element": {
+   "poison": "immune"
+  },
+  "meso": 52,
+  "mesoMax": 78
+ },
+ {
+  "id": 2230109,
+  "name": "Bubble Fish",
+  "level": 28,
+  "hp": 740,
+  "exp": 52,
+  "pdef": 35,
+  "mdef": 40,
+  "mapIds": [
+   230020200,
+   230020300
+  ],
+  "element": {
+   "lightning": "weak",
+   "poison": "weak",
+   "fire": "strong"
+  },
+  "meso": 52,
+  "mesoMax": 78
+ },
+ {
+  "id": 9420000,
+  "name": "Toad",
+  "level": 28,
+  "hp": 720,
+  "exp": 58,
+  "pdef": 60,
+  "mdef": 73,
+  "mapIds": [],
+  "meso": 63,
+  "mesoMax": 95,
+  "mesoEst": true
+ },
+ {
+  "id": 9420500,
+  "name": "Stopnow",
+  "level": 28,
+  "hp": 700,
+  "exp": 50,
+  "pdef": 35,
+  "mdef": 70,
+  "mapIds": [],
+  "meso": 62,
+  "mesoMax": 93,
+  "mesoEst": true
+ },
+ {
+  "id": 2100108,
+  "name": "Meercat",
+  "level": 29,
+  "hp": 780,
+  "exp": 58,
+  "pdef": 40,
+  "mdef": 45,
+  "mapIds": [
+   260020000,
+   260020100
+  ],
+  "meso": 66,
+  "mesoMax": 99,
+  "mesoEst": true
+ },
+ {
+  "id": 2110301,
+  "name": "Scorpion",
+  "level": 29,
+  "hp": 780,
+  "exp": 58,
+  "pdef": 40,
+  "mdef": 45,
+  "mapIds": [
+   260020600,
+   260020620,
+   260020700
+  ],
+  "meso": 66,
+  "mesoMax": 99,
+  "mesoEst": true
+ },
+ {
+  "id": 2230200,
+  "name": "Flower Fish",
+  "level": 29,
+  "hp": 790,
+  "exp": 58,
+  "pdef": 80,
+  "mdef": 85,
+  "mapIds": [
+   230020101,
+   230020200,
+   230020300
+  ],
+  "element": {
+   "ice": "weak",
+   "fire": "strong",
+   "poison": "strong"
+  },
+  "meso": 52,
+  "mesoMax": 78
+ },
+ {
+  "id": 3000000,
+  "name": "Sentinel",
+  "level": 30,
+  "hp": 900,
+  "exp": 55,
+  "pdef": 275,
+  "mdef": 85,
+  "mapIds": [
+   200080500,
+   200080600,
+   200080700,
+   200080800
+  ],
+  "element": {
+   "ice": "weak",
+   "lightning": "strong",
+   "holy": "strong"
+  },
+  "meso": 52,
+  "mesoMax": 78
+ },
+ {
+  "id": 3000001,
+  "name": "Fairy 1",
+  "level": 30,
+  "hp": 800,
+  "exp": 120,
+  "pdef": 85,
+  "mdef": 105,
+  "mapIds": [
+   200020000,
+   200040000,
+   200050000,
+   200080000
+  ],
+  "meso": 80,
+  "mesoMax": 120
+ },
+ {
+  "id": 3000002,
+  "name": "Fairy 2",
+  "level": 30,
+  "hp": 800,
+  "exp": 120,
+  "pdef": 85,
+  "mdef": 105,
+  "mapIds": [],
+  "meso": 80,
+  "mesoMax": 120
+ },
+ {
+  "id": 3000003,
+  "name": "Fairy 3",
+  "level": 30,
+  "hp": 800,
+  "exp": 120,
+  "pdef": 85,
+  "mdef": 105,
+  "mapIds": [],
+  "meso": 80,
+  "mesoMax": 120
+ },
+ {
+  "id": 3000004,
+  "name": "Fairy 4",
+  "level": 30,
+  "hp": 800,
+  "exp": 120,
+  "pdef": 85,
+  "mdef": 105,
+  "mapIds": [],
+  "meso": 80,
+  "mesoMax": 120
+ },
+ {
+  "id": 3000005,
+  "name": "Brown Teddy",
+  "level": 30,
+  "hp": 950,
+  "exp": 60,
+  "pdef": 38,
+  "mdef": 40,
+  "mapIds": [
+   197000000,
+   197010000,
+   220010000,
+   220010100,
+   220010200,
+   220010400,
+   220010500,
+   220010600,
+   220010700
+  ],
+  "meso": 97,
+  "mesoMax": 139
+ },
+ {
+  "id": 3000006,
+  "name": "Krip",
+  "level": 30,
+  "hp": 900,
+  "exp": 55,
+  "pdef": 40,
+  "mdef": 40,
+  "mapIds": [
+   230020100,
+   230020101
+  ],
+  "element": {
+   "poison": "weak",
+   "fire": "strong"
+  },
+  "meso": 52,
+  "mesoMax": 78
+ },
+ {
+  "id": 3100102,
+  "name": "Kiyo",
+  "level": 30,
+  "hp": 870,
+  "exp": 60,
+  "pdef": 40,
+  "mdef": 40,
+  "mapIds": [
+   260020200,
+   260020300,
+   260020400
+  ],
+  "meso": 71,
+  "mesoMax": 106,
+  "mesoEst": true
+ },
+ {
+  "id": 3230400,
+  "name": "Drumming Bunny",
+  "level": 30,
+  "hp": 950,
+  "exp": 60,
+  "pdef": 38,
+  "mdef": 40,
+  "mapIds": [
+   221020500,
+   221020600,
+   221021400,
+   221021500,
+   221022400,
+   221022500,
+   221022600,
+   221022700,
+   221023200,
+   221023300
+  ],
+  "meso": 56,
+  "mesoMax": 90
+ },
+ {
+  "id": 5200001,
+  "name": "Ice Sentinel",
+  "level": 30,
+  "hp": 900,
+  "exp": 55,
+  "pdef": 275,
+  "mdef": 85,
+  "mapIds": [
+   200080900,
+   200081000,
+   200081200,
+   200081400
+  ],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 52,
+  "mesoMax": 78
+ },
+ {
+  "id": 5200002,
+  "name": "Fire Sentinel",
+  "level": 30,
+  "hp": 900,
+  "exp": 55,
+  "pdef": 275,
+  "mdef": 85,
+  "mapIds": [
+   200081000,
+   200081100,
+   200081200,
+   200081300
+  ],
+  "element": {
+   "ice": "weak",
+   "fire": "strong"
+  },
+  "meso": 52,
+  "mesoMax": 78
+ },
+ {
+  "id": 9100013,
+  "name": "Adin ",
+  "level": 30,
+  "hp": 8000,
+  "exp": 100,
+  "pdef": 45,
+  "mdef": 45,
+  "mapIds": [],
+  "meso": 208,
+  "mesoMax": 312,
+  "mesoEst": true
+ },
+ {
+  "id": 9200015,
+  "name": "Brown Tanny",
+  "level": 30,
+  "hp": 950,
+  "exp": 60,
+  "pdef": 38,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 56,
+  "mesoMax": 90
+ },
+ {
+  "id": 9200016,
+  "name": "Drumming Bunny",
+  "level": 30,
+  "hp": 950,
+  "exp": 60,
+  "pdef": 38,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 56,
+  "mesoMax": 90
+ },
+ {
+  "id": 9300127,
+  "name": "Brown Teddy",
+  "level": 30,
+  "hp": 950,
+  "exp": 60,
+  "pdef": 70,
+  "mdef": 150,
+  "mapIds": [],
+  "meso": 97,
+  "mesoMax": 139
+ },
+ {
+  "id": 9300128,
+  "name": "Bloctopus ",
+  "level": 30,
+  "hp": 1800,
+  "exp": 113,
+  "pdef": 100,
+  "mdef": 150,
+  "mapIds": [],
+  "meso": 101,
+  "mesoMax": 151,
+  "mesoEst": true
+ },
+ {
+  "id": 9300129,
+  "name": "Ratz",
+  "level": 30,
+  "hp": 1600,
+  "exp": 115,
+  "pdef": 120,
+  "mdef": 160,
+  "mapIds": [],
+  "meso": 80,
+  "mesoMax": 120
+ },
+ {
+  "id": 9300130,
+  "name": "Chronos ",
+  "level": 30,
+  "hp": 2300,
+  "exp": 113,
+  "pdef": 110,
+  "mdef": 210,
+  "mapIds": [],
+  "meso": 113,
+  "mesoMax": 170,
+  "mesoEst": true
+ },
+ {
+  "id": 9300132,
+  "name": "Tick-Tock",
+  "level": 30,
+  "hp": 2400,
+  "exp": 117,
+  "pdef": 210,
+  "mdef": 210,
+  "mapIds": [],
+  "meso": 116,
+  "mesoMax": 174,
+  "mesoEst": true
+ },
+ {
+  "id": 9300133,
+  "name": "Robo",
+  "level": 30,
+  "hp": 3000,
+  "exp": 120,
+  "pdef": 200,
+  "mdef": 200,
+  "mapIds": [],
+  "element": {
+   "ice": "strong",
+   "fire": "strong"
+  },
+  "meso": 129,
+  "mesoMax": 194,
+  "mesoEst": true
+ },
+ {
+  "id": 9300134,
+  "name": "King Bloctopus",
+  "level": 30,
+  "hp": 3300,
+  "exp": 135,
+  "pdef": 210,
+  "mdef": 210,
+  "mapIds": [],
+  "meso": 135,
+  "mesoMax": 203,
+  "mesoEst": true
+ },
+ {
+  "id": 9300135,
+  "name": "Master Chronos ",
+  "level": 30,
+  "hp": 3000,
+  "exp": 153,
+  "pdef": 160,
+  "mdef": 200,
+  "mapIds": [],
+  "meso": 129,
+  "mesoMax": 194,
+  "mesoEst": true
+ },
+ {
+  "id": 9400001,
+  "name": "Fire Raccoon",
+  "level": 30,
+  "hp": 900,
+  "exp": 55,
+  "pdef": 85,
+  "mdef": 65,
+  "mapIds": [],
+  "meso": 52,
+  "mesoMax": 78
+ },
+ {
+  "id": 9400002,
+  "name": "Cloud Fox",
+  "level": 30,
+  "hp": 920,
+  "exp": 55,
+  "pdef": 80,
+  "mdef": 70,
+  "mapIds": [],
+  "element": {
+   "fire": "weak"
+  },
+  "meso": 52,
+  "mesoMax": 78
+ },
+ {
+  "id": 9400006,
+  "name": "Blue Boogie",
+  "level": 30,
+  "hp": 1050,
+  "exp": 60,
+  "pdef": 120,
+  "mdef": 105,
+  "mapIds": [],
+  "meso": 77,
+  "mesoMax": 116,
+  "mesoEst": true
+ },
+ {
+  "id": 9400238,
+  "name": "Drumming Bunny",
+  "level": 30,
+  "hp": 950,
+  "exp": 60,
+  "pdef": 38,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 56,
+  "mesoMax": 90
+ },
+ {
+  "id": 9400247,
+  "name": "Drumming Bunny",
+  "level": 30,
+  "hp": 950,
+  "exp": 60,
+  "pdef": 38,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 56,
+  "mesoMax": 90
+ },
+ {
+  "id": 9400512,
+  "name": "Cake Mob(2nd) ",
+  "level": 30,
+  "hp": 950,
+  "exp": 65,
+  "pdef": 40,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 56,
+  "mesoMax": 90
+ },
+ {
+  "id": 9400518,
+  "name": "Magik Fierry B",
+  "level": 30,
+  "hp": 800,
+  "exp": 120,
+  "pdef": 85,
+  "mdef": 105,
+  "mapIds": [],
+  "meso": 80,
+  "mesoMax": 120
+ },
+ {
+  "id": 9400548,
+  "name": "Mighty Maple Eater",
+  "level": 30,
+  "hp": 950,
+  "exp": 65,
+  "pdef": 50,
+  "mdef": 70,
+  "mapIds": [],
+  "meso": 56,
+  "mesoMax": 90
+ },
+ {
+  "id": 9400558,
+  "name": "Psycho Jack",
+  "level": 30,
+  "hp": 850,
+  "exp": 73,
+  "pdef": 60,
+  "mdef": 50,
+  "mapIds": [],
+  "meso": 70,
+  "mesoMax": 105,
+  "mesoEst": true
+ },
+ {
+  "id": 9500107,
+  "name": "Drumming Bunny",
+  "level": 30,
+  "hp": 950,
+  "exp": 60,
+  "pdef": 38,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 56,
+  "mesoMax": 90
+ },
+ {
+  "id": 9500154,
+  "name": "Coketump Lite",
+  "level": 30,
+  "hp": 930,
+  "exp": 56,
+  "pdef": 45,
+  "mdef": 45,
+  "mapIds": [],
+  "meso": 73,
+  "mesoMax": 109,
+  "mesoEst": true
+ },
+ {
+  "id": 9600004,
+  "name": "Goat",
+  "level": 30,
+  "hp": 900,
+  "exp": 58,
+  "pdef": 40,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 52,
+  "mesoMax": 78
+ },
+ {
+  "id": 3230307,
+  "name": "Chirppy",
+  "level": 31,
+  "hp": 800,
+  "exp": 62,
+  "pdef": 60,
+  "mdef": 50,
+  "mapIds": [
+   221023300,
+   221023500,
+   221023600
+  ],
+  "meso": 96,
+  "mesoMax": 143
+ },
+ {
+  "id": 3100101,
+  "name": "Sand Dwarf ",
+  "level": 32,
+  "hp": 1000,
+  "exp": 60,
+  "pdef": 45,
+  "mdef": 40,
+  "mapIds": [
+   260020200,
+   260020300,
+   260020400
+  ],
+  "meso": 80,
+  "mesoMax": 120
+ },
+ {
+  "id": 3110100,
+  "name": "Ligator",
+  "level": 32,
+  "hp": 1200,
+  "exp": 60,
+  "pdef": 45,
+  "mdef": 40,
+  "mapIds": [
+   107000000,
+   107000100,
+   107000200,
+   107000300
+  ],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 56,
+  "mesoMax": 84
+ },
+ {
+  "id": 3110101,
+  "name": "Pink Teddy",
+  "level": 32,
+  "hp": 1050,
+  "exp": 65,
+  "pdef": 50,
+  "mdef": 70,
+  "mapIds": [
+   197010000,
+   220010100,
+   220010200,
+   220010300,
+   220010400,
+   220010500,
+   220010600,
+   220010700,
+   220010800,
+   220010900
+  ],
+  "meso": 80,
+  "mesoMax": 120
+ },
+ {
+  "id": 3110102,
+  "name": "Ratz",
+  "level": 32,
+  "hp": 1000,
+  "exp": 65,
+  "pdef": 65,
+  "mdef": 75,
+  "mapIds": [
+   221020000,
+   221020100,
+   221024100,
+   221024200,
+   221024300,
+   221024400
+  ],
+  "meso": 80,
+  "mesoMax": 120
+ },
+ {
+  "id": 3110300,
+  "name": "Cube Slime",
+  "level": 32,
+  "hp": 1000,
+  "exp": 62,
+  "pdef": 40,
+  "mdef": 40,
+  "mapIds": [
+   261010001,
+   261010002
+  ],
+  "meso": 80,
+  "mesoMax": 120
+ },
+ {
+  "id": 3110301,
+  "name": "Dark Sand Dwarf ",
+  "level": 32,
+  "hp": 1000,
+  "exp": 62,
+  "pdef": 40,
+  "mdef": 40,
+  "mapIds": [
+   260020610,
+   260020620
+  ],
+  "meso": 80,
+  "mesoMax": 120
+ },
+ {
+  "id": 3210100,
+  "name": "Fire Boar",
+  "level": 32,
+  "hp": 1000,
+  "exp": 60,
+  "pdef": 40,
+  "mdef": 40,
+  "mapIds": [
+   101030405,
+   101030406,
+   106000140,
+   106000200,
+   106000300,
+   106000000,
+   106000001,
+   106000002,
+   106000100,
+   106000101,
+   106000110,
+   106000120,
+   106000130
+  ],
+  "element": {
+   "ice": "weak",
+   "fire": "strong"
+  },
+  "meso": 80,
+  "mesoMax": 120
+ },
+ {
+  "id": 3230104,
+  "name": "Mask Fish",
+  "level": 32,
+  "hp": 1000,
+  "exp": 65,
+  "pdef": 70,
+  "mdef": 80,
+  "mapIds": [
+   230020000,
+   230020100
+  ],
+  "element": {
+   "fire": "strong"
+  },
+  "meso": 80,
+  "mesoMax": 120
+ },
+ {
+  "id": 5300000,
+  "name": "Leatty",
+  "level": 32,
+  "hp": 1000,
+  "exp": 60,
+  "pdef": 45,
+  "mdef": 70,
+  "mapIds": [
+   200081500,
+   200081600,
+   200081700,
+   211000200
+  ],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 80,
+  "mesoMax": 120
+ },
+ {
+  "id": 9200017,
+  "name": "Pink Tanny",
+  "level": 32,
+  "hp": 1050,
+  "exp": 65,
+  "pdef": 50,
+  "mdef": 70,
+  "mapIds": [],
+  "meso": 80,
+  "mesoMax": 120
+ },
+ {
+  "id": 9300005,
+  "name": "Ratz from Another Dimension",
+  "level": 32,
+  "hp": 3700,
+  "exp": 260,
+  "pdef": 85,
+  "mdef": 95,
+  "mapIds": [],
+  "meso": 146,
+  "mesoMax": 219,
+  "mesoEst": true
+ },
+ {
+  "id": 9300169,
+  "name": "Ratz from Another Dimension",
+  "level": 32,
+  "hp": 3700,
+  "exp": 260,
+  "pdef": 85,
+  "mdef": 95,
+  "mapIds": [],
+  "meso": 146,
+  "mesoMax": 219,
+  "mesoEst": true
+ },
+ {
+  "id": 9500108,
+  "name": "Ligator",
+  "level": 32,
+  "hp": 1200,
+  "exp": 60,
+  "pdef": 45,
+  "mdef": 40,
+  "mapIds": [],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 56,
+  "mesoMax": 84
+ },
+ {
+  "id": 9500109,
+  "name": "Ratz",
+  "level": 32,
+  "hp": 1000,
+  "exp": 65,
+  "pdef": 65,
+  "mdef": 75,
+  "mapIds": [],
+  "meso": 80,
+  "mesoMax": 120
+ },
+ {
+  "id": 3210200,
+  "name": "Jr. Cellion",
+  "level": 33,
+  "hp": 1100,
+  "exp": 65,
+  "pdef": 60,
+  "mdef": 80,
+  "mapIds": [
+   200010100,
+   200010110
+  ],
+  "element": {
+   "ice": "weak",
+   "fire": "strong"
+  },
+  "meso": 72,
+  "mesoMax": 108
+ },
+ {
+  "id": 3210201,
+  "name": "Jr. Lioner",
+  "level": 33,
+  "hp": 1100,
+  "exp": 65,
+  "pdef": 60,
+  "mdef": 80,
+  "mapIds": [
+   200010100,
+   200010120
+  ],
+  "element": {
+   "ice": "weak",
+   "lightning": "strong"
+  },
+  "meso": 72,
+  "mesoMax": 108
+ },
+ {
+  "id": 3210202,
+  "name": "Jr. Grupin",
+  "level": 33,
+  "hp": 1100,
+  "exp": 70,
+  "pdef": 60,
+  "mdef": 80,
+  "mapIds": [
+   200010100,
+   200010130
+  ],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 72,
+  "mesoMax": 108
+ },
+ {
+  "id": 5300001,
+  "name": "Dark Leatty",
+  "level": 33,
+  "hp": 1100,
+  "exp": 65,
+  "pdef": 60,
+  "mdef": 80,
+  "mapIds": [
+   200081700,
+   200081800,
+   200081900,
+   200082000
+  ],
+  "element": {
+   "holy": "weak"
+  },
+  "meso": 72,
+  "mesoMax": 108
+ },
+ {
+  "id": 9400509,
+  "name": "Sakura Cellion",
+  "level": 33,
+  "hp": 1100,
+  "exp": 65,
+  "pdef": 60,
+  "mdef": 80,
+  "mapIds": [],
+  "meso": 72,
+  "mesoMax": 108
+ },
+ {
+  "id": 9420503,
+  "name": "Nospeed",
+  "level": 33,
+  "hp": 1000,
+  "exp": 60,
+  "pdef": 40,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 78,
+  "mesoMax": 117,
+  "mesoEst": true
+ },
+ {
+  "id": 9600006,
+  "name": "Cow",
+  "level": 33,
+  "hp": 1200,
+  "exp": 66,
+  "pdef": 50,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 81,
+  "mesoMax": 118
+ },
+ {
+  "id": 3210204,
+  "name": "Roloduck",
+  "level": 34,
+  "hp": 1200,
+  "exp": 70,
+  "pdef": 70,
+  "mdef": 85,
+  "mapIds": [
+   220010300,
+   220010800,
+   220010900,
+   220011000
+  ],
+  "meso": 84,
+  "mesoMax": 126
+ },
+ {
+  "id": 3210205,
+  "name": "Black Ratz",
+  "level": 34,
+  "hp": 1150,
+  "exp": 70,
+  "pdef": 75,
+  "mdef": 75,
+  "mapIds": [
+   221020100,
+   221020200,
+   221020300,
+   221020400,
+   221023700,
+   221023800,
+   221023900,
+   221024000,
+   221024100,
+   221024200
+  ],
+  "meso": 86,
+  "mesoMax": 126
+ },
+ {
+  "id": 3210207,
+  "name": "Tick",
+  "level": 34,
+  "hp": 1100,
+  "exp": 70,
+  "pdef": 95,
+  "mdef": 90,
+  "mapIds": [
+   220040200
+  ],
+  "meso": 84,
+  "mesoMax": 126
+ },
+ {
+  "id": 9300006,
+  "name": "Black Ratz from Another Dimension",
+  "level": 34,
+  "hp": 4300,
+  "exp": 280,
+  "pdef": 95,
+  "mdef": 95,
+  "mapIds": [],
+  "meso": 160,
+  "mesoMax": 239,
+  "mesoEst": true
+ },
+ {
+  "id": 9300170,
+  "name": "Black Ratz from Another Dimension",
+  "level": 34,
+  "hp": 4300,
+  "exp": 280,
+  "pdef": 95,
+  "mdef": 95,
+  "mapIds": [],
+  "meso": 160,
+  "mesoMax": 239,
+  "mesoEst": true
+ },
+ {
+  "id": 3110302,
+  "name": "Rumo",
+  "level": 35,
+  "hp": 1400,
+  "exp": 75,
+  "pdef": 110,
+  "mdef": 100,
+  "mapIds": [
+   261010001,
+   261010002,
+   261010003
+  ],
+  "meso": 77,
+  "mesoMax": 114
+ },
+ {
+  "id": 3230100,
+  "name": "Curse Eye",
+  "level": 35,
+  "hp": 1250,
+  "exp": 70,
+  "pdef": 45,
+  "mdef": 70,
+  "mapIds": [
+   100040102,
+   100040104,
+   105040303,
+   105040304,
+   105040305,
+   105040306,
+   101020004,
+   101020005,
+   101020009,
+   101020010,
+   105040100,
+   105040200,
+   105040301,
+   105040302
+  ],
+  "element": {
+   "poison": "strong"
+  },
+  "meso": 92,
+  "mesoMax": 138
+ },
+ {
+  "id": 3230101,
+  "name": "Jr. Wraith",
+  "level": 35,
+  "hp": 1200,
+  "exp": 70,
+  "pdef": 90,
+  "mdef": 90,
+  "mapIds": [
+   103000103,
+   103000104,
+   103000200,
+   103000201,
+   103000905
+  ],
+  "element": {
+   "fire": "weak",
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 56,
+  "mesoMax": 84
+ },
+ {
+  "id": 3230200,
+  "name": "Star Pixie",
+  "level": 35,
+  "hp": 1300,
+  "exp": 72,
+  "pdef": 100,
+  "mdef": 100,
+  "mapIds": [
+   200010000,
+   200020000,
+   200030000,
+   200040000,
+   200050000,
+   200060000
+  ],
+  "element": {
+   "holy": "strong"
+  },
+  "meso": 76,
+  "mesoMax": 114
+ },
+ {
+  "id": 3230300,
+  "name": "Jr. Boogie 1",
+  "level": 35,
+  "hp": 1700,
+  "exp": 150,
+  "pdef": 120,
+  "mdef": 155,
+  "mapIds": [
+   101040001,
+   103000905,
+   103000909,
+   105040100,
+   105040303,
+   105040304,
+   105040305
+  ],
+  "meso": 96,
+  "mesoMax": 144
+ },
+ {
+  "id": 3230301,
+  "name": "Jr. Boogie 2",
+  "level": 35,
+  "hp": 1700,
+  "exp": 150,
+  "pdef": 120,
+  "mdef": 155,
+  "mapIds": [],
+  "meso": 96,
+  "mesoMax": 144
+ },
+ {
+  "id": 3230302,
+  "name": "Bloctopus",
+  "level": 35,
+  "hp": 1300,
+  "exp": 72,
+  "pdef": 100,
+  "mdef": 130,
+  "mapIds": [
+   221020800,
+   221020900,
+   221021200,
+   221021300,
+   221021700,
+   221021800,
+   221021900,
+   221022000
+  ],
+  "meso": 76,
+  "mesoMax": 114
+ },
+ {
+  "id": 5400000,
+  "name": "Jr. Pepe",
+  "level": 35,
+  "hp": 1400,
+  "exp": 75,
+  "pdef": 110,
+  "mdef": 100,
+  "mapIds": [
+   200082000,
+   200082100,
+   211000200
+  ],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 77,
+  "mesoMax": 114
+ },
+ {
+  "id": 6130104,
+  "name": "Boogie",
+  "level": 35,
+  "hp": 14800,
+  "exp": 400,
+  "pdef": 250,
+  "mdef": 300,
+  "mapIds": [],
+  "meso": 294,
+  "mesoMax": 441,
+  "mesoEst": true
+ },
+ {
+  "id": 9300007,
+  "name": "Bloctopus from Another Dimension",
+  "level": 35,
+  "hp": 4900,
+  "exp": 288,
+  "pdef": 120,
+  "mdef": 150,
+  "mapIds": [],
+  "meso": 171,
+  "mesoMax": 257,
+  "mesoEst": true
+ },
+ {
+  "id": 9300171,
+  "name": "Bloctopus from Another Dimension",
+  "level": 35,
+  "hp": 4900,
+  "exp": 288,
+  "pdef": 120,
+  "mdef": 150,
+  "mapIds": [],
+  "meso": 171,
+  "mesoMax": 257,
+  "mesoEst": true
+ },
+ {
+  "id": 9500110,
+  "name": "Star Pixie",
+  "level": 35,
+  "hp": 1300,
+  "exp": 72,
+  "pdef": 100,
+  "mdef": 100,
+  "mapIds": [],
+  "element": {
+   "holy": "strong"
+  },
+  "meso": 76,
+  "mesoMax": 114
+ },
+ {
+  "id": 9500111,
+  "name": "Jr. Wraith",
+  "level": 35,
+  "hp": 1200,
+  "exp": 70,
+  "pdef": 90,
+  "mdef": 90,
+  "mapIds": [],
+  "element": {
+   "fire": "weak",
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 56,
+  "mesoMax": 84
+ },
+ {
+  "id": 9500112,
+  "name": "Jr. Pepe",
+  "level": 35,
+  "hp": 1400,
+  "exp": 75,
+  "pdef": 110,
+  "mdef": 100,
+  "mapIds": [],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 77,
+  "mesoMax": 114
+ },
+ {
+  "id": 9500143,
+  "name": "Coke Pig",
+  "level": 35,
+  "hp": 1400,
+  "exp": 72,
+  "pdef": 100,
+  "mdef": 130,
+  "mapIds": [],
+  "meso": 77,
+  "mesoMax": 114
+ },
+ {
+  "id": 9500157,
+  "name": "Jr. Wraith",
+  "level": 35,
+  "hp": 1200,
+  "exp": 70,
+  "pdef": 90,
+  "mdef": 90,
+  "mapIds": [],
+  "element": {
+   "fire": "weak",
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 56,
+  "mesoMax": 84
+ },
+ {
+  "id": 9600005,
+  "name": "Black Goat",
+  "level": 35,
+  "hp": 1250,
+  "exp": 71,
+  "pdef": 60,
+  "mdef": 50,
+  "mapIds": [],
+  "meso": 92,
+  "mesoMax": 138
+ },
+ {
+  "id": 3210203,
+  "name": "Panda Teddy",
+  "level": 36,
+  "hp": 1400,
+  "exp": 77,
+  "pdef": 95,
+  "mdef": 95,
+  "mapIds": [
+   220011000,
+   220020100,
+   220020200,
+   220020300,
+   220020400,
+   220020500,
+   220030200,
+   220030300,
+   220030400
+  ],
+  "meso": 98,
+  "mesoMax": 113
+ },
+ {
+  "id": 3210206,
+  "name": "Helly",
+  "level": 36,
+  "hp": 1350,
+  "exp": 77,
+  "pdef": 85,
+  "mdef": 105,
+  "mapIds": [
+   221022600,
+   221022700,
+   221023200,
+   221023300,
+   221023500,
+   221023600
+  ],
+  "meso": 98,
+  "mesoMax": 113
+ },
+ {
+  "id": 3210208,
+  "name": "Retz",
+  "level": 36,
+  "hp": 1400,
+  "exp": 78,
+  "pdef": 90,
+  "mdef": 85,
+  "mapIds": [
+   222020100,
+   222020200,
+   222020300
+  ],
+  "meso": 98,
+  "mesoMax": 113
+ },
+ {
+  "id": 3210450,
+  "name": "Scuba Pepe",
+  "level": 36,
+  "hp": 1430,
+  "exp": 80,
+  "pdef": 90,
+  "mdef": 155,
+  "mapIds": [
+   200082300,
+   230010000,
+   230010001
+  ],
+  "element": {
+   "ice": "strong",
+   "fire": "strong"
+  },
+  "meso": 76,
+  "mesoMax": 114
+ },
+ {
+  "id": 9400542,
+  "name": "Fire Tusk",
+  "level": 36,
+  "hp": 1450,
+  "exp": 85,
+  "pdef": 70,
+  "mdef": 70,
+  "mapIds": [],
+  "meso": 96,
+  "mesoMax": 143,
+  "mesoEst": true
+ },
+ {
+  "id": 9410009,
+  "name": "Yeti Doll",
+  "level": 36,
+  "hp": 1550,
+  "exp": 81,
+  "pdef": 90,
+  "mdef": 90,
+  "mapIds": [],
+  "meso": 99,
+  "mesoMax": 148,
+  "mesoEst": true
+ },
+ {
+  "id": 9410011,
+  "name": "Jr. Pepe Doll",
+  "level": 36,
+  "hp": 1400,
+  "exp": 81,
+  "pdef": 80,
+  "mdef": 85,
+  "mapIds": [],
+  "meso": 98,
+  "mesoMax": 113
+ },
+ {
+  "id": 9500113,
+  "name": "Panda Teddy",
+  "level": 36,
+  "hp": 1400,
+  "exp": 77,
+  "pdef": 95,
+  "mdef": 95,
+  "mapIds": [],
+  "meso": 98,
+  "mesoMax": 113
+ },
+ {
+  "id": 9500117,
+  "name": "Helly",
+  "level": 36,
+  "hp": 1350,
+  "exp": 77,
+  "pdef": 85,
+  "mdef": 105,
+  "mapIds": [],
+  "meso": 98,
+  "mesoMax": 113
+ },
+ {
+  "id": 3210800,
+  "name": "Lupin",
+  "level": 37,
+  "hp": 1500,
+  "exp": 77,
+  "pdef": 35,
+  "mdef": 40,
+  "mapIds": [
+   100040101,
+   100040103,
+   105040306,
+   106000130,
+   106000140,
+   106010100,
+   106010101,
+   106010103,
+   106010104,
+   107000401,
+   107000402,
+   110010000,
+   100040110,
+   110020000,
+   102020300,
+   103020100,
+   105040200,
+   105040301,
+   105040302,
+   105040303,
+   105040305
+  ],
+  "meso": 91,
+  "mesoMax": 131
+ },
+ {
+  "id": 3230102,
+  "name": "Lorang",
+  "level": 37,
+  "hp": 1950,
+  "exp": 80,
+  "pdef": 100,
+  "mdef": 200,
+  "mapIds": [
+   110010000,
+   110020000,
+   110020001,
+   110030000,
+   110030001
+  ],
+  "element": {
+   "lightning": "weak"
+  },
+  "meso": 92,
+  "mesoMax": 138
+ },
+ {
+  "id": 3230303,
+  "name": "Propelly",
+  "level": 37,
+  "hp": 1700,
+  "exp": 82,
+  "pdef": 95,
+  "mdef": 115,
+  "mapIds": [
+   221022400,
+   221022500,
+   221022600
+  ],
+  "meso": 96,
+  "mesoMax": 144
+ },
+ {
+  "id": 3230306,
+  "name": "Chronos",
+  "level": 37,
+  "hp": 1750,
+  "exp": 82,
+  "pdef": 90,
+  "mdef": 120,
+  "mapIds": [
+   220040100,
+   220040300
+  ],
+  "element": {
+   "canHeal": true
+  },
+  "meso": 96,
+  "mesoMax": 144
+ },
+ {
+  "id": 9300015,
+  "name": "Cronos",
+  "level": 37,
+  "hp": 2750,
+  "exp": 82,
+  "pdef": 90,
+  "mdef": 120,
+  "mapIds": [],
+  "meso": 132,
+  "mesoMax": 197,
+  "mesoEst": true
+ },
+ {
+  "id": 9500115,
+  "name": "Lorang",
+  "level": 37,
+  "hp": 1950,
+  "exp": 80,
+  "pdef": 100,
+  "mdef": 200,
+  "mapIds": [],
+  "element": {
+   "lightning": "weak"
+  },
+  "meso": 92,
+  "mesoMax": 138
+ },
+ {
+  "id": 9600008,
+  "name": "Black Sheep",
+  "level": 37,
+  "hp": 1500,
+  "exp": 79,
+  "pdef": 100,
+  "mdef": 115,
+  "mapIds": [],
+  "meso": 91,
+  "mesoMax": 131
+ },
+ {
+  "id": 3110303,
+  "name": "Triple Rumo",
+  "level": 38,
+  "hp": 1850,
+  "exp": 85,
+  "pdef": 105,
+  "mdef": 125,
+  "mapIds": [
+   261010002,
+   261010003
+  ],
+  "meso": 108,
+  "mesoMax": 166
+ },
+ {
+  "id": 3230103,
+  "name": "King Bloctopus",
+  "level": 38,
+  "hp": 1850,
+  "exp": 85,
+  "pdef": 120,
+  "mdef": 140,
+  "mapIds": [
+   221021200,
+   221021300
+  ],
+  "meso": 96,
+  "mesoMax": 144
+ },
+ {
+  "id": 3230304,
+  "name": "Planey",
+  "level": 38,
+  "hp": 1830,
+  "exp": 85,
+  "pdef": 105,
+  "mdef": 125,
+  "mapIds": [
+   221021100,
+   221021400,
+   221021500,
+   221022500
+  ],
+  "meso": 96,
+  "mesoMax": 138
+ },
+ {
+  "id": 3230405,
+  "name": "Jr. Seal",
+  "level": 38,
+  "hp": 1850,
+  "exp": 85,
+  "pdef": 90,
+  "mdef": 125,
+  "mapIds": [
+   230010000,
+   230010100
+  ],
+  "element": {
+   "fire": "strong"
+  },
+  "meso": 96,
+  "mesoMax": 144
+ },
+ {
+  "id": 9400515,
+  "name": "Indigo Eye",
+  "level": 38,
+  "hp": 1550,
+  "exp": 85,
+  "pdef": 50,
+  "mdef": 70,
+  "mapIds": [],
+  "meso": 100,
+  "mesoMax": 150,
+  "mesoEst": true
+ },
+ {
+  "id": 9410005,
+  "name": "Red Bubble Tea",
+  "level": 38,
+  "hp": 1900,
+  "exp": 88,
+  "pdef": 105,
+  "mdef": 120,
+  "mapIds": [],
+  "element": {
+   "ice": "weak",
+   "fire": "strong"
+  },
+  "meso": 111,
+  "mesoMax": 166,
+  "mesoEst": true
+ },
+ {
+  "id": 9410006,
+  "name": "Yellow Bubble Tea",
+  "level": 38,
+  "hp": 1900,
+  "exp": 90,
+  "pdef": 105,
+  "mdef": 120,
+  "mapIds": [],
+  "element": {
+   "poison": "weak",
+   "lightning": "strong"
+  },
+  "meso": 111,
+  "mesoMax": 166,
+  "mesoEst": true
+ },
+ {
+  "id": 9410007,
+  "name": "Green Bubble Tea",
+  "level": 38,
+  "hp": 1900,
+  "exp": 90,
+  "pdef": 105,
+  "mdef": 120,
+  "mapIds": [],
+  "element": {
+   "lightning": "weak",
+   "poison": "strong"
+  },
+  "meso": 111,
+  "mesoMax": 166,
+  "mesoEst": true
+ },
+ {
+  "id": 9420501,
+  "name": "Freezer",
+  "level": 38,
+  "hp": 1900,
+  "exp": 80,
+  "pdef": 100,
+  "mdef": 200,
+  "mapIds": [],
+  "element": {
+   "ice": "strong",
+   "fire": "strong"
+  },
+  "meso": 111,
+  "mesoMax": 166,
+  "mesoEst": true
+ },
+ {
+  "id": 9500114,
+  "name": "King Blockpus",
+  "level": 38,
+  "hp": 1850,
+  "exp": 85,
+  "pdef": 120,
+  "mdef": 140,
+  "mapIds": [],
+  "meso": 96,
+  "mesoMax": 144
+ },
+ {
+  "id": 9500145,
+  "name": "Coke Seal",
+  "level": 38,
+  "hp": 1850,
+  "exp": 87,
+  "pdef": 100,
+  "mdef": 125,
+  "mapIds": [],
+  "meso": 96,
+  "mesoMax": 144
+ },
+ {
+  "id": 9600007,
+  "name": "Plow Ox",
+  "level": 38,
+  "hp": 1800,
+  "exp": 86,
+  "pdef": 105,
+  "mdef": 120,
+  "mapIds": [],
+  "meso": 112,
+  "mesoMax": 161
+ },
+ {
+  "id": 3230305,
+  "name": "Toy Trojan",
+  "level": 39,
+  "hp": 1920,
+  "exp": 92,
+  "pdef": 110,
+  "mdef": 130,
+  "mapIds": [
+   220010000,
+   220010100,
+   220010200,
+   220010700,
+   220010800
+  ],
+  "meso": 96,
+  "mesoMax": 144
+ },
+ {
+  "id": 3230308,
+  "name": "Tweeter",
+  "level": 39,
+  "hp": 1900,
+  "exp": 85,
+  "pdef": 120,
+  "mdef": 130,
+  "mapIds": [
+   221020500,
+   221020600,
+   221021100
+  ],
+  "meso": 96,
+  "mesoMax": 143
+ },
+ {
+  "id": 9300011,
+  "name": "Toy Trojan",
+  "level": 39,
+  "hp": 1920,
+  "exp": 92,
+  "pdef": 110,
+  "mdef": 130,
+  "mapIds": [],
+  "meso": 96,
+  "mesoMax": 144
+ },
+ {
+  "id": 9300131,
+  "name": "Toy Trojan",
+  "level": 39,
+  "hp": 2300,
+  "exp": 115,
+  "pdef": 110,
+  "mdef": 100,
+  "mapIds": [],
+  "meso": 122,
+  "mesoMax": 184,
+  "mesoEst": true
+ },
+ {
+  "id": 9500118,
+  "name": "Tweeter",
+  "level": 39,
+  "hp": 1900,
+  "exp": 85,
+  "pdef": 120,
+  "mdef": 130,
+  "mapIds": [],
+  "meso": 96,
+  "mesoMax": 143
+ },
+ {
+  "id": 9500119,
+  "name": "Toy Trojan",
+  "level": 39,
+  "hp": 1920,
+  "exp": 92,
+  "pdef": 110,
+  "mdef": 130,
+  "mapIds": [],
+  "meso": 96,
+  "mesoMax": 144
+ },
+ {
+  "id": 4230100,
+  "name": "Cold Eye",
+  "level": 40,
+  "hp": 2000,
+  "exp": 85,
+  "pdef": 80,
+  "mdef": 80,
+  "mapIds": [
+   101020005,
+   105090000,
+   105090800,
+   105090100,
+   105090300,
+   105090301,
+   105090310,
+   105090400,
+   105090500,
+   105090600,
+   105090700
+  ],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 96,
+  "mesoMax": 144
+ },
+ {
+  "id": 4230101,
+  "name": "Zombie Lupin",
+  "level": 40,
+  "hp": 1800,
+  "exp": 90,
+  "pdef": 70,
+  "mdef": 70,
+  "mapIds": [
+   100040101,
+   100040102,
+   100040103,
+   100040104,
+   100040105,
+   100040106,
+   107000402,
+   107000403
+  ],
+  "element": {
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 106,
+  "mesoMax": 154
+ },
+ {
+  "id": 4230113,
+  "name": "Tick-Tock",
+  "level": 40,
+  "hp": 1900,
+  "exp": 95,
+  "pdef": 160,
+  "mdef": 170,
+  "mapIds": [
+   220040200,
+   220050100
+  ],
+  "meso": 108,
+  "mesoMax": 187
+ },
+ {
+  "id": 4230116,
+  "name": "Barnard Gray",
+  "level": 40,
+  "hp": 1930,
+  "exp": 95,
+  "pdef": 140,
+  "mdef": 160,
+  "mapIds": [
+   221040000,
+   221040100,
+   221040200,
+   221040201
+  ],
+  "meso": 108,
+  "mesoMax": 162
+ },
+ {
+  "id": 4230200,
+  "name": "Poopa",
+  "level": 40,
+  "hp": 1900,
+  "exp": 95,
+  "pdef": 130,
+  "mdef": 160,
+  "mapIds": [
+   230010000,
+   230010001
+  ],
+  "element": {
+   "poison": "weak",
+   "fire": "strong"
+  },
+  "meso": 108,
+  "mesoMax": 187
+ },
+ {
+  "id": 4230201,
+  "name": "Poison Poopa",
+  "level": 40,
+  "hp": 1910,
+  "exp": 97,
+  "pdef": 140,
+  "mdef": 100,
+  "mapIds": [
+   230010100,
+   230010200,
+   230010300
+  ],
+  "element": {
+   "fire": "strong",
+   "poison": "strong"
+  },
+  "meso": 108,
+  "mesoMax": 162
+ },
+ {
+  "id": 4230500,
+  "name": "Chipmunk",
+  "level": 40,
+  "hp": 1900,
+  "exp": 95,
+  "pdef": 135,
+  "mdef": 100,
+  "mapIds": [
+   250010000,
+   250010100
+  ],
+  "meso": 108,
+  "mesoMax": 187
+ },
+ {
+  "id": 4230600,
+  "name": "Desert Giant ",
+  "level": 40,
+  "hp": 1800,
+  "exp": 95,
+  "pdef": 160,
+  "mdef": 160,
+  "mapIds": [
+   260020400,
+   260020401
+  ],
+  "meso": 106,
+  "mesoMax": 154
+ },
+ {
+  "id": 9300009,
+  "name": "Block Golem from Another Dimension",
+  "level": 40,
+  "hp": 6500,
+  "exp": 408,
+  "pdef": 130,
+  "mdef": 110,
+  "mapIds": [],
+  "meso": 205,
+  "mesoMax": 307,
+  "mesoEst": true
+ },
+ {
+  "id": 9400011,
+  "name": "Paper Lantern Ghost",
+  "level": 40,
+  "hp": 1920,
+  "exp": 93,
+  "pdef": 140,
+  "mdef": 160,
+  "mapIds": [],
+  "element": {
+   "ice": "weak",
+   "canHeal": true,
+   "fire": "strong"
+  },
+  "meso": 95,
+  "mesoMax": 135
+ },
+ {
+  "id": 9400203,
+  "name": "Silver Slime",
+  "level": 40,
+  "hp": 800,
+  "exp": 20000,
+  "pdef": 800,
+  "mdef": 800,
+  "mapIds": [],
+  "meso": 74,
+  "mesoMax": 111,
+  "mesoEst": true
+ },
+ {
+  "id": 9400516,
+  "name": "Crystal Boar",
+  "level": 40,
+  "hp": 1900,
+  "exp": 90,
+  "pdef": 50,
+  "mdef": 45,
+  "mapIds": [],
+  "meso": 108,
+  "mesoMax": 187
+ },
+ {
+  "id": 9400517,
+  "name": "Magik Fierry A",
+  "level": 40,
+  "hp": 1930,
+  "exp": 135,
+  "pdef": 100,
+  "mdef": 110,
+  "mapIds": [],
+  "meso": 108,
+  "mesoMax": 162
+ },
+ {
+  "id": 9400563,
+  "name": "Nightmare",
+  "level": 40,
+  "hp": 1930,
+  "exp": 120,
+  "pdef": 130,
+  "mdef": 140,
+  "mapIds": [],
+  "meso": 108,
+  "mesoMax": 162
+ },
+ {
+  "id": 9400573,
+  "name": "Baby typhon",
+  "level": 40,
+  "hp": 100,
+  "exp": 10,
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "meso": 27,
+  "mesoMax": 40,
+  "mesoEst": true
+ },
+ {
+  "id": 9410003,
+  "name": "Clown Monkey",
+  "level": 40,
+  "hp": 1850,
+  "exp": 92,
+  "pdef": 140,
+  "mdef": 150,
+  "mapIds": [],
+  "meso": 63,
+  "mesoMax": 87
+ },
+ {
+  "id": 9420003,
+  "name": "Red Lizard",
+  "level": 40,
+  "hp": 1920,
+  "exp": 95,
+  "pdef": 110,
+  "mdef": 130,
+  "mapIds": [],
+  "meso": 95,
+  "mesoMax": 135
+ },
+ {
+  "id": 9500116,
+  "name": "Zombie Lupin",
+  "level": 40,
+  "hp": 1800,
+  "exp": 90,
+  "pdef": 70,
+  "mdef": 70,
+  "mapIds": [],
+  "element": {
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 106,
+  "mesoMax": 154
+ },
+ {
+  "id": 4230107,
+  "name": "Flyeye",
+  "level": 41,
+  "hp": 1600,
+  "exp": 95,
+  "pdef": 90,
+  "mdef": 110,
+  "mapIds": [
+   211041500,
+   211041600,
+   211041700,
+   211041800,
+   211041900,
+   230040410
+  ],
+  "meso": 112,
+  "mesoMax": 159
+ },
+ {
+  "id": 4230111,
+  "name": "Robo",
+  "level": 41,
+  "hp": 2000,
+  "exp": 99,
+  "pdef": 190,
+  "mdef": 175,
+  "mapIds": [
+   220020100,
+   220020400,
+   220020500,
+   220020600,
+   220030100,
+   220030300,
+   220030400
+  ],
+  "element": {
+   "ice": "strong",
+   "fire": "strong"
+  },
+  "meso": 116,
+  "mesoMax": 174
+ },
+ {
+  "id": 4230114,
+  "name": "Platoon Chronos",
+  "level": 41,
+  "hp": 2050,
+  "exp": 99,
+  "pdef": 130,
+  "mdef": 160,
+  "mapIds": [
+   220040000,
+   220050000
+  ],
+  "element": {
+   "canHeal": true
+  },
+  "meso": 116,
+  "mesoMax": 174
+ },
+ {
+  "id": 4230119,
+  "name": "Mateon",
+  "level": 41,
+  "hp": 2080,
+  "exp": 99,
+  "pdef": 120,
+  "mdef": 120,
+  "mapIds": [
+   221030000,
+   221030100,
+   221030200,
+   221030300,
+   221030301
+  ],
+  "meso": 119,
+  "mesoMax": 169
+ },
+ {
+  "id": 4230501,
+  "name": "Red Porky",
+  "level": 41,
+  "hp": 2000,
+  "exp": 99,
+  "pdef": 120,
+  "mdef": 150,
+  "mapIds": [
+   250010000,
+   250010100,
+   250010200
+  ],
+  "meso": 116,
+  "mesoMax": 174
+ },
+ {
+  "id": 9300016,
+  "name": "Platoon Cronos",
+  "level": 41,
+  "hp": 3050,
+  "exp": 99,
+  "pdef": 130,
+  "mdef": 160,
+  "mapIds": [],
+  "meso": 143,
+  "mesoMax": 214,
+  "mesoEst": true
+ },
+ {
+  "id": 9400217,
+  "name": "Flyeye(JP)",
+  "level": 41,
+  "hp": 1600,
+  "exp": 95,
+  "pdef": 100,
+  "mdef": 110,
+  "mapIds": [],
+  "meso": 112,
+  "mesoMax": 159
+ },
+ {
+  "id": 9400543,
+  "name": "Electrophant",
+  "level": 41,
+  "hp": 1600,
+  "exp": 95,
+  "pdef": 90,
+  "mdef": 110,
+  "mapIds": [],
+  "meso": 112,
+  "mesoMax": 159
+ },
+ {
+  "id": 4090000,
+  "name": "Iron Hook",
+  "level": 42,
+  "hp": 2200,
+  "exp": 99,
+  "pdef": 400,
+  "mdef": 400,
+  "mapIds": [],
+  "meso": 120,
+  "mesoMax": 180
+ },
+ {
+  "id": 4110300,
+  "name": "Iron Mutae",
+  "level": 42,
+  "hp": 2400,
+  "exp": 102,
+  "pdef": 110,
+  "mdef": 90,
+  "mapIds": [
+   261020600,
+   261020700
+  ],
+  "meso": 141,
+  "mesoMax": 189
+ },
+ {
+  "id": 4230103,
+  "name": "Iron Hog",
+  "level": 42,
+  "hp": 2200,
+  "exp": 99,
+  "pdef": 400,
+  "mdef": 400,
+  "mapIds": [
+   100000003,
+   100000004,
+   100000005,
+   103020000,
+   106010000,
+   106010100
+  ],
+  "meso": 120,
+  "mesoMax": 180
+ },
+ {
+  "id": 4230105,
+  "name": "Nependeath",
+  "level": 42,
+  "hp": 2100,
+  "exp": 99,
+  "pdef": 120,
+  "mdef": 120,
+  "mapIds": [
+   200030000,
+   200040001
+  ],
+  "element": {
+   "fire": "weak"
+  },
+  "meso": 120,
+  "mesoMax": 180
+ },
+ {
+  "id": 4230109,
+  "name": "Block Golem",
+  "level": 42,
+  "hp": 2400,
+  "exp": 102,
+  "pdef": 110,
+  "mdef": 90,
+  "mapIds": [
+   221020300,
+   221020400,
+   221020700,
+   221020701,
+   221020800,
+   221020900
+  ],
+  "element": {
+   "fire": "weak",
+   "ice": "strong",
+   "lightning": "strong"
+  },
+  "meso": 141,
+  "mesoMax": 189
+ },
+ {
+  "id": 4230117,
+  "name": "Zeta Gray",
+  "level": 42,
+  "hp": 2300,
+  "exp": 102,
+  "pdef": 160,
+  "mdef": 180,
+  "mapIds": [
+   221040100,
+   221040200,
+   221040300
+  ],
+  "meso": 129,
+  "mesoMax": 192
+ },
+ {
+  "id": 4230122,
+  "name": "Nependeath",
+  "level": 42,
+  "hp": 2100,
+  "exp": 99,
+  "pdef": 120,
+  "mdef": 120,
+  "mapIds": [],
+  "element": {
+   "fire": "weak"
+  },
+  "meso": 120,
+  "mesoMax": 180
+ },
+ {
+  "id": 4230124,
+  "name": "Freezer",
+  "level": 42,
+  "hp": 2300,
+  "exp": 102,
+  "pdef": 120,
+  "mdef": 160,
+  "mapIds": [
+   230010200,
+   230010400
+  ],
+  "element": {
+   "ice": "strong",
+   "fire": "strong"
+  },
+  "meso": 129,
+  "mesoMax": 192
+ },
+ {
+  "id": 4250000,
+  "name": "Moss Snail",
+  "level": 42,
+  "hp": 2400,
+  "exp": 102,
+  "pdef": 110,
+  "mdef": 100,
+  "mapIds": [],
+  "meso": 141,
+  "mesoMax": 189
+ },
+ {
+  "id": 9300060,
+  "name": "Iron Hog",
+  "level": 42,
+  "hp": 2200,
+  "exp": 99,
+  "pdef": 60,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 120,
+  "mesoMax": 180
+ },
+ {
+  "id": 9400216,
+  "name": "Zeta Gray(JP)",
+  "level": 42,
+  "hp": 2300,
+  "exp": 102,
+  "pdef": 165,
+  "mdef": 180,
+  "mapIds": [],
+  "meso": 129,
+  "mesoMax": 192
+ },
+ {
+  "id": 9410002,
+  "name": "Angry Stray Dog",
+  "level": 42,
+  "hp": 2300,
+  "exp": 105,
+  "pdef": 160,
+  "mdef": 110,
+  "mapIds": [],
+  "meso": 129,
+  "mesoMax": 192
+ },
+ {
+  "id": 9500146,
+  "name": "Play Seal",
+  "level": 42,
+  "hp": 2250,
+  "exp": 100,
+  "pdef": 120,
+  "mdef": 130,
+  "mapIds": [],
+  "meso": 124,
+  "mesoMax": 186,
+  "mesoEst": true
+ },
+ {
+  "id": 4230108,
+  "name": "Jr. Cerebes",
+  "level": 43,
+  "hp": 2300,
+  "exp": 102,
+  "pdef": 290,
+  "mdef": 150,
+  "mapIds": [
+   211042000,
+   211042100,
+   211042101,
+   211042200
+  ],
+  "meso": 139,
+  "mesoMax": 191
+ },
+ {
+  "id": 4230123,
+  "name": "Sparker",
+  "level": 43,
+  "hp": 2400,
+  "exp": 103,
+  "pdef": 140,
+  "mdef": 172,
+  "mapIds": [
+   230010300,
+   230010400
+  ],
+  "element": {
+   "lightning": "strong",
+   "fire": "strong"
+  },
+  "meso": 132,
+  "mesoMax": 198
+ },
+ {
+  "id": 4230502,
+  "name": "Black Porky",
+  "level": 43,
+  "hp": 2400,
+  "exp": 103,
+  "pdef": 130,
+  "mdef": 160,
+  "mapIds": [
+   250010100,
+   250010200,
+   250010300
+  ],
+  "meso": 130,
+  "mesoMax": 200
+ },
+ {
+  "id": 9300008,
+  "name": "Shadow Eye from Another Dimension",
+  "level": 43,
+  "hp": 7100,
+  "exp": 340,
+  "pdef": 470,
+  "mdef": 70,
+  "mapIds": [],
+  "meso": 218,
+  "mesoMax": 327,
+  "mesoEst": true
+ },
+ {
+  "id": 9300014,
+  "name": "Dark Eye from Another Dimension",
+  "level": 43,
+  "hp": 6500,
+  "exp": 340,
+  "pdef": 70,
+  "mdef": 470,
+  "mapIds": [],
+  "meso": 209,
+  "mesoMax": 314,
+  "mesoEst": true
+ },
+ {
+  "id": 9300084,
+  "name": "Deathly Fear",
+  "level": 43,
+  "hp": 6500,
+  "exp": 340,
+  "pdef": 70,
+  "mdef": 470,
+  "mapIds": [],
+  "meso": 209,
+  "mesoMax": 314,
+  "mesoEst": true
+ },
+ {
+  "id": 9420508,
+  "name": "Octobunny",
+  "level": 43,
+  "hp": 2150,
+  "exp": 120,
+  "pdef": 400,
+  "mdef": 400,
+  "mapIds": [],
+  "meso": 122,
+  "mesoMax": 183,
+  "mesoEst": true
+ },
+ {
+  "id": 4230112,
+  "name": "Master Robo",
+  "level": 44,
+  "hp": 2450,
+  "exp": 105,
+  "pdef": 210,
+  "mdef": 195,
+  "mapIds": [
+   220020000,
+   220020100,
+   220030000,
+   220030100
+  ],
+  "meso": 140,
+  "mesoMax": 210
+ },
+ {
+  "id": 4230120,
+  "name": "Plateon",
+  "level": 44,
+  "hp": 2480,
+  "exp": 105,
+  "pdef": 140,
+  "mdef": 190,
+  "mapIds": [
+   221030100,
+   221030200,
+   221030300,
+   221030400,
+   221030401,
+   221030500,
+   221030600,
+   221030601
+  ],
+  "meso": 145,
+  "mesoMax": 204
+ },
+ {
+  "id": 4230125,
+  "name": "Skeledog",
+  "level": 44,
+  "hp": 2450,
+  "exp": 107,
+  "pdef": 170,
+  "mdef": 190,
+  "mapIds": [
+   101030105,
+   101030106,
+   101030107
+  ],
+  "element": {
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 140,
+  "mesoMax": 210
+ },
+ {
+  "id": 9400546,
+  "name": "I.AM.ROBOT",
+  "level": 44,
+  "hp": 2490,
+  "exp": 120,
+  "pdef": 150,
+  "mdef": 195,
+  "mapIds": [],
+  "meso": 132,
+  "mesoMax": 198,
+  "mesoEst": true
+ },
+ {
+  "id": 4110301,
+  "name": "Reinforced Iron Mutae",
+  "level": 45,
+  "hp": 2550,
+  "exp": 110,
+  "pdef": 150,
+  "mdef": 160,
+  "mapIds": [
+   261020700
+  ],
+  "meso": 165,
+  "mesoMax": 243
+ },
+ {
+  "id": 4130100,
+  "name": "Copper Drake",
+  "level": 45,
+  "hp": 2700,
+  "exp": 105,
+  "pdef": 100,
+  "mdef": 100,
+  "mapIds": [
+   101030406,
+   106000001,
+   106000002
+  ],
+  "meso": 160,
+  "mesoMax": 240
+ },
+ {
+  "id": 4230106,
+  "name": "Lunar Pixie",
+  "level": 45,
+  "hp": 2500,
+  "exp": 105,
+  "pdef": 145,
+  "mdef": 160,
+  "mapIds": [
+   200020000,
+   200030000,
+   200040000,
+   200050000,
+   200060000,
+   200070000,
+   200080000
+  ],
+  "meso": 144,
+  "mesoMax": 216
+ },
+ {
+  "id": 4230110,
+  "name": "King Block Golem",
+  "level": 45,
+  "hp": 2600,
+  "exp": 110,
+  "pdef": 130,
+  "mdef": 110,
+  "mapIds": [
+   221020400,
+   221020700,
+   221020701
+  ],
+  "meso": 164,
+  "mesoMax": 246
+ },
+ {
+  "id": 4230118,
+  "name": "Ultra Gray",
+  "level": 45,
+  "hp": 2550,
+  "exp": 110,
+  "pdef": 180,
+  "mdef": 200,
+  "mapIds": [
+   221040300,
+   221040400
+  ],
+  "element": {
+   "lightning": "strong"
+  },
+  "meso": 165,
+  "mesoMax": 243
+ },
+ {
+  "id": 4230300,
+  "name": "Moon Bunny",
+  "level": 45,
+  "hp": 2600,
+  "exp": 110,
+  "pdef": 100,
+  "mdef": 180,
+  "mapIds": [
+   222010000,
+   222010001,
+   222010002
+  ],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 164,
+  "mesoMax": 246
+ },
+ {
+  "id": 4230400,
+  "name": "Iron Boar",
+  "level": 45,
+  "hp": 2650,
+  "exp": 115,
+  "pdef": 350,
+  "mdef": 350,
+  "mapIds": [
+   101040003
+  ],
+  "meso": 160,
+  "mesoMax": 240
+ },
+ {
+  "id": 4230503,
+  "name": "Blue Flower Serpent",
+  "level": 45,
+  "hp": 2550,
+  "exp": 110,
+  "pdef": 170,
+  "mdef": 150,
+  "mapIds": [
+   250010300,
+   250010400
+  ],
+  "meso": 139,
+  "mesoMax": 214
+ },
+ {
+  "id": 4230504,
+  "name": "Red Flower Serpent",
+  "level": 45,
+  "hp": 2550,
+  "exp": 110,
+  "pdef": 150,
+  "mdef": 160,
+  "mapIds": [
+   250010300,
+   250010400
+  ],
+  "meso": 165,
+  "mesoMax": 243
+ },
+ {
+  "id": 9400004,
+  "name": "Big Cloud Fox",
+  "level": 45,
+  "hp": 2600,
+  "exp": 110,
+  "pdef": 125,
+  "mdef": 175,
+  "mapIds": [],
+  "meso": 164,
+  "mesoMax": 246
+ },
+ {
+  "id": 9400007,
+  "name": "Green Boogie",
+  "level": 45,
+  "hp": 2900,
+  "exp": 120,
+  "pdef": 100,
+  "mdef": 225,
+  "mapIds": [],
+  "meso": 143,
+  "mesoMax": 214,
+  "mesoEst": true
+ },
+ {
+  "id": 9400100,
+  "name": "Extra A",
+  "level": 45,
+  "hp": 2800,
+  "exp": 130,
+  "pdef": 145,
+  "mdef": 125,
+  "mapIds": [],
+  "meso": 64,
+  "mesoMax": 96
+ },
+ {
+  "id": 9400215,
+  "name": "Ultra Gray(JP)",
+  "level": 45,
+  "hp": 2550,
+  "exp": 110,
+  "pdef": 185,
+  "mdef": 200,
+  "mapIds": [],
+  "meso": 165,
+  "mesoMax": 243
+ },
+ {
+  "id": 9400583,
+  "name": "Leprechaun",
+  "level": 45,
+  "hp": 2800,
+  "exp": 135,
+  "pdef": 150,
+  "mdef": 160,
+  "mapIds": [],
+  "meso": 64,
+  "mesoMax": 96
+ },
+ {
+  "id": 9500120,
+  "name": "King Block Golem",
+  "level": 45,
+  "hp": 2600,
+  "exp": 110,
+  "pdef": 130,
+  "mdef": 110,
+  "mapIds": [],
+  "meso": 164,
+  "mesoMax": 246
+ },
+ {
+  "id": 9500148,
+  "name": "Igloo Turtle",
+  "level": 45,
+  "hp": 2600,
+  "exp": 110,
+  "pdef": 130,
+  "mdef": 130,
+  "mapIds": [],
+  "meso": 164,
+  "mesoMax": 246
+ },
+ {
+  "id": 4130101,
+  "name": "Tortie",
+  "level": 46,
+  "hp": 2550,
+  "exp": 110,
+  "pdef": 300,
+  "mdef": 300,
+  "mapIds": [
+   110030001,
+   110040000
+  ],
+  "meso": 168,
+  "mesoMax": 252
+ },
+ {
+  "id": 4230115,
+  "name": "Master Chronos",
+  "level": 46,
+  "hp": 2600,
+  "exp": 115,
+  "pdef": 170,
+  "mdef": 200,
+  "mapIds": [
+   220040400,
+   220050200
+  ],
+  "element": {
+   "canHeal": true
+  },
+  "meso": 167,
+  "mesoMax": 246
+ },
+ {
+  "id": 4230121,
+  "name": "Mecateon",
+  "level": 46,
+  "hp": 2600,
+  "exp": 110,
+  "pdef": 160,
+  "mdef": 210,
+  "mapIds": [
+   221030300,
+   221030400,
+   221030500,
+   221030501,
+   221030600,
+   221030601
+  ],
+  "meso": 167,
+  "mesoMax": 246
+ },
+ {
+  "id": 4250001,
+  "name": "Lord Tree",
+  "level": 46,
+  "hp": 2600,
+  "exp": 112,
+  "pdef": 300,
+  "mdef": 300,
+  "mapIds": [],
+  "meso": 167,
+  "mesoMax": 246
+ },
+ {
+  "id": 9300017,
+  "name": "Master Cronos",
+  "level": 46,
+  "hp": 3600,
+  "exp": 115,
+  "pdef": 170,
+  "mdef": 200,
+  "mapIds": [],
+  "meso": 160,
+  "mesoMax": 240,
+  "mesoEst": true
+ },
+ {
+  "id": 9400214,
+  "name": "Master Chronos(JP)",
+  "level": 46,
+  "hp": 2600,
+  "exp": 115,
+  "pdef": 175,
+  "mdef": 200,
+  "mapIds": [],
+  "meso": 167,
+  "mesoMax": 246
+ },
+ {
+  "id": 4110302,
+  "name": "Mithril  mutae",
+  "level": 47,
+  "hp": 2750,
+  "exp": 117,
+  "pdef": 155,
+  "mdef": 160,
+  "mapIds": [
+   261020100,
+   261020200
+  ],
+  "meso": 172,
+  "mesoMax": 258
+ },
+ {
+  "id": 4130102,
+  "name": "Dark Nependeath",
+  "level": 47,
+  "hp": 2700,
+  "exp": 115,
+  "pdef": 170,
+  "mdef": 220,
+  "mapIds": [
+   200040001,
+   200060000
+  ],
+  "element": {
+   "holy": "weak"
+  },
+  "meso": 172,
+  "mesoMax": 258
+ },
+ {
+  "id": 4130104,
+  "name": "Dark Nependeath",
+  "level": 47,
+  "hp": 2700,
+  "exp": 115,
+  "pdef": 170,
+  "mdef": 220,
+  "mapIds": [],
+  "element": {
+   "holy": "weak"
+  },
+  "meso": 172,
+  "mesoMax": 258
+ },
+ {
+  "id": 4230126,
+  "name": "Mummydog",
+  "level": 47,
+  "hp": 2750,
+  "exp": 117,
+  "pdef": 175,
+  "mdef": 195,
+  "mapIds": [
+   101030105,
+   101030106,
+   101030107
+  ],
+  "element": {
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 172,
+  "mesoMax": 258
+ },
+ {
+  "id": 4230505,
+  "name": "Jar",
+  "level": 47,
+  "hp": 2700,
+  "exp": 117,
+  "pdef": 155,
+  "mdef": 160,
+  "mapIds": [
+   251010000,
+   251010100
+  ],
+  "meso": 172,
+  "mesoMax": 258
+ },
+ {
+  "id": 9300144,
+  "name": "Reinforced Mithril Mutae",
+  "level": 47,
+  "hp": 23000,
+  "exp": 300,
+  "pdef": 290,
+  "mdef": 300,
+  "mapIds": [],
+  "meso": 397,
+  "mesoMax": 596,
+  "mesoEst": true
+ },
+ {
+  "id": 9400101,
+  "name": "Extra B",
+  "level": 47,
+  "hp": 2800,
+  "exp": 139,
+  "pdef": 140,
+  "mdef": 110,
+  "mapIds": [],
+  "meso": 80,
+  "mesoMax": 132
+ },
+ {
+  "id": 9410004,
+  "name": "Biker Monkey",
+  "level": 47,
+  "hp": 3100,
+  "exp": 119,
+  "pdef": 180,
+  "mdef": 200,
+  "mapIds": [],
+  "meso": 115,
+  "mesoMax": 115
+ },
+ {
+  "id": 4230102,
+  "name": "Wraith",
+  "level": 48,
+  "hp": 2800,
+  "exp": 120,
+  "pdef": 180,
+  "mdef": 180,
+  "mapIds": [
+   103000104,
+   103000105,
+   103000201,
+   103000202,
+   103000909
+  ],
+  "element": {
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 176,
+  "mesoMax": 264
+ },
+ {
+  "id": 4230104,
+  "name": "Clang",
+  "level": 48,
+  "hp": 3000,
+  "exp": 128,
+  "pdef": 120,
+  "mdef": 150,
+  "mapIds": [
+   110030000,
+   110030001,
+   110040000
+  ],
+  "element": {
+   "lightning": "weak"
+  },
+  "meso": 176,
+  "mesoMax": 264
+ },
+ {
+  "id": 4230506,
+  "name": "Ginseng Jar",
+  "level": 48,
+  "hp": 2800,
+  "exp": 123,
+  "pdef": 165,
+  "mdef": 170,
+  "mapIds": [
+   251010000,
+   251010100,
+   251010101,
+   251010102
+  ],
+  "meso": 176,
+  "mesoMax": 264
+ },
+ {
+  "id": 9420507,
+  "name": "Trucker",
+  "level": 48,
+  "hp": 3000,
+  "exp": 160,
+  "pdef": 120,
+  "mdef": 150,
+  "mapIds": [],
+  "meso": 176,
+  "mesoMax": 264
+ },
+ {
+  "id": 9500121,
+  "name": "Wraith",
+  "level": 48,
+  "hp": 2800,
+  "exp": 120,
+  "pdef": 180,
+  "mdef": 180,
+  "mapIds": [],
+  "element": {
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 176,
+  "mesoMax": 264
+ },
+ {
+  "id": 9500156,
+  "name": "Wraith",
+  "level": 48,
+  "hp": 2800,
+  "exp": 120,
+  "pdef": 180,
+  "mdef": 180,
+  "mapIds": [],
+  "element": {
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 176,
+  "mesoMax": 264
+ },
+ {
+  "id": 4240000,
+  "name": "Chief Gray",
+  "level": 49,
+  "hp": 9000,
+  "exp": 580,
+  "pdef": 140,
+  "mdef": 250,
+  "mapIds": [
+   221040201,
+   221040300,
+   221040400
+  ],
+  "element": {
+   "ice": "strong",
+   "lightning": "strong",
+   "fire": "strong",
+   "holy": "strong"
+  },
+  "meso": 255,
+  "mesoMax": 382,
+  "mesoEst": true
+ },
+ {
+  "id": 9500122,
+  "name": "Chief Gray",
+  "level": 49,
+  "hp": 9000,
+  "exp": 580,
+  "pdef": 140,
+  "mdef": 250,
+  "mapIds": [],
+  "element": {
+   "ice": "strong",
+   "lightning": "strong",
+   "fire": "strong",
+   "holy": "strong"
+  },
+  "meso": 255,
+  "mesoMax": 382,
+  "mesoEst": true
+ },
+ {
+  "id": 5100000,
+  "name": "Jr. Yeti",
+  "level": 50,
+  "hp": 3700,
+  "exp": 135,
+  "pdef": 170,
+  "mdef": 180,
+  "mapIds": [
+   211010000,
+   211020000,
+   211040100,
+   211040101,
+   211040300
+  ],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 200,
+  "mesoMax": 300
+ },
+ {
+  "id": 5100003,
+  "name": "Hodori",
+  "level": 50,
+  "hp": 3800,
+  "exp": 140,
+  "pdef": 150,
+  "mdef": 180,
+  "mapIds": [
+   222010001,
+   222010002,
+   222010100,
+   222010101,
+   222010102,
+   222010200
+  ],
+  "meso": 200,
+  "mesoMax": 300
+ },
+ {
+  "id": 5110300,
+  "name": "Reinforced Mithril Mutae ",
+  "level": 50,
+  "hp": 3000,
+  "exp": 135,
+  "pdef": 170,
+  "mdef": 200,
+  "mapIds": [
+   261020100
+  ],
+  "meso": 150,
+  "mesoMax": 225,
+  "mesoEst": true
+ },
+ {
+  "id": 5130100,
+  "name": "Drake",
+  "level": 50,
+  "hp": 3200,
+  "exp": 135,
+  "pdef": 110,
+  "mdef": 150,
+  "mapIds": [
+   105080000,
+   105090000,
+   105090100,
+   105090300,
+   105090310
+  ],
+  "meso": 200,
+  "mesoMax": 300
+ },
+ {
+  "id": 9200018,
+  "name": "Jr. Yetti",
+  "level": 50,
+  "hp": 3700,
+  "exp": 135,
+  "pdef": 170,
+  "mdef": 180,
+  "mapIds": [],
+  "meso": 200,
+  "mesoMax": 300
+ },
+ {
+  "id": 9400102,
+  "name": "Extra C",
+  "level": 50,
+  "hp": 3100,
+  "exp": 148,
+  "pdef": 185,
+  "mdef": 170,
+  "mapIds": [],
+  "meso": 116,
+  "mesoMax": 174
+ },
+ {
+  "id": 9400114,
+  "name": "Slot Machine",
+  "level": 50,
+  "hp": 50000,
+  "exp": 1500,
+  "pdef": 50,
+  "mdef": 10,
+  "mapIds": [],
+  "meso": 591,
+  "mesoMax": 886,
+  "mesoEst": true
+ },
+ {
+  "id": 9400544,
+  "name": "Gryphon",
+  "level": 50,
+  "hp": 3300,
+  "exp": 220,
+  "pdef": 155,
+  "mdef": 170,
+  "mapIds": [],
+  "meso": 157,
+  "mesoMax": 236,
+  "mesoEst": true
+ },
+ {
+  "id": 9400559,
+  "name": "Sophilia Doll Ground",
+  "level": 50,
+  "hp": 2000,
+  "exp": 55,
+  "pdef": 170,
+  "mdef": 170,
+  "mapIds": [],
+  "meso": 123,
+  "mesoMax": 185,
+  "mesoEst": true
+ },
+ {
+  "id": 9400560,
+  "name": "Sophilia Doll",
+  "level": 50,
+  "hp": 1800,
+  "exp": 115,
+  "pdef": 170,
+  "mdef": 170,
+  "mapIds": [],
+  "meso": 117,
+  "mesoMax": 175,
+  "mesoEst": true
+ },
+ {
+  "id": 9400587,
+  "name": "Phantom Tree",
+  "level": 50,
+  "hp": 3500,
+  "exp": 122,
+  "pdef": 150,
+  "mdef": 200,
+  "mapIds": [],
+  "meso": 162,
+  "mesoMax": 242,
+  "mesoEst": true
+ },
+ {
+  "id": 9400588,
+  "name": "Phantom Tree",
+  "level": 50,
+  "hp": 3500,
+  "exp": 122,
+  "pdef": 150,
+  "mdef": 200,
+  "mapIds": [],
+  "meso": 162,
+  "mesoMax": 242,
+  "mesoEst": true
+ },
+ {
+  "id": 9410008,
+  "name": "Yeti UFO Catcher",
+  "level": 50,
+  "hp": 3800,
+  "exp": 150,
+  "pdef": 160,
+  "mdef": 210,
+  "mapIds": [],
+  "meso": 200,
+  "mesoMax": 300
+ },
+ {
+  "id": 9410010,
+  "name": "Jr. Pepe UFO Catcher",
+  "level": 50,
+  "hp": 3800,
+  "exp": 152,
+  "pdef": 160,
+  "mdef": 210,
+  "mapIds": [],
+  "meso": 169,
+  "mesoMax": 260
+ },
+ {
+  "id": 9420504,
+  "name": "Tippo Red",
+  "level": 50,
+  "hp": 2900,
+  "exp": 130,
+  "pdef": 180,
+  "mdef": 180,
+  "mapIds": [],
+  "meso": 147,
+  "mesoMax": 221,
+  "mesoEst": true
+ },
+ {
+  "id": 9500149,
+  "name": "Coke Golem",
+  "level": 50,
+  "hp": 3600,
+  "exp": 136,
+  "pdef": 170,
+  "mdef": 180,
+  "mapIds": [],
+  "meso": 164,
+  "mesoMax": 246,
+  "mesoEst": true
+ },
+ {
+  "id": 5100002,
+  "name": "Firebomb",
+  "level": 51,
+  "hp": 3600,
+  "exp": 142,
+  "pdef": 255,
+  "mdef": 205,
+  "mapIds": [
+   211042000,
+   211042200,
+   280020000
+  ],
+  "element": {
+   "ice": "weak",
+   "fire": "strong"
+  },
+  "meso": 220,
+  "mesoMax": 349
+ },
+ {
+  "id": 5250001,
+  "name": "Stone Bug",
+  "level": 51,
+  "hp": 3600,
+  "exp": 142,
+  "pdef": 255,
+  "mdef": 200,
+  "mapIds": [],
+  "meso": 220,
+  "mesoMax": 349
+ },
+ {
+  "id": 9300051,
+  "name": "Jr. Cellion in Tower of Goddess",
+  "level": 51,
+  "hp": 6400,
+  "exp": 305,
+  "pdef": 165,
+  "mdef": 110,
+  "mapIds": [],
+  "meso": 218,
+  "mesoMax": 327,
+  "mesoEst": true
+ },
+ {
+  "id": 9300052,
+  "name": "Jr. Lioner in Tower of Goddess",
+  "level": 51,
+  "hp": 6400,
+  "exp": 305,
+  "pdef": 165,
+  "mdef": 110,
+  "mapIds": [],
+  "meso": 218,
+  "mesoMax": 327,
+  "mesoEst": true
+ },
+ {
+  "id": 9300053,
+  "name": "Jr. Grupin in Tower of Goddess",
+  "level": 51,
+  "hp": 6400,
+  "exp": 305,
+  "pdef": 165,
+  "mdef": 110,
+  "mapIds": [],
+  "meso": 218,
+  "mesoMax": 327,
+  "mesoEst": true
+ },
+ {
+  "id": 5120000,
+  "name": "Luster Pixie",
+  "level": 52,
+  "hp": 4000,
+  "exp": 155,
+  "pdef": 125,
+  "mdef": 265,
+  "mapIds": [
+   200070000,
+   200080000
+  ],
+  "element": {
+   "ice": "strong",
+   "lightning": "strong",
+   "fire": "strong",
+   "holy": "strong"
+  },
+  "meso": 224,
+  "mesoMax": 336
+ },
+ {
+  "id": 5130103,
+  "name": "Croco",
+  "level": 52,
+  "hp": 3800,
+  "exp": 170,
+  "pdef": 120,
+  "mdef": 80,
+  "mapIds": [
+   107000300,
+   107000400
+  ],
+  "meso": 224,
+  "mesoMax": 336
+ },
+ {
+  "id": 5100005,
+  "name": "Hogul",
+  "level": 53,
+  "hp": 4500,
+  "exp": 165,
+  "pdef": 185,
+  "mdef": 215,
+  "mapIds": [
+   222010100,
+   222010101,
+   222010102,
+   222010200,
+   222010201
+  ],
+  "element": {
+   "ice": "weak",
+   "fire": "strong"
+  },
+  "meso": 417,
+  "mesoMax": 548
+ },
+ {
+  "id": 5120001,
+  "name": "Cellion",
+  "level": 53,
+  "hp": 4200,
+  "exp": 160,
+  "pdef": 170,
+  "mdef": 210,
+  "mapIds": [
+   200010111,
+   200010200
+  ],
+  "element": {
+   "ice": "weak",
+   "fire": "strong"
+  },
+  "meso": 244,
+  "mesoMax": 339
+ },
+ {
+  "id": 5120002,
+  "name": "Lioner",
+  "level": 53,
+  "hp": 4200,
+  "exp": 160,
+  "pdef": 170,
+  "mdef": 210,
+  "mapIds": [
+   200010121,
+   200010200
+  ],
+  "element": {
+   "ice": "weak",
+   "lightning": "strong"
+  },
+  "meso": 244,
+  "mesoMax": 339
+ },
+ {
+  "id": 5120003,
+  "name": "Grupin",
+  "level": 53,
+  "hp": 4200,
+  "exp": 160,
+  "pdef": 170,
+  "mdef": 210,
+  "mapIds": [
+   200010131,
+   200010200
+  ],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 244,
+  "mesoMax": 339
+ },
+ {
+  "id": 5120501,
+  "name": "Bellflower Root",
+  "level": 53,
+  "hp": 4200,
+  "exp": 160,
+  "pdef": 170,
+  "mdef": 210,
+  "mapIds": [
+   251010101,
+   251010102,
+   251010200,
+   251010300
+  ],
+  "meso": 244,
+  "mesoMax": 339
+ },
+ {
+  "id": 9300046,
+  "name": "Star Pixie in Tower of Goddess",
+  "level": 53,
+  "hp": 6300,
+  "exp": 320,
+  "pdef": 170,
+  "mdef": 120,
+  "mapIds": [],
+  "meso": 219,
+  "mesoMax": 328,
+  "mesoEst": true
+ },
+ {
+  "id": 9420505,
+  "name": "Tippo Blue",
+  "level": 53,
+  "hp": 3200,
+  "exp": 140,
+  "pdef": 110,
+  "mdef": 150,
+  "mapIds": [],
+  "meso": 157,
+  "mesoMax": 236,
+  "mesoEst": true
+ },
+ {
+  "id": 5110301,
+  "name": "Roid ",
+  "level": 54,
+  "hp": 4400,
+  "exp": 168,
+  "pdef": 180,
+  "mdef": 215,
+  "mapIds": [
+   261020300,
+   261020400
+  ],
+  "meso": 185,
+  "mesoMax": 277,
+  "mesoEst": true
+ },
+ {
+  "id": 5120502,
+  "name": "Sr. Bellflower Root",
+  "level": 54,
+  "hp": 4400,
+  "exp": 168,
+  "pdef": 180,
+  "mdef": 215,
+  "mapIds": [
+   251010200,
+   251010300
+  ],
+  "meso": 185,
+  "mesoMax": 277,
+  "mesoEst": true
+ },
+ {
+  "id": 9300004,
+  "name": "Mimic",
+  "level": 54,
+  "hp": 4100,
+  "exp": 165,
+  "pdef": 275,
+  "mdef": 215,
+  "mapIds": [],
+  "meso": 179,
+  "mesoMax": 268,
+  "mesoEst": true
+ },
+ {
+  "id": 9300040,
+  "name": "Cellion in Tower of Goddess",
+  "level": 54,
+  "hp": 4400,
+  "exp": 170,
+  "pdef": 180,
+  "mdef": 130,
+  "mapIds": [],
+  "meso": 185,
+  "mesoMax": 277,
+  "mesoEst": true
+ },
+ {
+  "id": 9300045,
+  "name": "Lunar Pixie in Tower of Goddess",
+  "level": 54,
+  "hp": 6600,
+  "exp": 325,
+  "pdef": 175,
+  "mdef": 140,
+  "mapIds": [],
+  "meso": 225,
+  "mesoMax": 338,
+  "mesoEst": true
+ },
+ {
+  "id": 9300057,
+  "name": "Cellion in Tower of Goddess",
+  "level": 54,
+  "hp": 4400,
+  "exp": 170,
+  "pdef": 180,
+  "mdef": 130,
+  "mapIds": [],
+  "meso": 185,
+  "mesoMax": 277,
+  "mesoEst": true
+ },
+ {
+  "id": 9400240,
+  "name": "Roid ",
+  "level": 54,
+  "hp": 4400,
+  "exp": 168,
+  "pdef": 180,
+  "mdef": 215,
+  "mapIds": [],
+  "meso": 185,
+  "mesoMax": 277,
+  "mesoEst": true
+ },
+ {
+  "id": 9400249,
+  "name": "Roid ",
+  "level": 54,
+  "hp": 4400,
+  "exp": 168,
+  "pdef": 180,
+  "mdef": 215,
+  "mapIds": [],
+  "meso": 185,
+  "mesoMax": 277,
+  "mesoEst": true
+ },
+ {
+  "id": 5120506,
+  "name": "The Book Ghost",
+  "level": 55,
+  "hp": 4500,
+  "exp": 175,
+  "pdef": 150,
+  "mdef": 220,
+  "mapIds": [
+   250010501,
+   250010502,
+   250010503
+  ],
+  "meso": 217,
+  "mesoMax": 334
+ },
+ {
+  "id": 5130101,
+  "name": "Stone Golem",
+  "level": 55,
+  "hp": 4000,
+  "exp": 170,
+  "pdef": 130,
+  "mdef": 100,
+  "mapIds": [
+   106010100,
+   106010101,
+   106010102,
+   106010103,
+   106010104
+  ],
+  "meso": 256,
+  "mesoMax": 384
+ },
+ {
+  "id": 5130104,
+  "name": "Hector",
+  "level": 55,
+  "hp": 4600,
+  "exp": 170,
+  "pdef": 120,
+  "mdef": 120,
+  "mapIds": [
+   211010000,
+   211020000,
+   211030000,
+   211040000,
+   211040500,
+   211040600,
+   211050000
+  ],
+  "meso": 256,
+  "mesoMax": 384
+ },
+ {
+  "id": 5250000,
+  "name": "Moss Mushroom",
+  "level": 55,
+  "hp": 4400,
+  "exp": 175,
+  "pdef": 100,
+  "mdef": 120,
+  "mapIds": [],
+  "meso": 186,
+  "mesoMax": 279,
+  "mesoEst": true
+ },
+ {
+  "id": 5300100,
+  "name": "Malady",
+  "level": 55,
+  "hp": 4000,
+  "exp": 175,
+  "pdef": 100,
+  "mdef": 200,
+  "mapIds": [
+   100040105,
+   100040106
+  ],
+  "element": {
+   "holy": "weak"
+  },
+  "meso": 256,
+  "mesoMax": 384
+ },
+ {
+  "id": 9400200,
+  "name": "Malady",
+  "level": 55,
+  "hp": 4000,
+  "exp": 175,
+  "pdef": 100,
+  "mdef": 200,
+  "mapIds": [],
+  "element": {
+   "holy": "weak"
+  },
+  "meso": 256,
+  "mesoMax": 384
+ },
+ {
+  "id": 9400204,
+  "name": "Red Slime",
+  "level": 55,
+  "hp": 6000,
+  "exp": 240,
+  "pdef": 200,
+  "mdef": 220,
+  "mapIds": [],
+  "meso": 200,
+  "mesoMax": 305
+ },
+ {
+  "id": 9400212,
+  "name": "Stone Golem(JP)",
+  "level": 55,
+  "hp": 4000,
+  "exp": 170,
+  "pdef": 135,
+  "mdef": 100,
+  "mapIds": [],
+  "meso": 256,
+  "mesoMax": 384
+ },
+ {
+  "id": 9400243,
+  "name": "Stone Golem",
+  "level": 55,
+  "hp": 4000,
+  "exp": 170,
+  "pdef": 130,
+  "mdef": 100,
+  "mapIds": [],
+  "meso": 256,
+  "mesoMax": 384
+ },
+ {
+  "id": 5100004,
+  "name": "Samiho",
+  "level": 56,
+  "hp": 4500,
+  "exp": 185,
+  "pdef": 150,
+  "mdef": 190,
+  "mapIds": [
+   222010201,
+   222010300,
+   222010310
+  ],
+  "element": {
+   "fire": "weak",
+   "holy": "weak"
+  },
+  "meso": 268,
+  "mesoMax": 402
+ },
+ {
+  "id": 5120500,
+  "name": "Grizzly",
+  "level": 56,
+  "hp": 4800,
+  "exp": 185,
+  "pdef": 180,
+  "mdef": 200,
+  "mapIds": [
+   250010301,
+   250010302,
+   250010303
+  ],
+  "meso": 195,
+  "mesoMax": 292,
+  "mesoEst": true
+ },
+ {
+  "id": 5130105,
+  "name": "Dark Jr. Yeti",
+  "level": 56,
+  "hp": 4400,
+  "exp": 180,
+  "pdef": 180,
+  "mdef": 190,
+  "mapIds": [
+   211040300,
+   211040400,
+   211040700
+  ],
+  "element": {
+   "holy": "weak"
+  },
+  "meso": 268,
+  "mesoMax": 402
+ },
+ {
+  "id": 9300047,
+  "name": "Luster Pixie in Tower of Goddess",
+  "level": 56,
+  "hp": 7200,
+  "exp": 355,
+  "pdef": 180,
+  "mdef": 160,
+  "mapIds": [],
+  "meso": 237,
+  "mesoMax": 356,
+  "mesoEst": true
+ },
+ {
+  "id": 9300108,
+  "name": "Lord Pirate's Jar",
+  "level": 56,
+  "hp": 4300,
+  "exp": 92,
+  "pdef": 180,
+  "mdef": 200,
+  "mapIds": [],
+  "meso": 185,
+  "mesoMax": 277,
+  "mesoEst": true
+ },
+ {
+  "id": 9400213,
+  "name": "Dark Jr. Yeti(JP)",
+  "level": 56,
+  "hp": 4400,
+  "exp": 180,
+  "pdef": 185,
+  "mdef": 190,
+  "mapIds": [],
+  "meso": 268,
+  "mesoMax": 402
+ },
+ {
+  "id": 9500155,
+  "name": "Three-Tailed Fox",
+  "level": 56,
+  "hp": 4500,
+  "exp": 185,
+  "pdef": 150,
+  "mdef": 190,
+  "mapIds": [],
+  "meso": 268,
+  "mesoMax": 402
+ },
+ {
+  "id": 5130107,
+  "name": "Coolie Zombie",
+  "level": 57,
+  "hp": 4500,
+  "exp": 190,
+  "pdef": 165,
+  "mdef": 180,
+  "mapIds": [
+   211041100,
+   211041200,
+   211041300,
+   211041400
+  ],
+  "element": {
+   "holy": "weak",
+   "canHeal": true,
+   "poison": "immune"
+  },
+  "meso": 273,
+  "mesoMax": 407
+ },
+ {
+  "id": 5130108,
+  "name": "Minor Zombie",
+  "level": 57,
+  "hp": 4500,
+  "exp": 190,
+  "pdef": 165,
+  "mdef": 180,
+  "mapIds": [
+   211041500,
+   211041600,
+   211041700,
+   211041800
+  ],
+  "meso": 273,
+  "mesoMax": 407
+ },
+ {
+  "id": 5150001,
+  "name": "Skeleton Soldier",
+  "level": 57,
+  "hp": 4600,
+  "exp": 190,
+  "pdef": 160,
+  "mdef": 160,
+  "mapIds": [
+   101030106,
+   101030107,
+   101030110,
+   101030111,
+   101030112
+  ],
+  "element": {
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 272,
+  "mesoMax": 408
+ },
+ {
+  "id": 5250002,
+  "name": "Prehistoric Boar",
+  "level": 57,
+  "hp": 4500,
+  "exp": 200,
+  "pdef": 170,
+  "mdef": 160,
+  "mapIds": [],
+  "meso": 273,
+  "mesoMax": 407
+ },
+ {
+  "id": 9300041,
+  "name": "Cellion in Tower of Goddess",
+  "level": 57,
+  "hp": 7300,
+  "exp": 370,
+  "pdef": 350,
+  "mdef": 170,
+  "mapIds": [],
+  "meso": 240,
+  "mesoMax": 360,
+  "mesoEst": true
+ },
+ {
+  "id": 9300042,
+  "name": "Grupin in Tower of Goddess",
+  "level": 57,
+  "hp": 7300,
+  "exp": 370,
+  "pdef": 190,
+  "mdef": 330,
+  "mapIds": [],
+  "meso": 240,
+  "mesoMax": 360,
+  "mesoEst": true
+ },
+ {
+  "id": 9300043,
+  "name": "Lioner in Tower of Goddess",
+  "level": 57,
+  "hp": 7300,
+  "exp": 370,
+  "pdef": 190,
+  "mdef": 170,
+  "mapIds": [],
+  "meso": 240,
+  "mesoMax": 360,
+  "mesoEst": true
+ },
+ {
+  "id": 9300109,
+  "name": "Lord Pirate's Ginseng Jar",
+  "level": 57,
+  "hp": 4500,
+  "exp": 95,
+  "pdef": 190,
+  "mdef": 210,
+  "mapIds": [],
+  "meso": 273,
+  "mesoMax": 407
+ },
+ {
+  "id": 9400209,
+  "name": "Minor Zombie(JP)",
+  "level": 57,
+  "hp": 4500,
+  "exp": 190,
+  "pdef": 170,
+  "mdef": 180,
+  "mapIds": [],
+  "meso": 273,
+  "mesoMax": 407
+ },
+ {
+  "id": 9400210,
+  "name": "Coolie Zombie(JP)",
+  "level": 57,
+  "hp": 4700,
+  "exp": 190,
+  "pdef": 170,
+  "mdef": 180,
+  "mapIds": [],
+  "meso": 194,
+  "mesoMax": 291,
+  "mesoEst": true
+ },
+ {
+  "id": 5110302,
+  "name": "Neo Huroid",
+  "level": 58,
+  "hp": 5600,
+  "exp": 205,
+  "pdef": 180,
+  "mdef": 210,
+  "mapIds": [
+   261020400,
+   261020500
+  ],
+  "meso": 212,
+  "mesoMax": 318,
+  "mesoEst": true
+ },
+ {
+  "id": 5120505,
+  "name": "Reindeer",
+  "level": 58,
+  "hp": 5600,
+  "exp": 205,
+  "pdef": 180,
+  "mdef": 210,
+  "mapIds": [
+   250010500,
+   250010501,
+   250010600,
+   250010700
+  ],
+  "meso": 212,
+  "mesoMax": 318,
+  "mesoEst": true
+ },
+ {
+  "id": 5130102,
+  "name": "Dark Stone Golem",
+  "level": 58,
+  "hp": 4800,
+  "exp": 200,
+  "pdef": 150,
+  "mdef": 200,
+  "mapIds": [
+   105040303,
+   105040304,
+   105040305,
+   105040306,
+   106010105
+  ],
+  "element": {
+   "holy": "weak"
+  },
+  "meso": 246,
+  "mesoMax": 384
+ },
+ {
+  "id": 5140000,
+  "name": "White Fang",
+  "level": 58,
+  "hp": 5800,
+  "exp": 220,
+  "pdef": 200,
+  "mdef": 220,
+  "mapIds": [
+   211030000,
+   211040000,
+   211040001,
+   211040100,
+   211040500,
+   211040600,
+   211040800,
+   211040900,
+   211041000,
+   211050000
+  ],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 280,
+  "mesoMax": 420
+ },
+ {
+  "id": 9200019,
+  "name": "White Fang",
+  "level": 58,
+  "hp": 5800,
+  "exp": 220,
+  "pdef": 200,
+  "mdef": 220,
+  "mapIds": [],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 280,
+  "mesoMax": 420
+ },
+ {
+  "id": 9300110,
+  "name": "Lord Pirate's Bellflower",
+  "level": 58,
+  "hp": 4700,
+  "exp": 98,
+  "pdef": 180,
+  "mdef": 230,
+  "mapIds": [],
+  "meso": 195,
+  "mesoMax": 292,
+  "mesoEst": true
+ },
+ {
+  "id": 9300114,
+  "name": "Lord Pirate's Enraged Mr. Alli",
+  "level": 58,
+  "hp": 2700,
+  "exp": 68,
+  "pdef": 190,
+  "mdef": 230,
+  "mapIds": [],
+  "meso": 149,
+  "mesoMax": 223,
+  "mesoEst": true
+ },
+ {
+  "id": 9300154,
+  "name": "Experimental Neo Huroid",
+  "level": 58,
+  "hp": 5600,
+  "exp": 205,
+  "pdef": 180,
+  "mdef": 210,
+  "mapIds": [],
+  "meso": 212,
+  "mesoMax": 318,
+  "mesoEst": true
+ },
+ {
+  "id": 9400211,
+  "name": "Dark Stone Golem(JP)",
+  "level": 58,
+  "hp": 4800,
+  "exp": 200,
+  "pdef": 155,
+  "mdef": 200,
+  "mapIds": [],
+  "meso": 246,
+  "mesoMax": 384
+ },
+ {
+  "id": 9420509,
+  "name": "Pac Pinky",
+  "level": 58,
+  "hp": 5000,
+  "exp": 200,
+  "pdef": 160,
+  "mdef": 200,
+  "mapIds": [],
+  "meso": 201,
+  "mesoMax": 301,
+  "mesoEst": true
+ },
+ {
+  "id": 5150000,
+  "name": "Mixed Golem",
+  "level": 59,
+  "hp": 6000,
+  "exp": 210,
+  "pdef": 160,
+  "mdef": 220,
+  "mapIds": [
+   105040305,
+   105040306,
+   106010106
+  ],
+  "meso": 296,
+  "mesoMax": 444
+ },
+ {
+  "id": 9300038,
+  "name": "Ghost Pixie",
+  "level": 59,
+  "hp": 9000,
+  "exp": 420,
+  "pdef": 160,
+  "mdef": 200,
+  "mapIds": [],
+  "meso": 269,
+  "mesoMax": 403,
+  "mesoEst": true
+ },
+ {
+  "id": 9300048,
+  "name": "Nependeath in Tower of Goddess",
+  "level": 59,
+  "hp": 10000,
+  "exp": 430,
+  "pdef": 180,
+  "mdef": 180,
+  "mapIds": [],
+  "meso": 283,
+  "mesoMax": 424,
+  "mesoEst": true
+ },
+ {
+  "id": 9300049,
+  "name": "Royal Nependeath in Tower of Goddess",
+  "level": 59,
+  "hp": 10000,
+  "exp": 430,
+  "pdef": 180,
+  "mdef": 180,
+  "mapIds": [],
+  "meso": 283,
+  "mesoMax": 424,
+  "mesoEst": true
+ },
+ {
+  "id": 9300111,
+  "name": "Lord Pirate's Ancient Bellflower",
+  "level": 59,
+  "hp": 4900,
+  "exp": 100,
+  "pdef": 180,
+  "mdef": 235,
+  "mapIds": [],
+  "meso": 200,
+  "mesoMax": 300,
+  "mesoEst": true
+ },
+ {
+  "id": 9300112,
+  "name": "Lord Pirate's 100yrOld Bellflower",
+  "level": 59,
+  "hp": 4100,
+  "exp": 100,
+  "pdef": 170,
+  "mdef": 210,
+  "mapIds": [],
+  "meso": 183,
+  "mesoMax": 275,
+  "mesoEst": true
+ },
+ {
+  "id": 9300115,
+  "name": "Lord Pirate's Enraged Kru",
+  "level": 59,
+  "hp": 2820,
+  "exp": 70,
+  "pdef": 350,
+  "mdef": 250,
+  "mapIds": [],
+  "meso": 153,
+  "mesoMax": 229,
+  "mesoEst": true
+ },
+ {
+  "id": 9300120,
+  "name": "Lord Pirate's Furious Mr. Alli",
+  "level": 59,
+  "hp": 8820,
+  "exp": 180,
+  "pdef": 190,
+  "mdef": 230,
+  "mapIds": [],
+  "meso": 266,
+  "mesoMax": 399,
+  "mesoEst": true
+ },
+ {
+  "id": 9300123,
+  "name": "Lord Pirate's Mr. Alli",
+  "level": 59,
+  "hp": 7350,
+  "exp": 150,
+  "pdef": 190,
+  "mdef": 230,
+  "mapIds": [],
+  "meso": 244,
+  "mesoMax": 365,
+  "mesoEst": true
+ },
+ {
+  "id": 9300126,
+  "name": "Lord Pirate's Enraged Ginseng Jar",
+  "level": 59,
+  "hp": 9500,
+  "exp": 105,
+  "pdef": 190,
+  "mdef": 220,
+  "mapIds": [],
+  "meso": 276,
+  "mesoMax": 414,
+  "mesoEst": true
+ },
+ {
+  "id": 9400244,
+  "name": "Mixed Golem",
+  "level": 59,
+  "hp": 6000,
+  "exp": 210,
+  "pdef": 160,
+  "mdef": 220,
+  "mapIds": [],
+  "meso": 296,
+  "mesoMax": 444
+ },
+ {
+  "id": 9500123,
+  "name": "Mixed Golem",
+  "level": 59,
+  "hp": 6000,
+  "exp": 210,
+  "pdef": 160,
+  "mdef": 220,
+  "mapIds": [],
+  "meso": 296,
+  "mesoMax": 444
+ },
+ {
+  "id": 6130100,
+  "name": "Red Drake",
+  "level": 60,
+  "hp": 6000,
+  "exp": 220,
+  "pdef": 190,
+  "mdef": 220,
+  "mapIds": [
+   106000002
+  ],
+  "element": {
+   "ice": "weak",
+   "fire": "strong"
+  },
+  "meso": 305,
+  "mesoMax": 456
+ },
+ {
+  "id": 6130102,
+  "name": "Separated Pepe",
+  "level": 60,
+  "hp": 7200,
+  "exp": 420,
+  "pdef": 210,
+  "mdef": 225,
+  "mapIds": [],
+  "meso": 304,
+  "mesoMax": 455
+ },
+ {
+  "id": 6130103,
+  "name": "Pepe",
+  "level": 60,
+  "hp": 7200,
+  "exp": 220,
+  "pdef": 210,
+  "mdef": 225,
+  "mapIds": [
+   211040001
+  ],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 304,
+  "mesoMax": 455
+ },
+ {
+  "id": 6130202,
+  "name": "Morphed Blin",
+  "level": 60,
+  "hp": 7000,
+  "exp": 330,
+  "pdef": 220,
+  "mdef": 230,
+  "mapIds": [
+   222010400,
+   222010401
+  ],
+  "meso": 305,
+  "mesoMax": 459
+ },
+ {
+  "id": 6130203,
+  "name": "Panda",
+  "level": 60,
+  "hp": 6500,
+  "exp": 225,
+  "pdef": 200,
+  "mdef": 230,
+  "mapIds": [
+   250010302,
+   250010303,
+   250010304
+  ],
+  "meso": 230,
+  "mesoMax": 346,
+  "mesoEst": true
+ },
+ {
+  "id": 9200022,
+  "name": "Separated Pepe",
+  "level": 60,
+  "hp": 7200,
+  "exp": 420,
+  "pdef": 210,
+  "mdef": 225,
+  "mapIds": [],
+  "meso": 304,
+  "mesoMax": 455
+ },
+ {
+  "id": 9300050,
+  "name": "Flying Boogie",
+  "level": 60,
+  "hp": 25000,
+  "exp": 515,
+  "pdef": 225,
+  "mdef": 190,
+  "mapIds": [],
+  "meso": 444,
+  "mesoMax": 667,
+  "mesoEst": true
+ },
+ {
+  "id": 9300113,
+  "name": "Lord Pirate's 100yrOld Ancient Bellflower",
+  "level": 60,
+  "hp": 4300,
+  "exp": 104,
+  "pdef": 180,
+  "mdef": 215,
+  "mapIds": [],
+  "meso": 188,
+  "mesoMax": 283,
+  "mesoEst": true
+ },
+ {
+  "id": 9300116,
+  "name": "Lord Pirate's Enraged Captain",
+  "level": 60,
+  "hp": 2940,
+  "exp": 72,
+  "pdef": 250,
+  "mdef": 350,
+  "mapIds": [],
+  "meso": 157,
+  "mesoMax": 235,
+  "mesoEst": true
+ },
+ {
+  "id": 9300121,
+  "name": "Lord Pirate's Furious Kru",
+  "level": 60,
+  "hp": 9360,
+  "exp": 187,
+  "pdef": 380,
+  "mdef": 250,
+  "mapIds": [],
+  "meso": 275,
+  "mesoMax": 413,
+  "mesoEst": true
+ },
+ {
+  "id": 9300124,
+  "name": "Lord Pirate's Kru",
+  "level": 60,
+  "hp": 7800,
+  "exp": 156,
+  "pdef": 190,
+  "mdef": 250,
+  "mapIds": [],
+  "meso": 252,
+  "mesoMax": 378,
+  "mesoEst": true
+ },
+ {
+  "id": 9400003,
+  "name": "Nightghost",
+  "level": 60,
+  "hp": 7100,
+  "exp": 220,
+  "pdef": 200,
+  "mdef": 220,
+  "mapIds": [],
+  "element": {
+   "ice": "weak",
+   "fire": "weak",
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 280,
+  "mesoMax": 420
+ },
+ {
+  "id": 9400012,
+  "name": "Water Goblin",
+  "level": 60,
+  "hp": 7100,
+  "exp": 220,
+  "pdef": 200,
+  "mdef": 230,
+  "mapIds": [],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 280,
+  "mesoMax": 420
+ },
+ {
+  "id": 9400561,
+  "name": "Voodoo",
+  "level": 60,
+  "hp": 6800,
+  "exp": 335,
+  "pdef": 240,
+  "mdef": 210,
+  "mapIds": [],
+  "meso": 236,
+  "mesoMax": 353,
+  "mesoEst": true
+ },
+ {
+  "id": 9400562,
+  "name": "Hoodoo",
+  "level": 60,
+  "hp": 6800,
+  "exp": 335,
+  "pdef": 240,
+  "mdef": 210,
+  "mapIds": [],
+  "meso": 236,
+  "mesoMax": 353,
+  "mesoEst": true
+ },
+ {
+  "id": 9410013,
+  "name": "Doll Vending Machine",
+  "level": 60,
+  "hp": 1500,
+  "exp": 280,
+  "pdef": 180,
+  "mdef": 190,
+  "mapIds": [],
+  "meso": 113,
+  "mesoMax": 169,
+  "mesoEst": true
+ },
+ {
+  "id": 9420002,
+  "name": "Python",
+  "level": 60,
+  "hp": 6000,
+  "exp": 230,
+  "pdef": 160,
+  "mdef": 220,
+  "mapIds": [],
+  "meso": 280,
+  "mesoMax": 432
+ },
+ {
+  "id": 9420511,
+  "name": "Selkie Jr.",
+  "level": 60,
+  "hp": 5500,
+  "exp": 220,
+  "pdef": 190,
+  "mdef": 220,
+  "mapIds": [],
+  "meso": 212,
+  "mesoMax": 319,
+  "mesoEst": true
+ },
+ {
+  "id": 9500125,
+  "name": "Red Drake",
+  "level": 60,
+  "hp": 6000,
+  "exp": 220,
+  "pdef": 190,
+  "mdef": 220,
+  "mapIds": [],
+  "element": {
+   "ice": "weak",
+   "fire": "strong"
+  },
+  "meso": 305,
+  "mesoMax": 456
+ },
+ {
+  "id": 9500142,
+  "name": "Separated Pepe",
+  "level": 60,
+  "hp": 7200,
+  "exp": 420,
+  "pdef": 210,
+  "mdef": 225,
+  "mapIds": [],
+  "meso": 304,
+  "mesoMax": 455
+ },
+ {
+  "id": 9500150,
+  "name": "Ice Golem",
+  "level": 60,
+  "hp": 6900,
+  "exp": 221,
+  "pdef": 200,
+  "mdef": 210,
+  "mapIds": [],
+  "meso": 237,
+  "mesoMax": 356,
+  "mesoEst": true
+ },
+ {
+  "id": 6130200,
+  "name": "Buffy",
+  "level": 61,
+  "hp": 7400,
+  "exp": 230,
+  "pdef": 213,
+  "mdef": 229,
+  "mapIds": [
+   220060000
+  ],
+  "meso": 300,
+  "mesoMax": 457
+ },
+ {
+  "id": 6130207,
+  "name": "Peach Monkey",
+  "level": 62,
+  "hp": 7500,
+  "exp": 240,
+  "pdef": 170,
+  "mdef": 200,
+  "mapIds": [
+   250010500,
+   250010600,
+   250010700
+  ],
+  "meso": 250,
+  "mesoMax": 374,
+  "mesoEst": true
+ },
+ {
+  "id": 6230100,
+  "name": "Wild Kargo",
+  "level": 62,
+  "hp": 5500,
+  "exp": 240,
+  "pdef": 180,
+  "mdef": 130,
+  "mapIds": [
+   105090100,
+   105090300,
+   105090301
+  ],
+  "meso": 320,
+  "mesoMax": 463
+ },
+ {
+  "id": 9300026,
+  "name": "Jr. Gargoyle",
+  "level": 62,
+  "hp": 15000,
+  "exp": 430,
+  "pdef": 250,
+  "mdef": 250,
+  "mapIds": [],
+  "meso": 350,
+  "mesoMax": 525,
+  "mesoEst": true
+ },
+ {
+  "id": 9300033,
+  "name": "Jr. Gargoyle",
+  "level": 62,
+  "hp": 15000,
+  "exp": 430,
+  "pdef": 250,
+  "mdef": 250,
+  "mapIds": [],
+  "meso": 350,
+  "mesoMax": 525,
+  "mesoEst": true
+ },
+ {
+  "id": 9300117,
+  "name": "Lord Pirate's Devoted Kru",
+  "level": 62,
+  "hp": 22800,
+  "exp": 313,
+  "pdef": 190,
+  "mdef": 250,
+  "mapIds": [],
+  "meso": 429,
+  "mesoMax": 643,
+  "mesoEst": true
+ },
+ {
+  "id": 9300122,
+  "name": "Lord Pirate's Furious Captain",
+  "level": 62,
+  "hp": 10440,
+  "exp": 198,
+  "pdef": 250,
+  "mdef": 380,
+  "mapIds": [],
+  "meso": 293,
+  "mesoMax": 440,
+  "mesoEst": true
+ },
+ {
+  "id": 9300125,
+  "name": "Lord Pirate's Captain",
+  "level": 62,
+  "hp": 8700,
+  "exp": 165,
+  "pdef": 250,
+  "mdef": 260,
+  "mapIds": [],
+  "meso": 268,
+  "mesoMax": 402,
+  "mesoEst": true
+ },
+ {
+  "id": 9300172,
+  "name": "Poisoned Lord Tree",
+  "level": 62,
+  "hp": 10500,
+  "exp": 240,
+  "pdef": 150,
+  "mdef": 130,
+  "mapIds": [],
+  "meso": 294,
+  "mesoMax": 441,
+  "mesoEst": true
+ },
+ {
+  "id": 9300182,
+  "name": "Deeply Poisoned Lord Tree",
+  "level": 62,
+  "hp": 10500,
+  "exp": 240,
+  "pdef": 150,
+  "mdef": 130,
+  "mapIds": [],
+  "meso": 294,
+  "mesoMax": 441,
+  "mesoEst": true
+ },
+ {
+  "id": 9400110,
+  "name": "Leader A",
+  "level": 62,
+  "hp": 10000,
+  "exp": 310,
+  "pdef": 210,
+  "mdef": 175,
+  "mapIds": [],
+  "meso": 287,
+  "mesoMax": 431,
+  "mesoEst": true
+ },
+ {
+  "id": 9400201,
+  "name": "Wild Cargo",
+  "level": 62,
+  "hp": 5500,
+  "exp": 1,
+  "pdef": 180,
+  "mdef": 130,
+  "mapIds": [],
+  "meso": 320,
+  "mesoMax": 463
+ },
+ {
+  "id": 6230101,
+  "name": "Puco",
+  "level": 63,
+  "hp": 20000,
+  "exp": 190,
+  "pdef": 200,
+  "mdef": 220,
+  "mapIds": [],
+  "meso": 404,
+  "mesoMax": 607,
+  "mesoEst": true
+ },
+ {
+  "id": 6230400,
+  "name": "Soul Teddy",
+  "level": 63,
+  "hp": 7600,
+  "exp": 245,
+  "pdef": 190,
+  "mdef": 215,
+  "mapIds": [
+   220070000
+  ],
+  "element": {
+   "holy": "weak",
+   "canHeal": true,
+   "ice": "strong",
+   "lightning": "strong"
+  },
+  "meso": 329,
+  "mesoMax": 495
+ },
+ {
+  "id": 6230401,
+  "name": "Jr. Lucida ",
+  "level": 63,
+  "hp": 7600,
+  "exp": 245,
+  "pdef": 190,
+  "mdef": 220,
+  "mapIds": [
+   200010300
+  ],
+  "meso": 329,
+  "mesoMax": 495
+ },
+ {
+  "id": 6230602,
+  "name": "Officer Skeleton",
+  "level": 63,
+  "hp": 7500,
+  "exp": 240,
+  "pdef": 190,
+  "mdef": 230,
+  "mapIds": [
+   101030108,
+   101030109,
+   101030110,
+   101030111,
+   101030112
+  ],
+  "element": {
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 328,
+  "mesoMax": 492
+ },
+ {
+  "id": 9300020,
+  "name": "Muscle Stone",
+  "level": 63,
+  "hp": 16000,
+  "exp": 520,
+  "pdef": 350,
+  "mdef": 560,
+  "mapIds": [],
+  "meso": 363,
+  "mesoMax": 544,
+  "mesoEst": true
+ },
+ {
+  "id": 9420510,
+  "name": "Slimy",
+  "level": 63,
+  "hp": 5800,
+  "exp": 250,
+  "pdef": 190,
+  "mdef": 150,
+  "mapIds": [],
+  "meso": 221,
+  "mesoMax": 332,
+  "mesoEst": true
+ },
+ {
+  "id": 6130204,
+  "name": "Mr. Alli",
+  "level": 64,
+  "hp": 7800,
+  "exp": 250,
+  "pdef": 190,
+  "mdef": 230,
+  "mapIds": [
+   251010400,
+   251010401,
+   251010500
+  ],
+  "meso": 324,
+  "mesoMax": 486
+ },
+ {
+  "id": 6230200,
+  "name": "Dark Pepe",
+  "level": 64,
+  "hp": 7800,
+  "exp": 250,
+  "pdef": 220,
+  "mdef": 240,
+  "mapIds": [
+   211040400
+  ],
+  "element": {
+   "holy": "weak"
+  },
+  "meso": 324,
+  "mesoMax": 486
+ },
+ {
+  "id": 6230201,
+  "name": "Separated Dark Pepe",
+  "level": 64,
+  "hp": 7800,
+  "exp": 700,
+  "pdef": 220,
+  "mdef": 240,
+  "mapIds": [],
+  "meso": 324,
+  "mesoMax": 486
+ },
+ {
+  "id": 6230600,
+  "name": "Ice Drake",
+  "level": 64,
+  "hp": 7700,
+  "exp": 250,
+  "pdef": 200,
+  "mdef": 230,
+  "mapIds": [
+   105090310,
+   105090311,
+   105090312
+  ],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 324,
+  "mesoMax": 486
+ },
+ {
+  "id": 9300118,
+  "name": "Lord Pirate's Devoted Captain",
+  "level": 64,
+  "hp": 28200,
+  "exp": 378,
+  "pdef": 250,
+  "mdef": 260,
+  "mapIds": [],
+  "meso": 480,
+  "mesoMax": 720,
+  "mesoEst": true
+ },
+ {
+  "id": 9400111,
+  "name": "Leader B",
+  "level": 64,
+  "hp": 9000,
+  "exp": 320,
+  "pdef": 190,
+  "mdef": 200,
+  "mapIds": [],
+  "meso": 275,
+  "mesoMax": 413,
+  "mesoEst": true
+ },
+ {
+  "id": 9500126,
+  "name": "Ice Drake",
+  "level": 64,
+  "hp": 7700,
+  "exp": 250,
+  "pdef": 200,
+  "mdef": 230,
+  "mapIds": [],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 324,
+  "mesoMax": 486
+ },
+ {
+  "id": 6110300,
+  "name": "Homun",
+  "level": 65,
+  "hp": 11000,
+  "exp": 255,
+  "pdef": 170,
+  "mdef": 245,
+  "mapIds": [
+   261010101
+  ],
+  "element": {
+   "canHeal": true,
+   "holy": "weak"
+  },
+  "meso": 328,
+  "mesoMax": 492
+ },
+ {
+  "id": 6300000,
+  "name": "Yeti",
+  "level": 65,
+  "hp": 11000,
+  "exp": 255,
+  "pdef": 170,
+  "mdef": 245,
+  "mapIds": [
+   211040100,
+   211040101,
+   211040200
+  ],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 328,
+  "mesoMax": 492
+ },
+ {
+  "id": 6300001,
+  "name": "Transformed Yeti",
+  "level": 65,
+  "hp": 11000,
+  "exp": 390,
+  "pdef": 170,
+  "mdef": 245,
+  "mapIds": [],
+  "meso": 328,
+  "mesoMax": 492
+ },
+ {
+  "id": 6300002,
+  "name": "Separated Yeti",
+  "level": 65,
+  "hp": 11000,
+  "exp": 455,
+  "pdef": 170,
+  "mdef": 245,
+  "mapIds": [],
+  "meso": 328,
+  "mesoMax": 492
+ },
+ {
+  "id": 9200021,
+  "name": "Separated Yetti",
+  "level": 65,
+  "hp": 11000,
+  "exp": 455,
+  "pdef": 170,
+  "mdef": 245,
+  "mapIds": [],
+  "meso": 328,
+  "mesoMax": 492
+ },
+ {
+  "id": 9300019,
+  "name": "Master Muscle Stone",
+  "level": 65,
+  "hp": 40000,
+  "exp": 1120,
+  "pdef": 380,
+  "mdef": 560,
+  "mapIds": [],
+  "meso": 572,
+  "mesoMax": 858,
+  "mesoEst": true
+ },
+ {
+  "id": 9300141,
+  "name": "Homun of Closed Laboratory",
+  "level": 65,
+  "hp": 11000,
+  "exp": 255,
+  "pdef": 170,
+  "mdef": 245,
+  "mapIds": [],
+  "meso": 328,
+  "mesoMax": 492
+ },
+ {
+  "id": 9300173,
+  "name": "Poisoned Stone Bug",
+  "level": 65,
+  "hp": 12500,
+  "exp": 255,
+  "pdef": 170,
+  "mdef": 245,
+  "mapIds": [],
+  "meso": 325,
+  "mesoMax": 487,
+  "mesoEst": true
+ },
+ {
+  "id": 9300174,
+  "name": "Poisoned Spright",
+  "level": 65,
+  "hp": 13000,
+  "exp": 255,
+  "pdef": 170,
+  "mdef": 245,
+  "mapIds": [],
+  "meso": 331,
+  "mesoMax": 496,
+  "mesoEst": true
+ },
+ {
+  "id": 9300181,
+  "name": "More Poisoned Stone Bug",
+  "level": 65,
+  "hp": 12500,
+  "exp": 255,
+  "pdef": 170,
+  "mdef": 245,
+  "mapIds": [],
+  "meso": 325,
+  "mesoMax": 487,
+  "mesoEst": true
+ },
+ {
+  "id": 9300183,
+  "name": "Deeply Poisoned Stone Bug",
+  "level": 65,
+  "hp": 12500,
+  "exp": 255,
+  "pdef": 170,
+  "mdef": 245,
+  "mapIds": [],
+  "meso": 325,
+  "mesoMax": 487,
+  "mesoEst": true
+ },
+ {
+  "id": 9300184,
+  "name": "Deeply Poisoned Spright",
+  "level": 65,
+  "hp": 13000,
+  "exp": 255,
+  "pdef": 170,
+  "mdef": 245,
+  "mapIds": [],
+  "meso": 331,
+  "mesoMax": 496,
+  "mesoEst": true
+ },
+ {
+  "id": 9400008,
+  "name": "Black Boogie",
+  "level": 65,
+  "hp": 7980,
+  "exp": 325,
+  "pdef": 270,
+  "mdef": 250,
+  "mapIds": [],
+  "meso": 261,
+  "mesoMax": 391,
+  "mesoEst": true
+ },
+ {
+  "id": 9500141,
+  "name": "Separated Yeti",
+  "level": 65,
+  "hp": 11000,
+  "exp": 455,
+  "pdef": 170,
+  "mdef": 245,
+  "mapIds": [],
+  "meso": 328,
+  "mesoMax": 492
+ },
+ {
+  "id": 6130209,
+  "name": "Sage Cat",
+  "level": 66,
+  "hp": 9000,
+  "exp": 255,
+  "pdef": 160,
+  "mdef": 200,
+  "mapIds": [
+   250010502,
+   250010503,
+   250010504
+  ],
+  "meso": 278,
+  "mesoMax": 417,
+  "mesoEst": true
+ },
+ {
+  "id": 6230300,
+  "name": "Lazy Buffy",
+  "level": 66,
+  "hp": 9400,
+  "exp": 260,
+  "pdef": 180,
+  "mdef": 254,
+  "mapIds": [
+   220060000
+  ],
+  "meso": 325,
+  "mesoMax": 457
+ },
+ {
+  "id": 9300022,
+  "name": "Black Knight",
+  "level": 66,
+  "hp": 40000,
+  "exp": 1060,
+  "pdef": 550,
+  "mdef": 320,
+  "mapIds": [],
+  "meso": 575,
+  "mesoMax": 862,
+  "mesoEst": true
+ },
+ {
+  "id": 9300023,
+  "name": "Myst Knight",
+  "level": 66,
+  "hp": 40000,
+  "exp": 1060,
+  "pdef": 550,
+  "mdef": 320,
+  "mapIds": [],
+  "meso": 575,
+  "mesoMax": 862,
+  "mesoEst": true
+ },
+ {
+  "id": 9300036,
+  "name": "Black Knight",
+  "level": 66,
+  "hp": 22000,
+  "exp": 100,
+  "pdef": 550,
+  "mdef": 320,
+  "mapIds": [],
+  "meso": 429,
+  "mesoMax": 644,
+  "mesoEst": true
+ },
+ {
+  "id": 9300037,
+  "name": "Mist Knight",
+  "level": 66,
+  "hp": 22000,
+  "exp": 100,
+  "pdef": 550,
+  "mdef": 320,
+  "mapIds": [],
+  "meso": 429,
+  "mesoMax": 644,
+  "mesoEst": true
+ },
+ {
+  "id": 6230500,
+  "name": "Master Soul Teddy",
+  "level": 67,
+  "hp": 11000,
+  "exp": 265,
+  "pdef": 210,
+  "mdef": 250,
+  "mapIds": [
+   220070000
+  ],
+  "element": {
+   "holy": "weak",
+   "canHeal": true,
+   "lightning": "strong",
+   "ice": "immune"
+  },
+  "meso": 333,
+  "mesoMax": 498
+ },
+ {
+  "id": 6300003,
+  "name": "Punco",
+  "level": 67,
+  "hp": 40000,
+  "exp": 210,
+  "pdef": 270,
+  "mdef": 410,
+  "mapIds": [],
+  "meso": 577,
+  "mesoMax": 866,
+  "mesoEst": true
+ },
+ {
+  "id": 9300024,
+  "name": "Puppet Golem",
+  "level": 67,
+  "hp": 35000,
+  "exp": 1100,
+  "pdef": 370,
+  "mdef": 800,
+  "mapIds": [],
+  "meso": 541,
+  "mesoMax": 811,
+  "mesoEst": true
+ },
+ {
+  "id": 9500127,
+  "name": "Master Soul Teddy",
+  "level": 67,
+  "hp": 11000,
+  "exp": 265,
+  "pdef": 210,
+  "mdef": 250,
+  "mapIds": [],
+  "element": {
+   "holy": "weak",
+   "canHeal": true,
+   "lightning": "strong",
+   "ice": "immune"
+  },
+  "meso": 333,
+  "mesoMax": 498
+ },
+ {
+  "id": 6110301,
+  "name": "Site",
+  "level": 68,
+  "hp": 13000,
+  "exp": 265,
+  "pdef": 190,
+  "mdef": 270,
+  "mapIds": [
+   261010101,
+   261010103,
+   261020401
+  ],
+  "meso": 332,
+  "mesoMax": 498
+ },
+ {
+  "id": 6130208,
+  "name": "Kru",
+  "level": 68,
+  "hp": 12500,
+  "exp": 265,
+  "pdef": 190,
+  "mdef": 250,
+  "mapIds": [
+   251010400,
+   251010401,
+   251010402,
+   251010403
+  ],
+  "meso": 329,
+  "mesoMax": 493,
+  "mesoEst": true
+ },
+ {
+  "id": 6230601,
+  "name": "Dark Drake",
+  "level": 68,
+  "hp": 13000,
+  "exp": 265,
+  "pdef": 205,
+  "mdef": 250,
+  "mapIds": [
+   105090311,
+   105090312
+  ],
+  "meso": 332,
+  "mesoMax": 498
+ },
+ {
+  "id": 6400000,
+  "name": "Dark Yeti",
+  "level": 68,
+  "hp": 13000,
+  "exp": 265,
+  "pdef": 190,
+  "mdef": 270,
+  "mapIds": [
+   211040300,
+   211040400,
+   211040700
+  ],
+  "element": {
+   "holy": "weak"
+  },
+  "meso": 332,
+  "mesoMax": 498
+ },
+ {
+  "id": 6400001,
+  "name": "Transformed Dark Yeti",
+  "level": 68,
+  "hp": 13000,
+  "exp": 445,
+  "pdef": 190,
+  "mdef": 270,
+  "mapIds": [],
+  "meso": 332,
+  "mesoMax": 498
+ },
+ {
+  "id": 6400002,
+  "name": "Separated Dark Yeti",
+  "level": 68,
+  "hp": 13000,
+  "exp": 715,
+  "pdef": 190,
+  "mdef": 270,
+  "mapIds": [],
+  "meso": 332,
+  "mesoMax": 498
+ },
+ {
+  "id": 9300025,
+  "name": "Gargoyle",
+  "level": 68,
+  "hp": 35000,
+  "exp": 1150,
+  "pdef": 340,
+  "mdef": 570,
+  "mapIds": [],
+  "meso": 543,
+  "mesoMax": 815,
+  "mesoEst": true
+ },
+ {
+  "id": 9300080,
+  "name": "Kru",
+  "level": 68,
+  "hp": 12500,
+  "exp": 265,
+  "pdef": 190,
+  "mdef": 270,
+  "mapIds": [],
+  "meso": 329,
+  "mesoMax": 493,
+  "mesoEst": true
+ },
+ {
+  "id": 9420512,
+  "name": "Mr. Anchor",
+  "level": 68,
+  "hp": 11500,
+  "exp": 275,
+  "pdef": 220,
+  "mdef": 250,
+  "mapIds": [],
+  "meso": 316,
+  "mesoMax": 474,
+  "mesoEst": true
+ },
+ {
+  "id": 9500128,
+  "name": "Dark Yeti",
+  "level": 68,
+  "hp": 13000,
+  "exp": 265,
+  "pdef": 190,
+  "mdef": 270,
+  "mapIds": [],
+  "element": {
+   "holy": "weak"
+  },
+  "meso": 332,
+  "mesoMax": 498
+ },
+ {
+  "id": 6400003,
+  "name": "Cuzco",
+  "level": 69,
+  "hp": 60000,
+  "exp": 240,
+  "pdef": 320,
+  "mdef": 530,
+  "mapIds": [],
+  "meso": 709,
+  "mesoMax": 1064,
+  "mesoEst": true
+ },
+ {
+  "id": 7130100,
+  "name": "Tauromacis",
+  "level": 70,
+  "hp": 15000,
+  "exp": 270,
+  "pdef": 250,
+  "mdef": 250,
+  "mapIds": [
+   105090500,
+   105090600,
+   105090700,
+   105090800
+  ],
+  "element": {
+   "poison": "immune"
+  },
+  "meso": 340,
+  "mesoMax": 500
+ },
+ {
+  "id": 7130104,
+  "name": "Captain",
+  "level": 70,
+  "hp": 15000,
+  "exp": 282,
+  "pdef": 250,
+  "mdef": 260,
+  "mapIds": [
+   251010401,
+   251010402,
+   251010403
+  ],
+  "meso": 340,
+  "mesoMax": 500
+ },
+ {
+  "id": 7130500,
+  "name": "Rash",
+  "level": 70,
+  "hp": 14500,
+  "exp": 270,
+  "pdef": 235,
+  "mdef": 245,
+  "mapIds": [
+   240010000,
+   240010100,
+   240010101
+  ],
+  "element": {
+   "poison": "weak"
+  },
+  "meso": 337,
+  "mesoMax": 501,
+  "patk": 245
+ },
+ {
+  "id": 8140200,
+  "name": "Klock",
+  "level": 70,
+  "hp": 15000,
+  "exp": 270,
+  "pdef": 250,
+  "mdef": 250,
+  "mapIds": [
+   220070100
+  ],
+  "element": {
+   "fire": "weak",
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 340,
+  "mesoMax": 500
+ },
+ {
+  "id": 9400576,
+  "name": "Windraider",
+  "level": 70,
+  "hp": 16000,
+  "exp": 800,
+  "pdef": 265,
+  "mdef": 365,
+  "mapIds": [],
+  "meso": 374,
+  "mesoMax": 561,
+  "mesoEst": true
+ },
+ {
+  "id": 9500129,
+  "name": "Taurospear",
+  "level": 70,
+  "hp": 15000,
+  "exp": 270,
+  "pdef": 250,
+  "mdef": 250,
+  "mapIds": [],
+  "element": {
+   "fire": "strong",
+   "lightning": "strong"
+  },
+  "meso": 340,
+  "mesoMax": 500
+ },
+ {
+  "id": 9500147,
+  "name": "Yeti and Coketump",
+  "level": 70,
+  "hp": 20000,
+  "exp": 272,
+  "pdef": 280,
+  "mdef": 280,
+  "mapIds": [],
+  "meso": 417,
+  "mesoMax": 626,
+  "mesoEst": true
+ },
+ {
+  "id": 7130001,
+  "name": "Cerebes",
+  "level": 72,
+  "hp": 15200,
+  "exp": 295,
+  "pdef": 320,
+  "mdef": 265,
+  "mapIds": [
+   211042000,
+   211042100,
+   211042200
+  ],
+  "meso": 344,
+  "mesoMax": 516
+ },
+ {
+  "id": 7130002,
+  "name": "Beetle",
+  "level": 72,
+  "hp": 15200,
+  "exp": 295,
+  "pdef": 335,
+  "mdef": 265,
+  "mapIds": [
+   240010901,
+   240011000
+  ],
+  "element": {
+   "lightning": "strong"
+  },
+  "meso": 352,
+  "mesoMax": 542,
+  "patk": 272,
+  "matk": 310
+ },
+ {
+  "id": 7130600,
+  "name": "Hobi",
+  "level": 72,
+  "hp": 15000,
+  "exp": 295,
+  "pdef": 330,
+  "mdef": 260,
+  "mapIds": [
+   240010100,
+   240010200
+  ],
+  "element": {
+   "poison": "weak"
+  },
+  "meso": 347,
+  "mesoMax": 515,
+  "mesoEst": true,
+  "patk": 270,
+  "matk": 310
+ },
+ {
+  "id": 9400103,
+  "name": "Extra D",
+  "level": 72,
+  "hp": 15100,
+  "exp": 465,
+  "pdef": 320,
+  "mdef": 205,
+  "mapIds": [],
+  "meso": 367,
+  "mesoMax": 550,
+  "mesoEst": true
+ },
+ {
+  "id": 7110301,
+  "name": "Homunculus",
+  "level": 73,
+  "hp": 15500,
+  "exp": 320,
+  "pdef": 300,
+  "mdef": 320,
+  "mapIds": [
+   261010102,
+   261010103
+  ],
+  "element": {
+   "canHeal": true,
+   "holy": "weak"
+  },
+  "meso": 352,
+  "mesoMax": 529
+ },
+ {
+  "id": 7130000,
+  "name": "Lucida",
+  "level": 73,
+  "hp": 15500,
+  "exp": 320,
+  "pdef": 300,
+  "mdef": 320,
+  "mapIds": [
+   200010300,
+   200010301,
+   200010302
+  ],
+  "element": {
+   "holy": "weak",
+   "poison": "immune"
+  },
+  "meso": 352,
+  "mesoMax": 529
+ },
+ {
+  "id": 7130103,
+  "name": "Commander Skeleton",
+  "level": 73,
+  "hp": 15300,
+  "exp": 315,
+  "pdef": 330,
+  "mdef": 300,
+  "mapIds": [
+   101030108,
+   101030109
+  ],
+  "element": {
+   "holy": "weak",
+   "canHeal": true,
+   "ice": "strong",
+   "poison": "immune"
+  },
+  "meso": 370,
+  "mesoMax": 556,
+  "mesoEst": true
+ },
+ {
+  "id": 9300142,
+  "name": "Homunculu of hidden laboratory",
+  "level": 73,
+  "hp": 15500,
+  "exp": 320,
+  "pdef": 300,
+  "mdef": 320,
+  "mapIds": [],
+  "meso": 352,
+  "mesoMax": 529
+ },
+ {
+  "id": 9300143,
+  "name": "Reinforced Iron Mutae",
+  "level": 73,
+  "hp": 20000,
+  "exp": 300,
+  "pdef": 290,
+  "mdef": 300,
+  "mapIds": [],
+  "meso": 422,
+  "mesoMax": 633,
+  "mesoEst": true
+ },
+ {
+  "id": 9400218,
+  "name": "Tauromacis(JP)",
+  "level": 73,
+  "hp": 16000,
+  "exp": 270,
+  "pdef": 260,
+  "mdef": 260,
+  "mapIds": [],
+  "meso": 379,
+  "mesoMax": 568,
+  "mesoEst": true
+ },
+ {
+  "id": 9500131,
+  "name": "Luinel",
+  "level": 73,
+  "hp": 15500,
+  "exp": 320,
+  "pdef": 300,
+  "mdef": 320,
+  "mapIds": [],
+  "meso": 352,
+  "mesoMax": 529
+ },
+ {
+  "id": 6300100,
+  "name": "Buffoon",
+  "level": 74,
+  "hp": 16000,
+  "exp": 340,
+  "pdef": 340,
+  "mdef": 330,
+  "mapIds": [
+   220060100,
+   220060200
+  ],
+  "element": {
+   "ice": "weak",
+   "fire": "strong"
+  },
+  "meso": 320,
+  "mesoMax": 480
+ },
+ {
+  "id": 7130501,
+  "name": "Dark Rash",
+  "level": 74,
+  "hp": 15500,
+  "exp": 340,
+  "pdef": 285,
+  "mdef": 295,
+  "mapIds": [
+   240010000,
+   240010100,
+   240010101
+  ],
+  "element": {
+   "poison": "strong"
+  },
+  "meso": 352,
+  "mesoMax": 528,
+  "patk": 295
+ },
+ {
+  "id": 9300145,
+  "name": "Homun",
+  "level": 74,
+  "hp": 33000,
+  "exp": 330,
+  "pdef": 290,
+  "mdef": 300,
+  "mapIds": [],
+  "element": {
+   "canHeal": true,
+   "holy": "weak"
+  },
+  "meso": 541,
+  "mesoMax": 812,
+  "mesoEst": true
+ },
+ {
+  "id": 7110300,
+  "name": "D. Roy",
+  "level": 75,
+  "hp": 16000,
+  "exp": 350,
+  "pdef": 800,
+  "mdef": 290,
+  "mapIds": [
+   261020500
+  ],
+  "meso": 384,
+  "mesoMax": 576
+ },
+ {
+  "id": 7130101,
+  "name": "Taurospear",
+  "level": 75,
+  "hp": 18000,
+  "exp": 350,
+  "pdef": 550,
+  "mdef": 400,
+  "mapIds": [
+   105090700,
+   105090800
+  ],
+  "element": {
+   "fire": "strong",
+   "lightning": "strong"
+  },
+  "meso": 400,
+  "mesoMax": 600
+ },
+ {
+  "id": 7130200,
+  "name": "Werewolf",
+  "level": 75,
+  "hp": 16000,
+  "exp": 350,
+  "pdef": 800,
+  "mdef": 290,
+  "mapIds": [
+   211040500,
+   211040600
+  ],
+  "meso": 384,
+  "mesoMax": 576
+ },
+ {
+  "id": 9300087,
+  "name": "The Charging Taurospear",
+  "level": 75,
+  "hp": 18000,
+  "exp": 350,
+  "pdef": 550,
+  "mdef": 400,
+  "mapIds": [],
+  "meso": 400,
+  "mesoMax": 600
+ },
+ {
+  "id": 9400585,
+  "name": "Crimson Tree",
+  "level": 75,
+  "hp": 3500,
+  "exp": 122,
+  "pdef": 150,
+  "mdef": 200,
+  "mapIds": [],
+  "meso": 182,
+  "mesoMax": 273,
+  "mesoEst": true
+ },
+ {
+  "id": 9400586,
+  "name": "Crimson Tree",
+  "level": 75,
+  "hp": 3500,
+  "exp": 122,
+  "pdef": 150,
+  "mdef": 200,
+  "mapIds": [],
+  "meso": 182,
+  "mesoMax": 273,
+  "mesoEst": true
+ },
+ {
+  "id": 9500132,
+  "name": "Werewolf",
+  "level": 75,
+  "hp": 16000,
+  "exp": 350,
+  "pdef": 800,
+  "mdef": 290,
+  "mapIds": [],
+  "meso": 384,
+  "mesoMax": 576
+ },
+ {
+  "id": 7130003,
+  "name": "Dual Beetle",
+  "level": 76,
+  "hp": 18000,
+  "exp": 370,
+  "pdef": 400,
+  "mdef": 400,
+  "mapIds": [
+   240010900,
+   240010901
+  ],
+  "element": {
+   "lightning": "strong"
+  },
+  "meso": 431,
+  "mesoMax": 663,
+  "patk": 300,
+  "matk": 350
+ },
+ {
+  "id": 7130601,
+  "name": "Green Hobi",
+  "level": 76,
+  "hp": 18000,
+  "exp": 370,
+  "pdef": 400,
+  "mdef": 350,
+  "mapIds": [
+   240010100,
+   240010300
+  ],
+  "element": {
+   "poison": "strong"
+  },
+  "meso": 431,
+  "mesoMax": 663,
+  "patk": 300,
+  "matk": 350
+ },
+ {
+  "id": 8140300,
+  "name": "Dark Klock",
+  "level": 76,
+  "hp": 18000,
+  "exp": 370,
+  "pdef": 380,
+  "mdef": 400,
+  "mapIds": [
+   220070100
+  ],
+  "element": {
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 640,
+  "mesoMax": 960
+ },
+ {
+  "id": 9300146,
+  "name": "Cyti",
+  "level": 76,
+  "hp": 38000,
+  "exp": 360,
+  "pdef": 190,
+  "mdef": 400,
+  "mapIds": [],
+  "meso": 584,
+  "mesoMax": 876,
+  "mesoEst": true
+ },
+ {
+  "id": 6400100,
+  "name": "Deep Buffoon",
+  "level": 77,
+  "hp": 19000,
+  "exp": 385,
+  "pdef": 400,
+  "mdef": 410,
+  "mapIds": [
+   220060100
+  ],
+  "element": {
+   "ice": "weak",
+   "fire": "strong"
+  },
+  "meso": 334,
+  "mesoMax": 501
+ },
+ {
+  "id": 9300147,
+  "name": "Homunculus",
+  "level": 77,
+  "hp": 20000,
+  "exp": 320,
+  "pdef": 300,
+  "mdef": 320,
+  "mapIds": [],
+  "element": {
+   "canHeal": true,
+   "holy": "weak"
+  },
+  "meso": 429,
+  "mesoMax": 643,
+  "mesoEst": true
+ },
+ {
+  "id": 7130004,
+  "name": "Hankie",
+  "level": 78,
+  "hp": 20000,
+  "exp": 400,
+  "pdef": 600,
+  "mdef": 450,
+  "mapIds": [
+   240010200,
+   240010300
+  ],
+  "element": {
+   "fire": "weak",
+   "poison": "weak"
+  },
+  "meso": 460,
+  "mesoMax": 709,
+  "patk": 330,
+  "matk": 365
+ },
+ {
+  "id": 9300149,
+  "name": "Roid",
+  "level": 78,
+  "hp": 29000,
+  "exp": 295,
+  "pdef": 270,
+  "mdef": 300,
+  "mapIds": [],
+  "meso": 516,
+  "mesoMax": 774,
+  "mesoEst": true
+ },
+ {
+  "id": 9300148,
+  "name": "Neo Huroid",
+  "level": 79,
+  "hp": 24000,
+  "exp": 330,
+  "pdef": 400,
+  "mdef": 450,
+  "mapIds": [],
+  "meso": 472,
+  "mesoMax": 708,
+  "mesoEst": true
+ },
+ {
+  "id": 8110300,
+  "name": "Homunscullo",
+  "level": 80,
+  "hp": 27000,
+  "exp": 850,
+  "pdef": 650,
+  "mdef": 450,
+  "mapIds": [
+   261010102
+  ],
+  "element": {
+   "canHeal": true,
+   "holy": "weak"
+  },
+  "meso": 502,
+  "mesoMax": 753,
+  "mesoEst": true
+ },
+ {
+  "id": 8140000,
+  "name": "Lycanthrope",
+  "level": 80,
+  "hp": 27000,
+  "exp": 850,
+  "pdef": 650,
+  "mdef": 520,
+  "mapIds": [
+   211040800,
+   211040900,
+   211041000
+  ],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 502,
+  "mesoMax": 753,
+  "mesoEst": true
+ },
+ {
+  "id": 8140001,
+  "name": "Harp",
+  "level": 80,
+  "hp": 27000,
+  "exp": 850,
+  "pdef": 650,
+  "mdef": 450,
+  "mapIds": [
+   240010600,
+   240010700,
+   240010800
+  ],
+  "element": {
+   "poison": "strong"
+  },
+  "meso": 636,
+  "mesoMax": 921,
+  "mesoEst": true,
+  "patk": 350,
+  "matk": 410
+ },
+ {
+  "id": 9300095,
+  "name": "Lycanthrope the Kidnapper",
+  "level": 80,
+  "hp": 19000,
+  "exp": 850,
+  "pdef": 450,
+  "mdef": 420,
+  "mapIds": [],
+  "meso": 423,
+  "mesoMax": 634,
+  "mesoEst": true
+ },
+ {
+  "id": 9300150,
+  "name": "Neo Huroid",
+  "level": 80,
+  "hp": 35000,
+  "exp": 390,
+  "pdef": 290,
+  "mdef": 310,
+  "mapIds": [],
+  "meso": 570,
+  "mesoMax": 854,
+  "mesoEst": true
+ },
+ {
+  "id": 9400545,
+  "name": "Wolf Spider",
+  "level": 80,
+  "hp": 28000,
+  "exp": 1200,
+  "pdef": 700,
+  "mdef": 650,
+  "mapIds": [],
+  "meso": 511,
+  "mesoMax": 766,
+  "mesoEst": true
+ },
+ {
+  "id": 9400581,
+  "name": "Stormbreaker",
+  "level": 80,
+  "hp": 38000,
+  "exp": 1650,
+  "pdef": 700,
+  "mdef": 480,
+  "mapIds": [],
+  "meso": 593,
+  "mesoMax": 889,
+  "mesoEst": true
+ },
+ {
+  "id": 9500134,
+  "name": "Lycanthrope",
+  "level": 80,
+  "hp": 27000,
+  "exp": 850,
+  "pdef": 650,
+  "mdef": 520,
+  "mapIds": [],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 502,
+  "mesoMax": 753,
+  "mesoEst": true
+ },
+ {
+  "id": 9500161,
+  "name": "Hankie",
+  "level": 78,
+  "hp": 20000,
+  "exp": 400,
+  "pdef": 600,
+  "mdef": 450,
+  "mapIds": [],
+  "element": {
+   "fire": "weak",
+   "poison": "weak"
+  },
+  "meso": 460,
+  "mesoMax": 709,
+  "mesoEst": true,
+  "patk": 330,
+  "matk": 365
+ },
+ {
+  "id": 9500162,
+  "name": "Harp",
+  "level": 80,
+  "hp": 27000,
+  "exp": 850,
+  "pdef": 650,
+  "mdef": 450,
+  "mapIds": [],
+  "element": {
+   "poison": "strong"
+  },
+  "meso": 636,
+  "mesoMax": 921,
+  "mesoEst": true,
+  "patk": 350,
+  "matk": 410
+ },
+ {
+  "id": 7140000,
+  "name": "Ghost Pirate",
+  "level": 83,
+  "hp": 30000,
+  "exp": 1100,
+  "pdef": 710,
+  "mdef": 460,
+  "mapIds": [
+   220060200
+  ],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 360,
+  "mesoMax": 540
+ },
+ {
+  "id": 8140002,
+  "name": "Blood Harp",
+  "level": 83,
+  "hp": 30000,
+  "exp": 1100,
+  "pdef": 700,
+  "mdef": 465,
+  "mapIds": [
+   240010600,
+   240010700
+  ],
+  "element": {
+   "ice": "weak",
+   "fire": "strong"
+  },
+  "meso": 648,
+  "mesoMax": 933,
+  "patk": 365,
+  "matk": 400
+ },
+ {
+  "id": 9500163,
+  "name": "Blood Harp",
+  "level": 83,
+  "hp": 30000,
+  "exp": 1100,
+  "pdef": 700,
+  "mdef": 465,
+  "mapIds": [],
+  "element": {
+   "ice": "weak",
+   "fire": "strong"
+  },
+  "meso": 648,
+  "mesoMax": 933,
+  "patk": 365,
+  "matk": 400
+ },
+ {
+  "id": 7130010,
+  "name": "Death Teddy",
+  "level": 85,
+  "hp": 32000,
+  "exp": 1300,
+  "pdef": 700,
+  "mdef": 465,
+  "mapIds": [
+   220070200
+  ],
+  "element": {
+   "fire": "weak",
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 364,
+  "mesoMax": 546
+ },
+ {
+  "id": 7130020,
+  "name": "Goby",
+  "level": 85,
+  "hp": 17000,
+  "exp": 1400,
+  "pdef": 645,
+  "mdef": 430,
+  "mapIds": [
+   230040400,
+   230040000,
+   230040100
+  ],
+  "element": {
+   "fire": "strong"
+  },
+  "meso": 104,
+  "mesoMax": 156
+ },
+ {
+  "id": 8140110,
+  "name": "Birk",
+  "level": 85,
+  "hp": 32000,
+  "exp": 1420,
+  "pdef": 760,
+  "mdef": 465,
+  "mapIds": [
+   240010400,
+   240010500,
+   240010800
+  ],
+  "element": {
+   "ice": "weak",
+   "holy": "strong"
+  },
+  "meso": 661,
+  "mesoMax": 946,
+  "patk": 380
+ },
+ {
+  "id": 9300097,
+  "name": "Goby in Warped Dimension",
+  "level": 85,
+  "hp": 17000,
+  "exp": 1400,
+  "pdef": 645,
+  "mdef": 430,
+  "mapIds": [],
+  "meso": 104,
+  "mesoMax": 156
+ },
+ {
+  "id": 9500135,
+  "name": "Death Teddy",
+  "level": 85,
+  "hp": 32000,
+  "exp": 1300,
+  "pdef": 700,
+  "mdef": 465,
+  "mapIds": [],
+  "element": {
+   "fire": "weak",
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 364,
+  "mesoMax": 546
+ },
+ {
+  "id": 7160000,
+  "name": "Dual Ghost Pirate",
+  "level": 87,
+  "hp": 35000,
+  "exp": 1500,
+  "pdef": 775,
+  "mdef": 470,
+  "mapIds": [
+   220060201
+  ],
+  "element": {
+   "fire": "weak",
+   "ice": "immune"
+  },
+  "meso": 400,
+  "mesoMax": 600
+ },
+ {
+  "id": 8140101,
+  "name": "Black Kentaurus",
+  "level": 88,
+  "hp": 37000,
+  "exp": 1600,
+  "pdef": 800,
+  "mdef": 495,
+  "mapIds": [
+   240020100,
+   240020101,
+   240020200,
+   240020300
+  ],
+  "element": {
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 668,
+  "mesoMax": 953,
+  "mesoEst": true,
+  "patk": 390,
+  "matk": 430
+ },
+ {
+  "id": 8140102,
+  "name": "Red Kentaurus",
+  "level": 88,
+  "hp": 37000,
+  "exp": 1600,
+  "pdef": 800,
+  "mdef": 495,
+  "mapIds": [
+   240020000,
+   240020100,
+   240020102,
+   240020500
+  ],
+  "element": {
+   "ice": "weak",
+   "fire": "strong"
+  },
+  "meso": 668,
+  "mesoMax": 953,
+  "mesoEst": true,
+  "patk": 390,
+  "matk": 430
+ },
+ {
+  "id": 8140103,
+  "name": "Blue Kentaurus",
+  "level": 88,
+  "hp": 37000,
+  "exp": 1600,
+  "pdef": 800,
+  "mdef": 495,
+  "mapIds": [
+   240020300,
+   240020400,
+   240020402,
+   240020500
+  ],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 668,
+  "mesoMax": 953,
+  "mesoEst": true,
+  "patk": 390,
+  "matk": 430
+ },
+ {
+  "id": 8140111,
+  "name": "Dual Birk",
+  "level": 88,
+  "hp": 37000,
+  "exp": 1620,
+  "pdef": 850,
+  "mdef": 480,
+  "mapIds": [
+   240010400,
+   240010500
+  ],
+  "element": {
+   "poison": "strong",
+   "holy": "strong"
+  },
+  "meso": 669,
+  "mesoMax": 954,
+  "mesoEst": true,
+  "patk": 395
+ },
+ {
+  "id": 9300096,
+  "name": "Black Kentaurus",
+  "level": 88,
+  "hp": 37000,
+  "exp": 1600,
+  "pdef": 800,
+  "mdef": 495,
+  "mapIds": [],
+  "element": {
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 668,
+  "mesoMax": 953,
+  "mesoEst": true,
+  "patk": 390,
+  "matk": 430
+ },
+ {
+  "id": 9500164,
+  "name": "Black Kentaurus",
+  "level": 88,
+  "hp": 37000,
+  "exp": 1600,
+  "pdef": 800,
+  "mdef": 495,
+  "mapIds": [],
+  "element": {
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 668,
+  "mesoMax": 953,
+  "mesoEst": true,
+  "patk": 390,
+  "matk": 430
+ },
+ {
+  "id": 9500165,
+  "name": "Red Kentaurus",
+  "level": 88,
+  "hp": 37000,
+  "exp": 1600,
+  "pdef": 800,
+  "mdef": 495,
+  "mapIds": [],
+  "element": {
+   "ice": "weak",
+   "fire": "strong"
+  },
+  "meso": 668,
+  "mesoMax": 953,
+  "mesoEst": true,
+  "patk": 390,
+  "matk": 430
+ },
+ {
+  "id": 9500166,
+  "name": "Blue Kentaurus",
+  "level": 88,
+  "hp": 37000,
+  "exp": 1600,
+  "pdef": 800,
+  "mdef": 495,
+  "mapIds": [],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 668,
+  "mesoMax": 953,
+  "mesoEst": true,
+  "patk": 390,
+  "matk": 430
+ },
+ {
+  "id": 7130300,
+  "name": "Master Death Teddy",
+  "level": 89,
+  "hp": 40000,
+  "exp": 1720,
+  "pdef": 750,
+  "mdef": 480,
+  "mapIds": [
+   220070201
+  ],
+  "element": {
+   "holy": "weak",
+   "canHeal": true,
+   "ice": "strong",
+   "lightning": "strong"
+  },
+  "meso": 408,
+  "mesoMax": 612
+ },
+ {
+  "id": 8140500,
+  "name": "Bain",
+  "level": 90,
+  "hp": 45000,
+  "exp": 1800,
+  "pdef": 835,
+  "mdef": 505,
+  "mapIds": [
+   211042200
+  ],
+  "element": {
+   "ice": "weak",
+   "fire": "strong"
+  },
+  "meso": 640,
+  "mesoMax": 960
+ },
+ {
+  "id": 8140700,
+  "name": "Blue Dragon Turtle",
+  "level": 90,
+  "hp": 40000,
+  "exp": 1780,
+  "pdef": 820,
+  "mdef": 480,
+  "mapIds": [
+   240030000,
+   240030100
+  ],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 675,
+  "mesoMax": 960,
+  "mesoEst": true,
+  "patk": 410
+ },
+ {
+  "id": 9400577,
+  "name": "Firebrand",
+  "level": 90,
+  "hp": 21000,
+  "exp": 910,
+  "pdef": 820,
+  "mdef": 600,
+  "mapIds": [],
+  "meso": 460,
+  "mesoMax": 689,
+  "mesoEst": true
+ },
+ {
+  "id": 9400578,
+  "name": "Firebrand",
+  "level": 90,
+  "hp": 45000,
+  "exp": 2350,
+  "pdef": 920,
+  "mdef": 700,
+  "mapIds": [],
+  "meso": 640,
+  "mesoMax": 960
+ },
+ {
+  "id": 9500138,
+  "name": "Bain",
+  "level": 90,
+  "hp": 45000,
+  "exp": 1800,
+  "pdef": 835,
+  "mdef": 505,
+  "mapIds": [],
+  "element": {
+   "ice": "weak",
+   "fire": "strong"
+  },
+  "meso": 640,
+  "mesoMax": 960
+ },
+ {
+  "id": 8140600,
+  "name": "Bone Fish",
+  "level": 92,
+  "hp": 42500,
+  "exp": 2000,
+  "pdef": 840,
+  "mdef": 540,
+  "mapIds": [
+   230040000,
+   230040100
+  ],
+  "element": {
+   "holy": "weak",
+   "canHeal": true,
+   "fire": "strong"
+  },
+  "meso": 652,
+  "mesoMax": 978,
+  "mesoEst": true
+ },
+ {
+  "id": 9300098,
+  "name": "Bone Fish in Warped Dimension",
+  "level": 92,
+  "hp": 42500,
+  "exp": 2000,
+  "pdef": 840,
+  "mdef": 540,
+  "mapIds": [],
+  "meso": 652,
+  "mesoMax": 978,
+  "mesoEst": true
+ },
+ {
+  "id": 8140701,
+  "name": "Red Dragon Turtle",
+  "level": 93,
+  "hp": 49000,
+  "exp": 2100,
+  "pdef": 830,
+  "mdef": 500,
+  "mapIds": [
+   240030000,
+   240030100,
+   240030103
+  ],
+  "element": {
+   "ice": "weak",
+   "fire": "strong"
+  },
+  "meso": 686,
+  "mesoMax": 971,
+  "patk": 420
+ },
+ {
+  "id": 8141000,
+  "name": "Spirit Viking",
+  "level": 93,
+  "hp": 50000,
+  "exp": 2100,
+  "pdef": 830,
+  "mdef": 530,
+  "mapIds": [
+   220060300
+  ],
+  "element": {
+   "lightning": "weak",
+   "fire": "strong"
+  },
+  "meso": 625,
+  "mesoMax": 926
+ },
+ {
+  "id": 8141300,
+  "name": "Squid",
+  "level": 94,
+  "hp": 46000,
+  "exp": 2200,
+  "pdef": 830,
+  "mdef": 525,
+  "mapIds": [
+   230040200,
+   230040300
+  ],
+  "element": {
+   "fire": "strong",
+   "poison": "strong"
+  },
+  "meso": 682,
+  "mesoMax": 1023,
+  "mesoEst": true
+ },
+ {
+  "id": 8140702,
+  "name": "Rexton",
+  "level": 95,
+  "hp": 50000,
+  "exp": 2280,
+  "pdef": 840,
+  "mdef": 550,
+  "mapIds": [
+   240030200
+  ],
+  "element": {
+   "lightning": "weak"
+  },
+  "meso": 692,
+  "mesoMax": 977,
+  "mesoEst": true,
+  "patk": 420
+ },
+ {
+  "id": 8142000,
+  "name": "Phantom Watch",
+  "level": 95,
+  "hp": 53000,
+  "exp": 2300,
+  "pdef": 835,
+  "mdef": 530,
+  "mapIds": [
+   220070300
+  ],
+  "element": {
+   "fire": "weak",
+   "holy": "weak",
+   "canHeal": true,
+   "ice": "strong"
+  },
+  "meso": 622,
+  "mesoMax": 948
+ },
+ {
+  "id": 9400580,
+  "name": "Elderwraith",
+  "level": 95,
+  "hp": 51000,
+  "exp": 2480,
+  "pdef": 940,
+  "mdef": 550,
+  "mapIds": [],
+  "meso": 720,
+  "mesoMax": 1080,
+  "mesoEst": true
+ },
+ {
+  "id": 9500137,
+  "name": "G. Phantom Watch",
+  "level": 95,
+  "hp": 53000,
+  "exp": 2800,
+  "pdef": 835,
+  "mdef": 530,
+  "mapIds": [],
+  "meso": 622,
+  "mesoMax": 948
+ },
+ {
+  "id": 8140703,
+  "name": "Brexton",
+  "level": 97,
+  "hp": 55000,
+  "exp": 2500,
+  "pdef": 850,
+  "mdef": 570,
+  "mapIds": [
+   240030300
+  ],
+  "element": {
+   "ice": "weak",
+   "fire": "strong"
+  },
+  "meso": 699,
+  "mesoMax": 984,
+  "patk": 470,
+  "matk": 520
+ },
+ {
+  "id": 8142100,
+  "name": "Risell Squid",
+  "level": 97,
+  "hp": 49000,
+  "exp": 2500,
+  "pdef": 830,
+  "mdef": 550,
+  "mapIds": [
+   230040200,
+   230040300
+  ],
+  "element": {
+   "fire": "strong",
+   "lightning": "strong"
+  },
+  "meso": 710,
+  "mesoMax": 1065,
+  "mesoEst": true
+ },
+ {
+  "id": 8150300,
+  "name": "Red Wyvern",
+  "level": 97,
+  "hp": 53000,
+  "exp": 2500,
+  "pdef": 830,
+  "mdef": 550,
+  "mapIds": [
+   240040000,
+   240040100,
+   240040310,
+   240040400,
+   240040401
+  ],
+  "element": {
+   "ice": "weak",
+   "fire": "strong"
+  },
+  "meso": 699,
+  "mesoMax": 984,
+  "patk": 450,
+  "matk": 500
+ },
+ {
+  "id": 9300069,
+  "name": "Red Wyvern 1 in Cave",
+  "level": 97,
+  "hp": 53000,
+  "exp": 800,
+  "pdef": 830,
+  "mdef": 550,
+  "mapIds": [],
+  "meso": 738,
+  "mesoMax": 1107,
+  "mesoEst": true
+ },
+ {
+  "id": 9300070,
+  "name": "Red Wyvern 2 in Cave",
+  "level": 97,
+  "hp": 53000,
+  "exp": 800,
+  "pdef": 830,
+  "mdef": 550,
+  "mapIds": [],
+  "meso": 738,
+  "mesoMax": 1107,
+  "mesoEst": true
+ },
+ {
+  "id": 8141100,
+  "name": "Gigantic Spirit Viking",
+  "level": 98,
+  "hp": 58000,
+  "exp": 2600,
+  "pdef": 845,
+  "mdef": 580,
+  "mapIds": [
+   220060301
+  ],
+  "element": {
+   "lightning": "weak",
+   "fire": "strong"
+  },
+  "meso": 646,
+  "mesoMax": 959
+ },
+ {
+  "id": 9500136,
+  "name": "Gigantic Viking",
+  "level": 98,
+  "hp": 58000,
+  "exp": 2600,
+  "pdef": 845,
+  "mdef": 580,
+  "mapIds": [],
+  "meso": 646,
+  "mesoMax": 959
+ },
+ {
+  "id": 8143000,
+  "name": "Grim Phantom Watch",
+  "level": 99,
+  "hp": 60000,
+  "exp": 2800,
+  "pdef": 850,
+  "mdef": 570,
+  "mapIds": [
+   220070301
+  ],
+  "element": {
+   "fire": "weak",
+   "holy": "weak",
+   "canHeal": true,
+   "ice": "immune"
+  },
+  "meso": 622,
+  "mesoMax": 948
+ },
+ {
+  "id": 8150100,
+  "name": "Shark",
+  "level": 100,
+  "hp": 56000,
+  "exp": 3000,
+  "pdef": 850,
+  "mdef": 570,
+  "mapIds": [
+   230040400
+  ],
+  "element": {
+   "fire": "strong"
+  },
+  "meso": 765,
+  "mesoMax": 1147,
+  "mesoEst": true
+ },
+ {
+  "id": 8150200,
+  "name": "Green Cornian",
+  "level": 100,
+  "hp": 56000,
+  "exp": 3000,
+  "pdef": 800,
+  "mdef": 500,
+  "mapIds": [
+   240030100,
+   240030101,
+   240030102,
+   240030103,
+   240030104,
+   240030200
+  ],
+  "element": {
+   "poison": "strong"
+  },
+  "meso": 714,
+  "mesoMax": 999,
+  "mesoEst": true,
+  "patk": 480
+ },
+ {
+  "id": 9300065,
+  "name": "Green Cornian1 in Cave",
+  "level": 100,
+  "hp": 56000,
+  "exp": 1000,
+  "pdef": 800,
+  "mdef": 500,
+  "mapIds": [],
+  "meso": 765,
+  "mesoMax": 1147,
+  "mesoEst": true
+ },
+ {
+  "id": 9300066,
+  "name": "Green Cornian 2 in Cave",
+  "level": 100,
+  "hp": 56000,
+  "exp": 1000,
+  "pdef": 800,
+  "mdef": 500,
+  "mapIds": [],
+  "meso": 765,
+  "mesoMax": 1147,
+  "mesoEst": true
+ },
+ {
+  "id": 9300099,
+  "name": "Shark in Warped Dimension",
+  "level": 100,
+  "hp": 56000,
+  "exp": 3000,
+  "pdef": 850,
+  "mdef": 570,
+  "mapIds": [],
+  "meso": 765,
+  "mesoMax": 1147,
+  "mesoEst": true
+ },
+ {
+  "id": 9400013,
+  "name": "Dreamy Ghost",
+  "level": 100,
+  "hp": 68000,
+  "exp": 3200,
+  "pdef": 810,
+  "mdef": 580,
+  "mapIds": [],
+  "element": {
+   "holy": "weak",
+   "canHeal": true,
+   "poison": "immune"
+  },
+  "meso": 697,
+  "mesoMax": 1020
+ },
+ {
+  "id": 9400564,
+  "name": "Mirror Ghost",
+  "level": 100,
+  "hp": 1000000,
+  "exp": 1,
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "meso": 3116,
+  "mesoMax": 4674,
+  "mesoEst": true
+ },
+ {
+  "id": 9400574,
+  "name": "Typhon",
+  "level": 100,
+  "hp": 56000,
+  "exp": 3200,
+  "pdef": 500,
+  "mdef": 450,
+  "mapIds": [],
+  "meso": 765,
+  "mesoMax": 1147,
+  "mesoEst": true
+ },
+ {
+  "id": 9400579,
+  "name": "Nightshadow",
+  "level": 100,
+  "hp": 70000,
+  "exp": 3600,
+  "pdef": 800,
+  "mdef": 560,
+  "mapIds": [],
+  "meso": 852,
+  "mesoMax": 1279,
+  "mesoEst": true
+ },
+ {
+  "id": 9500192,
+  "name": "Pumpkin Knight",
+  "level": 100,
+  "hp": 10,
+  "exp": 12,
+  "pdef": 5,
+  "mdef": 10,
+  "mapIds": [],
+  "meso": 11,
+  "mesoMax": 17,
+  "mesoEst": true
+ },
+ {
+  "id": 9500193,
+  "name": "Fire Steed",
+  "level": 100,
+  "hp": 10,
+  "exp": 12,
+  "pdef": 5,
+  "mdef": 10,
+  "mapIds": [],
+  "meso": 11,
+  "mesoMax": 17,
+  "mesoEst": true
+ },
+ {
+  "id": 9500199,
+  "name": "Toy Clown",
+  "level": 100,
+  "hp": 10,
+  "exp": 12,
+  "pdef": 5,
+  "mdef": 10,
+  "mapIds": [],
+  "meso": 11,
+  "mesoMax": 17,
+  "mesoEst": true
+ },
+ {
+  "id": 9500300,
+  "name": "Busted Doll",
+  "level": 100,
+  "hp": 10,
+  "exp": 12,
+  "pdef": 10,
+  "mdef": 10,
+  "mapIds": [],
+  "meso": 11,
+  "mesoMax": 17,
+  "mesoEst": true
+ },
+ {
+  "id": 9500301,
+  "name": "Destroyed Doll",
+  "level": 100,
+  "hp": 10,
+  "exp": 12,
+  "pdef": 10,
+  "mdef": 10,
+  "mapIds": [],
+  "meso": 11,
+  "mesoMax": 17,
+  "mesoEst": true
+ },
+ {
+  "id": 8150301,
+  "name": "Blue Wyvern",
+  "level": 101,
+  "hp": 57000,
+  "exp": 3050,
+  "pdef": 850,
+  "mdef": 570,
+  "mapIds": [
+   240040000,
+   240040100,
+   240040210,
+   240040400,
+   240040401
+  ],
+  "element": {
+   "fire": "weak",
+   "ice": "strong"
+  },
+  "meso": 715,
+  "mesoMax": 1000,
+  "mesoEst": true,
+  "patk": 495,
+  "matk": 435
+ },
+ {
+  "id": 9300071,
+  "name": "Blue Wyvern 1 in Cave",
+  "level": 101,
+  "hp": 57000,
+  "exp": 1000,
+  "pdef": 850,
+  "mdef": 570,
+  "mapIds": [],
+  "meso": 774,
+  "mesoMax": 1160,
+  "mesoEst": true
+ },
+ {
+  "id": 9300072,
+  "name": "Blue Wyvern 2 in Cave",
+  "level": 101,
+  "hp": 57000,
+  "exp": 1000,
+  "pdef": 850,
+  "mdef": 570,
+  "mapIds": [],
+  "meso": 774,
+  "mesoMax": 1160,
+  "mesoEst": true
+ },
+ {
+  "id": 8150101,
+  "name": "Cold Shark",
+  "level": 102,
+  "hp": 58500,
+  "exp": 3100,
+  "pdef": 855,
+  "mdef": 575,
+  "mapIds": [
+   230040400
+  ],
+  "element": {
+   "ice": "strong",
+   "fire": "strong"
+  },
+  "meso": 786,
+  "mesoMax": 1178,
+  "mesoEst": true
+ },
+ {
+  "id": 8150302,
+  "name": "Dark Wyvern",
+  "level": 103,
+  "hp": 60000,
+  "exp": 3150,
+  "pdef": 900,
+  "mdef": 580,
+  "mapIds": [
+   240040200,
+   240040300,
+   240040400,
+   240040401,
+   240040500
+  ],
+  "element": {
+   "poison": "strong"
+  },
+  "meso": 718,
+  "mesoMax": 1003,
+  "mesoEst": true,
+  "patk": 505,
+  "matk": 540
+ },
+ {
+  "id": 9300073,
+  "name": "Dark Wyvern 1 in Cave",
+  "level": 103,
+  "hp": 60000,
+  "exp": 1050,
+  "pdef": 900,
+  "mdef": 580,
+  "mapIds": [],
+  "meso": 798,
+  "mesoMax": 1197,
+  "mesoEst": true
+ },
+ {
+  "id": 9300074,
+  "name": "Dark Wyvern 2 in Cave",
+  "level": 103,
+  "hp": 60000,
+  "exp": 1050,
+  "pdef": 900,
+  "mdef": 580,
+  "mapIds": [],
+  "meso": 798,
+  "mesoMax": 1197,
+  "mesoEst": true
+ },
+ {
+  "id": 8150201,
+  "name": "Dark Cornian",
+  "level": 105,
+  "hp": 67000,
+  "exp": 3700,
+  "pdef": 800,
+  "mdef": 500,
+  "mapIds": [
+   240030100,
+   240030101,
+   240030102,
+   240030104,
+   240030300
+  ],
+  "element": {
+   "poison": "strong"
+  },
+  "meso": 733,
+  "mesoMax": 1018,
+  "mesoEst": true,
+  "patk": 500,
+  "matk": 550
+ },
+ {
+  "id": 8190000,
+  "name": "Jr. Newtie",
+  "level": 105,
+  "hp": 68000,
+  "exp": 3800,
+  "pdef": 750,
+  "mdef": 680,
+  "mapIds": [
+   240040520,
+   240040521
+  ],
+  "meso": 736,
+  "mesoMax": 1021,
+  "mesoEst": true,
+  "patk": 500,
+  "matk": 550
+ },
+ {
+  "id": 9300067,
+  "name": "Dark Cornian 1 in Cave",
+  "level": 105,
+  "hp": 67000,
+  "exp": 1200,
+  "pdef": 800,
+  "mdef": 500,
+  "mapIds": [],
+  "meso": 846,
+  "mesoMax": 1270,
+  "mesoEst": true
+ },
+ {
+  "id": 9300068,
+  "name": "Dark Cornian 2 in Cave",
+  "level": 105,
+  "hp": 67000,
+  "exp": 1200,
+  "pdef": 800,
+  "mdef": 500,
+  "mapIds": [],
+  "meso": 846,
+  "mesoMax": 1270,
+  "mesoEst": true
+ },
+ {
+  "id": 9300078,
+  "name": "Jr. Newtie in Cave",
+  "level": 105,
+  "hp": 68000,
+  "exp": 1250,
+  "pdef": 750,
+  "mdef": 680,
+  "mapIds": [],
+  "meso": 853,
+  "mesoMax": 1279,
+  "mesoEst": true
+ },
+ {
+  "id": 8160000,
+  "name": "Gatekeeper",
+  "level": 108,
+  "hp": 78000,
+  "exp": 4300,
+  "pdef": 900,
+  "mdef": 650,
+  "mapIds": [
+   220060400
+  ],
+  "element": {
+   "lightning": "strong"
+  },
+  "meso": 664,
+  "mesoMax": 996
+ },
+ {
+  "id": 8170000,
+  "name": "Thanatos",
+  "level": 108,
+  "hp": 70000,
+  "exp": 4100,
+  "pdef": 850,
+  "mdef": 680,
+  "mapIds": [
+   220070400
+  ],
+  "element": {
+   "holy": "weak",
+   "canHeal": true,
+   "ice": "immune"
+  },
+  "meso": 664,
+  "mesoMax": 996
+ },
+ {
+  "id": 8190002,
+  "name": "Nest Golem",
+  "level": 110,
+  "hp": 80000,
+  "exp": 4250,
+  "pdef": 900,
+  "mdef": 600,
+  "mapIds": [
+   240040520,
+   240040521,
+   240040600
+  ],
+  "meso": 753,
+  "mesoMax": 1038,
+  "mesoEst": true,
+  "patk": 580,
+  "matk": 650
+ },
+ {
+  "id": 8190003,
+  "name": "Skelegon",
+  "level": 110,
+  "hp": 80000,
+  "exp": 4500,
+  "pdef": 800,
+  "mdef": 700,
+  "mapIds": [
+   240040510,
+   240040511
+  ],
+  "element": {
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 754,
+  "mesoMax": 1039,
+  "mesoEst": true,
+  "patk": 520,
+  "matk": 660
+ },
+ {
+  "id": 8190005,
+  "name": "Nest Golem",
+  "level": 110,
+  "hp": 80000,
+  "exp": 4250,
+  "pdef": 900,
+  "mdef": 600,
+  "mapIds": [],
+  "meso": 753,
+  "mesoMax": 1038,
+  "mesoEst": true,
+  "patk": 580,
+  "matk": 650
+ },
+ {
+  "id": 9300075,
+  "name": "Skelegon 1 in Cave",
+  "level": 110,
+  "hp": 80000,
+  "exp": 1500,
+  "pdef": 800,
+  "mdef": 700,
+  "mapIds": [],
+  "meso": 936,
+  "mesoMax": 1403,
+  "mesoEst": true
+ },
+ {
+  "id": 9300076,
+  "name": "Skelegon 2 in Cave",
+  "level": 110,
+  "hp": 80000,
+  "exp": 1500,
+  "pdef": 800,
+  "mdef": 700,
+  "mapIds": [],
+  "meso": 936,
+  "mesoMax": 1403,
+  "mesoEst": true
+ },
+ {
+  "id": 9300079,
+  "name": "Nest Golem in Cave",
+  "level": 110,
+  "hp": 80000,
+  "exp": 1500,
+  "pdef": 900,
+  "mdef": 600,
+  "mapIds": [],
+  "meso": 936,
+  "mesoMax": 1403,
+  "mesoEst": true
+ },
+ {
+  "id": 8190004,
+  "name": "Skelosaurus",
+  "level": 113,
+  "hp": 85000,
+  "exp": 4750,
+  "pdef": 810,
+  "mdef": 710,
+  "mapIds": [
+   240040510,
+   240040511,
+   240040600
+  ],
+  "element": {
+   "holy": "weak",
+   "canHeal": true
+  },
+  "meso": 760,
+  "mesoMax": 1045,
+  "mesoEst": true,
+  "patk": 530,
+  "matk": 670
+ },
+ {
+  "id": 9300077,
+  "name": "T-Skelegon in Cave",
+  "level": 113,
+  "hp": 85000,
+  "exp": 1500,
+  "pdef": 810,
+  "mdef": 710,
+  "mapIds": [],
+  "meso": 971,
+  "mesoMax": 1457,
+  "mesoEst": true
+ },
+ {
+  "id": 9400582,
+  "name": "Crimson Guardian",
+  "level": 120,
+  "hp": 120000,
+  "exp": 6100,
+  "pdef": 1000,
+  "mdef": 800,
+  "mapIds": [],
+  "meso": 1169,
+  "mesoMax": 1754,
+  "mesoEst": true
+ },
+ {
+  "id": 9300013,
+  "name": "King Block Golem from Another Dimension",
+  "level": 200,
+  "hp": 99999,
+  "exp": 1,
+  "pdef": 999,
+  "mdef": 999,
+  "mapIds": [],
+  "meso": 1243,
+  "mesoMax": 1864,
+  "mesoEst": true
+ },
+ {
+  "id": 3000001,
+  "name": "Fairy",
+  "level": 30,
+  "hp": 842,
+  "exp": 99,
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "meso": 80,
+  "mesoMax": 120
+ },
+ {
+  "id": 6090001,
+  "name": "Snow Witch",
+  "level": 64,
+  "hp": 8000,
+  "exp": 358,
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "meso": 260,
+  "mesoMax": 390,
+  "mesoEst": true
+ },
+ {
+  "id": 7130102,
+  "name": "Yeti and Pepe",
+  "level": 78,
+  "hp": 21667,
+  "exp": 350,
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "meso": 417,
+  "mesoMax": 548
+ },
+ {
+  "id": 8220000,
+  "name": "Eliza",
+  "level": 83,
+  "hp": 28500,
+  "exp": 1237,
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "meso": 521,
+  "mesoMax": 781,
+  "mesoEst": true
+ },
+ {
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "id": 8140100,
+  "name": "Dark Yeti and Pepe",
+  "level": 82,
+  "hp": 28750,
+  "exp": 1040,
+  "meso": 658,
+  "mesoMax": 979
+ },
+ {
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "id": 6090000,
+  "name": "Riche",
+  "level": 65,
+  "hp": 15833,
+  "exp": 488,
+  "meso": 364,
+  "mesoMax": 546,
+  "mesoEst": true
+ },
+ {
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "id": 4230112,
+  "name": "Fly-Eye",
+  "level": 41,
+  "hp": 2130,
+  "exp": 98,
+  "meso": 112,
+  "mesoMax": 159
+ },
+ {
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "id": 5130108,
+  "name": "Miner Zombie",
+  "level": 57,
+  "hp": 5450,
+  "exp": 252,
+  "meso": 273,
+  "mesoMax": 407
+ },
+ {
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "id": 3210202,
+  "name": "Toy Soldier",
+  "level": 39,
+  "hp": 1977,
+  "exp": 94,
+  "meso": 114,
+  "mesoMax": 171,
+  "mesoEst": true
+ },
+ {
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "id": 2600613,
+  "name": "Timer",
+  "level": 58,
+  "hp": 5383,
+  "exp": 191,
+  "meso": 208,
+  "mesoMax": 312,
+  "mesoEst": true
+ },
+ {
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "id": 6090003,
+  "name": "Scholar Ghost",
+  "level": 62,
+  "hp": 12707,
+  "exp": 309,
+  "meso": 323,
+  "mesoMax": 484,
+  "mesoEst": true
+ },
+ {
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "id": 6130202,
+  "name": "Morphed Blin 1",
+  "level": 60,
+  "hp": 6850,
+  "exp": 306,
+  "meso": 236,
+  "mesoMax": 355,
+  "mesoEst": true
+ },
+ {
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "id": 6130203,
+  "name": "Morphed Blin 2",
+  "level": 60,
+  "hp": 6850,
+  "exp": 306,
+  "meso": 304,
+  "mesoMax": 456
+ },
+ {
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "id": 5400000,
+  "name": "Pin Boom",
+  "level": 22,
+  "hp": 355,
+  "exp": 36,
+  "meso": 40,
+  "mesoMax": 60
+ },
+ {
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "id": 8140555,
+  "name": "Bombing Fish House",
+  "level": 90,
+  "hp": 39333,
+  "exp": 1727,
+  "meso": 624,
+  "mesoMax": 936,
+  "mesoEst": true
+ },
+ {
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "id": 8140554,
+  "name": "Blood Boom",
+  "level": 75,
+  "hp": 12500,
+  "exp": 274,
+  "meso": 338,
+  "mesoMax": 508,
+  "mesoEst": true
+ },
+ {
+  "id": 2600115,
+  "name": "Dark Sand Dwarf",
+  "level": 32,
+  "hp": 1000,
+  "exp": 62,
+  "patk": 90,
+  "matk": 0,
+  "pdef": 40,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 80,
+  "mesoMax": 120
+ },
+ {
+  "id": 2400573,
+  "name": "Deo",
+  "level": 38,
+  "hp": 118000,
+  "exp": 445,
+  "patk": 0,
+  "matk": 0,
+  "pdef": 100,
+  "mdef": 120,
+  "mapIds": [],
+  "meso": 828,
+  "mesoMax": 1242,
+  "mesoEst": true
+ },
+ {
+  "id": 2600117,
+  "name": "Desert Giant",
+  "level": 40,
+  "hp": 1800,
+  "exp": 95,
+  "patk": 120,
+  "matk": 0,
+  "pdef": 160,
+  "mdef": 160,
+  "mapIds": [],
+  "meso": 106,
+  "mesoMax": 154
+ },
+ {
+  "id": 2600113,
+  "name": "Sand Dwarf",
+  "level": 32,
+  "hp": 1000,
+  "exp": 60,
+  "patk": 110,
+  "matk": 0,
+  "pdef": 45,
+  "mdef": 40,
+  "mapIds": [],
+  "meso": 80,
+  "mesoMax": 120
+ },
+ {
+  "id": 2600518,
+  "name": "Deet and Roi",
+  "level": 80,
+  "hp": 700000,
+  "exp": 0,
+  "patk": 600,
+  "matk": 600,
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "meso": 2453,
+  "mesoMax": 3680,
+  "mesoEst": true
+ },
+ {
+  "id": 0,
+  "name": "Kimera",
+  "level": 85,
+  "hp": 986000,
+  "exp": 3000,
+  "patk": 0,
+  "matk": 0,
+  "pdef": 700,
+  "mdef": 465,
+  "mapIds": [],
+  "meso": 2951,
+  "mesoMax": 4426,
+  "mesoEst": true
+ },
+ {
+  "id": 2600507,
+  "name": "Mithril Mutae",
+  "level": 47,
+  "hp": 2750,
+  "exp": 117,
+  "patk": 140,
+  "matk": 0,
+  "pdef": 155,
+  "mdef": 160,
+  "mapIds": [],
+  "meso": 172,
+  "mesoMax": 258
+ },
+ {
+  "id": 2600504,
+  "name": "Rurumo",
+  "level": 63,
+  "hp": 556000,
+  "exp": 245,
+  "patk": 190,
+  "matk": 220,
+  "pdef": 190,
+  "mdef": 220,
+  "mapIds": [],
+  "meso": 2044,
+  "mesoMax": 3067,
+  "mesoEst": true
+ },
+ {
+  "id": 2600513,
+  "name": "Saitie",
+  "level": 68,
+  "hp": 13000,
+  "exp": 265,
+  "patk": 210,
+  "matk": 290,
+  "pdef": 190,
+  "mdef": 270,
+  "mapIds": [],
+  "meso": 332,
+  "mesoMax": 498
+ },
+ {
+  "id": 2600509,
+  "name": "Security Camera",
+  "level": 75,
+  "hp": 889500,
+  "exp": 350,
+  "patk": 300,
+  "matk": 380,
+  "pdef": 550,
+  "mdef": 290,
+  "mapIds": [],
+  "meso": 2705,
+  "mesoMax": 4058,
+  "mesoEst": true
+ },
+ {
+  "id": 0,
+  "name": "Giant Bellflower Root",
+  "level": 62,
+  "hp": 520000,
+  "exp": 10,
+  "patk": 0,
+  "matk": 0,
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "meso": 1970,
+  "mesoMax": 2954,
+  "mesoEst": true
+ },
+ {
+  "id": 2600305,
+  "name": "King Sage Cat",
+  "level": 59,
+  "hp": 1009000,
+  "exp": 220,
+  "patk": 0,
+  "matk": 0,
+  "pdef": 180,
+  "mdef": 210,
+  "mapIds": [],
+  "meso": 2682,
+  "mesoMax": 4022,
+  "mesoEst": true
+ },
+ {
+  "id": 2600304,
+  "name": "Master Dummy",
+  "level": 59,
+  "hp": 100,
+  "exp": 10,
+  "patk": 0,
+  "matk": 0,
+  "pdef": 0,
+  "mdef": 0,
+  "mapIds": [],
+  "meso": 30,
+  "mesoMax": 45,
+  "mesoEst": true
+ },
+ {
+  "id": 2600300,
+  "name": "Straw Target Dummy",
+  "level": 50,
+  "hp": 3000,
+  "exp": 135,
+  "patk": 140,
+  "matk": 0,
+  "pdef": 170,
+  "mdef": 200,
+  "mapIds": [],
+  "meso": 150,
+  "mesoMax": 225,
+  "mesoEst": true
+ },
+ {
+  "id": 2600316,
+  "name": "Tae Roon",
+  "level": 71,
+  "hp": 914000,
+  "exp": 1580,
+  "patk": 272,
+  "matk": 310,
+  "pdef": 335,
+  "mdef": 265,
+  "mapIds": [],
+  "meso": 2698,
+  "mesoMax": 4047,
+  "mesoEst": true
+ },
+ {
+  "id": 2600301,
+  "name": "Wooden Target Dummy",
+  "level": 51,
+  "hp": 3200,
+  "exp": 142,
+  "patk": 170,
+  "matk": 0,
+  "pdef": 200,
+  "mdef": 160,
+  "mapIds": [],
+  "meso": 156,
+  "mesoMax": 233,
+  "mesoEst": true
+ },
+ {
+  "id": 8180001,
+  "name": "Griffey",
+  "level": 105,
+  "hp": 1700000,
+  "exp": 13500,
+  "patk": 550,
+  "matk": 680,
+  "pdef": -1,
+  "mdef": -1,
+  "mapIds": [],
+  "meso": 0,
+  "mesoMax": 0
+ },
+ {
+  "id": 8180000,
+  "name": "Manon",
+  "level": 105,
+  "hp": 1700000,
+  "exp": 0,
+  "patk": 550,
+  "matk": 680,
+  "pdef": -1,
+  "mdef": -1,
+  "mapIds": [],
+  "meso": 0,
+  "mesoMax": 0
+ },
+ {
+  "id": 8220003,
+  "name": "Leviathan",
+  "level": 120,
+  "hp": 56845000,
+  "exp": 0,
+  "patk": 0,
+  "matk": 0,
+  "pdef": -1,
+  "mdef": -1,
+  "mapIds": [],
+  "meso": 0,
+  "mesoMax": 0
+ }
+]

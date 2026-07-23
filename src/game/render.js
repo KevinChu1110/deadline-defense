@@ -935,7 +935,14 @@ function drawEnemies(ctx, enemies, now) {
     const gif = e.def.sprite ? getCachedMob(e.def.sprite) : null;
     const frame = gif ? sampleGifFrame(gif, e.animTime) : null;
     if (frame) {
-      const sc = e.def.spriteScale || 1.5;
+      let sc = e.def.spriteScale || 1.5;
+      // 世界怪的原圖尺寸差很多（蝸牛~40px vs 大怪~200px），等級推的 scale 不精準。
+      // 依 radius 夾制目標高度，避免大怪整隻爆出畫面 / 小怪太小。
+      const targetH = (e.def.radius || 16) * 3.4;
+      const rawH = frame.height * sc;
+      if (rawH > targetH * 1.6 || rawH < targetH * 0.5) {
+        sc = targetH / frame.height;
+      }
       const w = frame.width * sc;
       const h = frame.height * sc;
       ctx.imageSmoothingEnabled = false;

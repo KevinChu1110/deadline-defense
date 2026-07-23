@@ -32,6 +32,7 @@ import {
 import { LOADOUT_PRESETS, loadStars } from "./data/meta-progress.js";
 import { sfx } from "./audio/sfx.js";
 import { STAGES, loadProgress, isStageUnlocked, getStageByIndex } from "./data/stages.js";
+import { getWorldChapters } from "./data/world-stages.js";
 import { getItem } from "./data/items.js";
 import {
   getNickname,
@@ -148,6 +149,7 @@ const els = {
   btnCoachSkip: document.querySelector("#btn-coach-skip"),
   stageOverlay: document.querySelector("#stage-overlay"),
   stageList: document.querySelector("#stage-list"),
+  continentTabs: document.querySelector("#continent-tabs"),
   arenaList: document.querySelector("#arena-list"),
   nickInput: document.querySelector("#nick-input"),
   btnSaveNick: document.querySelector("#btn-save-nick"),
@@ -1035,35 +1037,66 @@ function getStarsForStage(stageId) {
   return Math.min(3, Number(data?.[stageId] || 0));
 }
 
+let selectedContinent = null;
+
 function renderStageList() {
   if (!els.stageList) return;
   flushActiveSlot();
   const progress = loadProgress();
-  els.stageList.innerHTML = "";
-  // 下一個可挑戰
+  const chapters = getWorldChapters();
+
+  // 下一個可挑戰（全域）
   let nextIdx = STAGES.findIndex((_, i) => isStageUnlocked(i, progress) && !progress.cleared[STAGES[i].id]);
   if (nextIdx < 0) nextIdx = Math.min(STAGES.length - 1, (progress.unlocked || 1) - 1);
 
-  STAGES.forEach((stage, i) => {
+  // 大陸解鎖：首關解鎖即解鎖；預設選中「下一關所在的大陸」
+  const contUnlocked = (ch) => isStageUnlocked(ch.stages[0].index, progress);
+  if (!selectedContinent || !chapters.some((c) => c.code === selectedContinent && contUnlocked(c))) {
+    const nextStage = STAGES[nextIdx];
+    selectedContinent = nextStage?.continent || chapters[0].code;
+  }
+
+  // ── 大陸列 ──
+  if (els.continentTabs) {
+    els.continentTabs.innerHTML = "";
+    chapters.forEach((ch) => {
+      const unlocked = contUnlocked(ch);
+      const clears = ch.stages.filter((s) => progress.cleared[s.id]).length;
+      const hasNext = ch.stages.some((s) => s.index === nextIdx);
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className =
+        "continent-chip" +
+        (ch.code === selectedContinent ? " is-active" : "") +
+        (!unlocked ? " is-locked" : "") +
+        (hasNext ? " has-next" : "");
+      btn.disabled = !unlocked;
+      const colors = STAGE_ACCENTS[ch.code.toUpperCase()] || STAGE_ACCENTS.VICTORIA;
+      btn.style.setProperty("--wn-a", colors[0]);
+      btn.style.setProperty("--wn-b", colors[1]);
+      btn.innerHTML = `
+        <span class="cc-name">${!unlocked ? "🔒 " : ""}${escapeHtml(ch.nameZh)}</span>
+        <span class="cc-prog">${clears}/${ch.stages.length}${hasNext ? " ▶" : clears === ch.stages.length ? " ✓" : ""}</span>`;
+      btn.addEventListener("click", () => {
+        if (!unlocked) return;
+        selectedContinent = ch.code;
+        sfx.play("uiClick");
+        renderStageList();
+      });
+      els.continentTabs.appendChild(btn);
+    });
+  }
+
+  // ── 選中大陸的地圖格 ──
+  els.stageList.innerHTML = "";
+  const chapter = chapters.find((c) => c.code === selectedContinent) || chapters[0];
+  chapter.stages.forEach((stage, li) => {
+    const i = stage.index;
     const unlocked = isStageUnlocked(i, progress);
     const cleared = !!progress.cleared[stage.id];
     const stars = getStarsForStage(stage.id);
     const isNext = i === nextIdx && unlocked;
     const colors = STAGE_ACCENTS[stage.code] || STAGE_ACCENTS.VICTORIA;
-
-    if (i > 0) {
-      const seg = document.createElement("span");
-      seg.className =
-        "world-path-seg" +
-        (!unlocked && !isStageUnlocked(i - 1, progress) ? " is-locked" : "") +
-        (cleared || isStageUnlocked(i, progress) && i <= nextIdx ? " is-done" : "");
-      if (cleared || (i <= nextIdx && unlocked)) seg.classList.add("is-done");
-      if (!isStageUnlocked(i - 1, progress)) {
-        seg.classList.remove("is-done");
-        seg.classList.add("is-locked");
-      }
-      els.stageList.appendChild(seg);
-    }
 
     const btn = document.createElement("button");
     btn.type = "button";
@@ -1076,30 +1109,28 @@ function renderStageList() {
     btn.setAttribute("role", "listitem");
     btn.style.setProperty("--wn-a", colors[0]);
     btn.style.setProperty("--wn-b", colors[1]);
-    btn.title = unlocked
-      ? `${stage.name} — ${stage.briefing}`
-      : `未解鎖 · 通關前一關`;
+    btn.title = unlocked ? `${stage.name} · 建議等級 ${stage.stageLevel}` : "未解鎖 · 通關前一關";
     const starStr =
       cleared || stars > 0 ? "★".repeat(stars) + "☆".repeat(Math.max(0, 3 - stars)) : isNext ? "▶" : "";
     btn.innerHTML = `
-      <span class="world-node-orb">${!unlocked ? "🔒" : String(i + 1).padStart(2, "0")}</span>
+      <span class="world-node-orb">${!unlocked ? "🔒" : String(li + 1).padStart(2, "0")}</span>
       <span class="world-node-name">${escapeHtml(stage.name)}</span>
+      <span class="world-node-lv">Lv.${stage.stageLevel}</span>
       <span class="world-node-stars">${starStr}</span>
     `;
     btn.addEventListener("click", () => {
       void sfx.unlock();
       sfx.play("uiClick");
       pendingStageId = stage.id;
-      pendingChallenge = null; // 一般關卡：清掉週挑戰狀態
+      pendingChallenge = null;
       openCharacterSelect();
     });
     els.stageList.appendChild(btn);
   });
 
-  // 滾到下一關
   requestAnimationFrame(() => {
     const nextEl = els.stageList.querySelector(".world-node.is-next");
-    nextEl?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    nextEl?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   });
 
   syncNickInput();

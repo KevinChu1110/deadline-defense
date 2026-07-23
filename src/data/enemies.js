@@ -2,6 +2,8 @@
  * 全戰役敵人 / Boss 定義
  * sprite → public/mobs/*
  */
+import { WORLD_ENEMIES } from "./world-generated.js";
+
 export const ENEMIES = {
   // ── 基礎 ──
   snail: {
@@ -758,3 +760,6 @@ ENEMIES.burnout = ENEMIES.stone_golem;
 ENEMIES.ticketZombie = ENEMIES.slime;
 ENEMIES.reviewLoop = ENEMIES.boss_pig_king;
 ENEMIES.handoffGhost = ENEMIES.jr_wraith;
+
+// ── 世界地圖：448 關用的 274 種真實怪（數字 mob id，不與上面手刻的撞名）──
+Object.assign(ENEMIES, WORLD_ENEMIES);
