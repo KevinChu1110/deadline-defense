@@ -726,10 +726,15 @@ body.is-dragging-job .specialist-card {
   padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
 }
 
-/* 說明／排行／設定要蓋過全螢幕主選單 (z-index 80) */
+/* 這些 overlay 要相對「視窗」置中（position:fixed），而不是相對 #app。
+   #app 在矮視窗下會比視窗高很多，用 absolute 的話 overlay 跟著 #app 撐高，
+   卡片就被推到視窗下方要捲才看得到。同時 z-index 蓋過全螢幕主選單(80)。
+   ⚠️ 新增 overlay 記得加進這串，否則會重演「卡片跑到視窗外」。 */
 #guide-overlay,
 #rank-overlay,
-#settings-overlay {
+#settings-overlay,
+#weekly-overlay,
+#dex-overlay {
   position: fixed;
   z-index: 90;
 }
@@ -6403,4 +6408,33 @@ body.mode-bc .wave-cta {
   .weekly-stage { color: #e8e0d0; }
   .weekly-mod strong { color: #e8e0d0; }
   .weekly-mod { background: rgba(255,255,255,0.05); }
+}
+
+/* 首頁次選單：次要功能收成一排小圖示鈕（圖鑑/排行/說明/設定）
+   主選單只留三大主行動，手機直向不再是一長條 8 顆按鈕。 */
+.title-menu-icons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.title-icon-btn {
+  font-size: 0.82rem;
+  padding: 8px 12px;
+  min-height: 40px;
+  background: rgba(247, 244, 234, 0.55);
+  border: 1.5px solid rgba(122, 90, 40, 0.28);
+  border-radius: 12px;
+  color: #5a4526;
+  font-weight: 700;
+}
+.title-icon-btn:hover {
+  background: rgba(247, 244, 234, 0.85);
+}
+@media (max-width: 380px) {
+  .title-icon-btn { font-size: 0.76rem; padding: 8px 10px; }
+}
+@media (prefers-color-scheme: dark) {
+  .title-icon-btn { background: rgba(255,255,255,0.06); color: #e8e0d0; }
 }
