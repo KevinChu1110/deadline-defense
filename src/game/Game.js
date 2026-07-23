@@ -70,6 +70,7 @@ import {
   getNickname,
 } from "../data/ranking.js";
 import { themeForStage } from "../data/map-themes.js";
+import { markJobUsed, markEnemy } from "../data/dex.js";
 import { BOSSES } from "../data/bosses.js";
 import { applyBossCast, tickBossAttacks } from "./boss-attacks.js";
 import {
@@ -647,6 +648,7 @@ export class Game {
     if (this.bcMode && this.bc) {
       placeEnemyOnBcLane(enemy, this.bc, this.enemies.length);
     }
+    markEnemy(enemy.typeId); // 圖鑑：遇到就記 seen
     this.enemies.push(enemy);
     if (enemy.def.boss) {
       this.fx.push(createRing(enemy.x, enemy.y, enemy.def.color, { maxR: 70, life: 0.55 }));
@@ -727,6 +729,7 @@ export class Game {
     }
     const pad = this.stage.map.pads[padIndex];
     const unit = createSpecialist(this.placingType, padIndex, pad, def);
+    markJobUsed(this.placingType); // 圖鑑：部署過就收集
     this.specialists.push(unit);
     this.padsOccupied.set(padIndex, unit.id);
     this.points -= def.cost;
@@ -1289,6 +1292,7 @@ export class Game {
             })
           );
           if (killed) {
+            markEnemy(target.typeId, { killed: true }); // 圖鑑：擊殺
             if (owner) owner.kills += 1;
             this.sfx.play("kill", { boss: wasBoss, family: owner?.def?.family });
             if (wasBoss) {

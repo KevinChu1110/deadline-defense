@@ -40,6 +40,7 @@ import {
   getStageLeaderboard,
   exportRankingJson,
 } from "./data/ranking.js";
+import { getJobDex, getEnemyDex, getDexSummary } from "./data/dex.js";
 import {
   ARENA_BOSS_ROTATION,
   ARENA_BOSS_META,
@@ -159,6 +160,14 @@ const els = {
   wizardStepRaid: document.querySelector("#wizard-step-raid"),
   wizardDots: document.querySelectorAll(".wizard-dot"),
   btnHomeRank: document.querySelector("#btn-home-rank"),
+  btnHomeDex: document.querySelector("#btn-home-dex"),
+  homeDexBadge: document.querySelector("#home-dex-badge"),
+  dexOverlay: document.querySelector("#dex-overlay"),
+  dexTitle: document.querySelector("#dex-title"),
+  dexSubtitle: document.querySelector("#dex-subtitle"),
+  dexTabs: document.querySelector("#dex-tabs"),
+  dexGrid: document.querySelector("#dex-grid"),
+  btnDexClose: document.querySelector("#btn-dex-close"),
   btnHomeGuide: document.querySelector("#btn-home-guide"),
   btnHomeSettings: document.querySelector("#btn-home-settings"),
   homeLeaves: document.querySelector("#home-leaves"),
@@ -302,6 +311,7 @@ function hideAllOverlays() {
   setOverlayOpen(els.rewardOverlay, false);
   setOverlayOpen(els.overlay, false);
   setOverlayOpen(els.rankOverlay, false);
+  setOverlayOpen(els.dexOverlay, false);
   setOverlayOpen(els.pauseOverlay, false);
   setOverlayOpen(els.helpOverlay, false);
   setOverlayOpen(els.guideOverlay, false);
@@ -1365,6 +1375,7 @@ function refreshHomeMeta(progress = loadProgress(), nextIdx = 0) {
   if (els.homeLeaves) {
     els.homeLeaves.textContent = String(loadCardProgress().leaves || 0);
   }
+  refreshDexBadge();
   if (els.btnContinue) {
     const stage = STAGES[Math.max(0, nextIdx)] || STAGES[0];
     const show = hasAnyProgress(progress) && !!stage;
@@ -1619,6 +1630,67 @@ function openGuideOverlay(tab = "play") {
 function closeGuideOverlay() {
   setOverlayOpen(els.guideOverlay, false);
   sfx.play("uiClick");
+}
+
+let dexTab = "jobs";
+
+function openDexOverlay(tab = "jobs") {
+  dexTab = tab;
+  hideAllOverlays();
+  renderDex();
+  setOverlayOpen(els.dexOverlay, true);
+  void sfx.unlock();
+  sfx.play("uiClick");
+}
+
+function renderDex() {
+  if (!els.dexGrid) return;
+  const sum = getDexSummary();
+
+  if (els.dexTabs) {
+    els.dexTabs.querySelectorAll(".dex-tab").forEach((b) => {
+      b.classList.toggle("is-active", b.dataset.tab === dexTab);
+    });
+  }
+
+  if (dexTab === "jobs") {
+    els.dexTitle.textContent = `職業圖鑑　${sum.jobs.done} / ${sum.jobs.total}`;
+    els.dexSubtitle.textContent = "在防衛戰裡部署過的職業會亮起。用你在 Discord 練的角色收集全部！";
+    const rows = getJobDex();
+    els.dexGrid.innerHTML = rows
+      .map((j) => {
+        if (!j.used) {
+          return `<div class="dex-cell dex-locked" title="尚未使用"><span class="dex-q">?</span></div>`;
+        }
+        return `<div class="dex-cell dex-owned" style="--dex-c:${j.color || "#6aaa62"}" title="${escapeHtml(j.nameZh)}">
+          <span class="dex-dot"></span><span class="dex-name">${escapeHtml(j.nameZh)}</span></div>`;
+      })
+      .join("");
+  } else {
+    els.dexTitle.textContent = `怪物圖鑑　擊倒 ${sum.enemies.killed} / ${sum.enemies.total}`;
+    els.dexSubtitle.textContent = "遇到會顯示剪影，擊倒後解鎖名字。Boss 排在最後。";
+    const rows = getEnemyDex();
+    els.dexGrid.innerHTML = rows
+      .map((e) => {
+        if (!e.seen) {
+          return `<div class="dex-cell dex-locked ${e.boss ? "dex-boss" : ""}" title="未遭遇"><span class="dex-q">?</span></div>`;
+        }
+        const cls = e.killed ? "dex-owned" : "dex-seen";
+        const nameHtml = e.killed
+          ? `<span class="dex-name">${escapeHtml(e.nameZh)}</span>`
+          : `<span class="dex-name dex-shadow">？？？</span>`;
+        return `<div class="dex-cell ${cls} ${e.boss ? "dex-boss" : ""}" style="--dex-c:${e.color || "#b45"}" title="${e.killed ? escapeHtml(e.nameZh) : "已遭遇，尚未擊倒"}">
+          <span class="dex-dot"></span>${nameHtml}</div>`;
+      })
+      .join("");
+  }
+}
+
+/** 首頁圖鑑按鈕的完成度徽章 */
+function refreshDexBadge() {
+  if (!els.homeDexBadge) return;
+  const sum = getDexSummary();
+  els.homeDexBadge.textContent = `${sum.percent}%`;
 }
 
 function openRankOverlay(tab = "all") {
@@ -3090,6 +3162,26 @@ els.btnHomeRank?.addEventListener("click", () =>
     openRankOverlay(rankTab || "all");
   })
 );
+els.btnHomeDex?.addEventListener("click", () =>
+  withAudio(() => {
+    openDexOverlay(dexTab || "jobs");
+  })
+);
+els.btnDexClose?.addEventListener("click", () =>
+  withAudio(() => {
+    sfx.play("uiClick");
+    setOverlayOpen(els.dexOverlay, false);
+    openTitleScreen();
+  })
+);
+els.dexTabs?.addEventListener("click", (e) => {
+  const btn = e.target.closest?.(".dex-tab");
+  if (!btn) return;
+  withAudio(() => {
+    dexTab = btn.dataset.tab;
+    renderDex();
+  });
+});
 els.btnHomeGuide?.addEventListener("click", () =>
   withAudio(() => {
     openGuideOverlay("play");

@@ -180,6 +180,7 @@
                   <button type="button" id="btn-continue" class="btn title-btn" hidden>
                     ↻ 繼續防衛戰
                   </button>
+                  <button type="button" id="btn-home-dex" class="btn title-btn">📖 圖鑑 <span id="home-dex-badge" class="title-btn-badge"></span></button>
                   <button type="button" id="btn-home-guide" class="btn title-btn">📜 遊戲說明</button>
                   <button type="button" id="btn-home-rank" class="btn title-btn">🏆 排行榜</button>
                   <button type="button" id="btn-home-settings" class="btn title-btn title-btn-ghost">⚙ 設定</button>
@@ -429,6 +430,23 @@
           </div>
 
           <!-- Ranking -->
+          <!-- 圖鑑：職業 / 敵人 / 關卡三軸收集 -->
+          <div id="dex-overlay" class="overlay" hidden>
+            <div class="overlay-card dex-card maple-panel">
+              <p class="overlay-kicker">📖 冒險圖鑑</p>
+              <h2 id="dex-title">圖鑑</h2>
+              <p class="muted" id="dex-subtitle">部署過的職業與打倒過的怪物都會記錄下來</p>
+              <div class="dex-tabs" id="dex-tabs">
+                <button type="button" class="btn dex-tab is-active" data-tab="jobs">職業</button>
+                <button type="button" class="btn dex-tab" data-tab="enemies">怪物</button>
+              </div>
+              <div id="dex-grid" class="dex-grid"></div>
+              <div class="overlay-actions">
+                <button type="button" id="btn-dex-close" class="btn primary maple-primary">關閉</button>
+              </div>
+            </div>
+          </div>
+
           <div id="rank-overlay" class="overlay" hidden>
             <div class="overlay-card rank-card maple-panel">
               <p class="overlay-kicker">🏆 本機聯賽</p>
