@@ -237,6 +237,7 @@ const els = {
   dialogOk: document.querySelector("#dialog-ok"),
   btnDiscordImport: document.querySelector("#btn-discord-import"),
   btnDiscordExport: document.querySelector("#btn-discord-export"),
+  btnDiscordCode: document.querySelector("#btn-discord-code"),
   discordBridgeBar: document.querySelector("#discord-bridge-bar"),
   discordBridgeHint: document.querySelector("#discord-bridge-hint"),
   discordLinkedRow: document.querySelector("#discord-linked-row"),
@@ -3438,7 +3439,10 @@ els.loadoutPresets?.addEventListener("click", (ev) => {
     applyLoadoutPresetById(id);
   });
 });
-els.btnDiscordImport?.addEventListener("click", () => withAudio(openDiscordImport));
+// 未登入主 CTA：直接走 Discord 登入（登入後角色自動帶入，不用手動匯入）
+els.btnDiscordImport?.addEventListener("click", () => withAudio(() => artaleHub.startDiscordOAuth()));
+// 沒有 Discord 的備援：貼 /同步 短碼
+els.btnDiscordCode?.addEventListener("click", () => withAudio(openDiscordImport));
 els.btnDiscordExport?.addEventListener("click", () => withAudio(doDiscordExport));
 els.btnDiscordResync?.addEventListener("click", () => withAudio(doLiveSync));
 els.btnDiscordImportCancel?.addEventListener("click", () => withAudio(closeDiscordImport));
