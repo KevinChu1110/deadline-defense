@@ -3986,8 +3986,10 @@ body.mode-td .wave-cta-btn {
 .wave-cta {
   position: absolute;
   left: 50%;
-  top: 52%;
-  transform: translate(-50%, -50%);
+  /* ⚠️ 原本 top:52% 浮在戰場正中央擋住視線與部署點。移到底部中央，不擋戰場。 */
+  bottom: 6%;
+  top: auto;
+  transform: translateX(-50%);
   z-index: 6;
   display: flex;
   flex-direction: column;
@@ -4748,6 +4750,39 @@ body.mode-bc .wave-cta {
   line-height: 1.4;
 }
 
+/* 已登入狀態列：取代手動匯入/匯出，一行表明「已連結，自動帶入」＋重新同步 */
+.discord-linked-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 8px 10px;
+  margin: 0 0 10px;
+  border-radius: 10px;
+  background: rgba(74, 222, 128, 0.12);
+  border: 1px solid rgba(74, 222, 128, 0.35);
+  font-size: 0.8rem;
+}
+.discord-linked-badge {
+  font-weight: 800;
+  color: #16a34a;
+}
+.discord-linked-name {
+  font-weight: 800;
+}
+.discord-linked-note {
+  color: var(--muted, #8a7a5c);
+}
+.discord-linked-row .linklike {
+  margin-left: auto;
+  font-weight: 800;
+}
+@media (prefers-color-scheme: dark) {
+  .discord-linked-badge {
+    color: #4ade80;
+  }
+}
+
 .discord-import-card {
   width: min(94vw, 440px) !important;
   text-align: left !important;
@@ -5301,13 +5336,112 @@ body.mode-bc .wave-cta {
   margin: 0 0 8px;
 }
 
+.ms-inv-scroll {
+  overflow: auto;
+  max-height: min(52vh, 440px);
+  padding-right: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .ms-inv-grid {
   display: flex;
   flex-direction: column;
   gap: 5px;
-  overflow: auto;
-  max-height: min(50vh, 420px);
-  padding-right: 2px;
+}
+
+/* 分類分組 */
+.ms-inv-group-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 800;
+  font-size: 0.82rem;
+  color: #5a2810;
+  margin: 0 0 5px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid rgba(107, 68, 35, 0.25);
+}
+
+.ms-inv-group-n {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #fff8e0;
+  background: #a16207;
+  border-radius: 8px;
+  padding: 0 6px;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* 一列 meta：部位·分類 / 需求等級 / 職業 */
+.ms-inv-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: center;
+  margin-top: 2px;
+}
+.ms-inv-slot {
+  font-weight: 700;
+  color: #6b4226;
+}
+.ms-inv-req {
+  color: #15803d;
+  font-weight: 700;
+}
+.ms-inv-req.over {
+  color: #dc2626;
+}
+.ms-inv-jobs {
+  color: #7c5a2e;
+}
+.ms-inv-stats {
+  display: block;
+  margin-top: 3px;
+  color: #b45309;
+  font-weight: 700;
+  font-size: 0.72rem;
+}
+.ms-inv-worn-tag {
+  display: inline-block;
+  margin-top: 3px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: #fff8e0;
+  background: #3d7a32;
+  border-radius: 6px;
+  padding: 1px 6px;
+}
+.ms-inv-item.is-locked-req {
+  border-color: rgba(220, 38, 38, 0.5);
+  background: linear-gradient(180deg, #fff5f5, #f8e0e0);
+}
+
+/* 衝裝入口 */
+.ms-forge-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 8px;
+  padding: 7px 9px;
+  border-radius: 10px;
+  background: rgba(161, 98, 7, 0.1);
+  border: 1px solid rgba(161, 98, 7, 0.3);
+}
+.ms-forge-q {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #7c4a10;
+  margin-right: auto;
+}
+.ms-forge-bar .chip-preset {
+  padding: 5px 10px !important;
+  font-size: 0.76rem !important;
+  min-height: 0 !important;
+  font-weight: 800;
 }
 
 .ms-inv-item {
@@ -6340,14 +6474,16 @@ body.mode-bc .wave-cta {
 .title-btn-weekly::after {
   content: "NEW";
   position: absolute;
-  top: -6px;
-  right: 8px;
+  /* ⚠️ 原本 top:-6px 溢出按鈕頂緣被卡片 overflow 裁切成半個。改放按鈕內右上角。 */
+  top: 6px;
+  right: 10px;
   font-size: 0.6rem;
   font-weight: 900;
-  padding: 1px 5px;
+  padding: 1px 6px;
   border-radius: 8px;
   background: #d4534e;
   color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .weekly-card {

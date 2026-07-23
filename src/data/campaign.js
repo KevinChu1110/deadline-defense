@@ -8,6 +8,9 @@ import {
   MAP_DUAL_SHORTCUT,
   MAP_TRIPLE,
   MAP_ARENA,
+  MAP_CROSS,
+  MAP_SERPENTINE,
+  MAP_SPIRAL,
 } from "./maps.js";
 
 const g = (at, path, units, interval = 0.9) => ({ at, path, units, interval });
@@ -25,6 +28,12 @@ export const STAGE_SCALES = [
   { hp: 2.7, spd: 1.1, leak: 1.3, pts: 20, core: 28, team: 9 },
   { hp: 3.2, spd: 1.12, leak: 1.3, pts: 22, core: 30, team: 10 },
   { hp: 3.8, spd: 1.15, leak: 1.5, pts: 24, core: 32, team: 10 },
+  // ── 第二章 英雄的試煉（11~15）：延續終章難度再往上，給高轉/英雄職發揮 ──
+  { hp: 4.6, spd: 1.16, leak: 1.5, pts: 26, core: 34, team: 11 },
+  { hp: 5.5, spd: 1.18, leak: 1.6, pts: 27, core: 34, team: 11 },
+  { hp: 6.6, spd: 1.2, leak: 1.7, pts: 28, core: 36, team: 12 },
+  { hp: 7.8, spd: 1.22, leak: 1.8, pts: 30, core: 38, team: 12 },
+  { hp: 9.5, spd: 1.25, leak: 2.0, pts: 32, core: 40, team: 12 },
 ];
 
 function stage(cfg) {
@@ -503,6 +512,243 @@ const S10_WAVES = [
   ]),
 ];
 
+// ═══════════════════════════════════════
+// 第二章 · Stage 11 幽靈船 — 幽靈船長（十字交叉）
+// ═══════════════════════════════════════
+const S11_WAVES = [
+  W("死者甲板", "十字交叉路：中央交會點是關鍵防守位。", [
+    g(0, "workflow", [["wraith", 5]], 0.9),
+    g(0, "event", [["jr_wraith", 7]], 0.75),
+  ]),
+  W("幽靈潮", "兩路湧上，交會點集火。", [
+    g(0, "workflow", [["jr_wraith", 8]], 0.7),
+    g(0.4, "event", [["wraith", 5]], 0.9),
+  ]),
+  W("隱形甲板", "黑木妖混入。", [
+    g(0, "workflow", [["dark_stump", 6]], 0.9),
+    g(0, "event", [["wraith", 4], ["jr_wraith", 5]], 0.75),
+  ]),
+  W("鋼鐵水手", "護甲單位登場。", [
+    g(0, "workflow", [["iron_hog", 3]], 1.6),
+    g(0, "event", [["croco", 5]], 1.0),
+  ]),
+  W("【中Boss】亡魂副官", "隱形高血精英，交會點爆發。", [
+    g(0, "workflow", [["mid_ghost_lieutenant", 1]], 1),
+    g(2, "event", [["wraith", 5], ["dark_stump", 4]], 0.8),
+  ]),
+  W("喘息", "補陣形。", [
+    g(0, "workflow", [["green_mushroom", 14]], 0.55),
+    g(0, "event", [["pig", 8]], 0.7),
+  ]),
+  W("幽靈與甲", "隱形＋護甲雙壓。", [
+    g(0, "workflow", [["wraith", 5], ["iron_hog", 2]], 0.9),
+    g(0, "event", [["jr_wraith", 6], ["stone_golem", 2]], 0.9),
+  ]),
+  W("亡靈狂潮", "大量混合。", [
+    g(0, "workflow", [["wraith", 6], ["dark_stump", 5], ["hellhound", 3]], 0.65),
+    g(0, "event", [["jr_wraith", 8], ["iron_hog", 2]], 0.65),
+  ]),
+  W("船長前哨", "地獄犬護衛。", [
+    g(0, "workflow", [["hellhound", 5]], 0.8),
+    g(0, "event", [["wraith", 5], ["croco", 4]], 0.8),
+  ]),
+  W("【Boss】幽靈船長", "巴洛古船長！隱形突進與亡魂召喚。", [
+    g(0, "workflow", [["boss_ghost_captain", 1]], 1),
+    g(2, "event", [["wraith", 4], ["hellhound", 3]], 0.75),
+    g(5, "workflow", [["jr_wraith", 6], ["dark_stump", 4]], 0.8),
+  ]),
+];
+
+// ═══════════════════════════════════════
+// 第二章 · Stage 12 冰封巨塔 — 雪吉拉王（長蛇）
+// ═══════════════════════════════════════
+const S12_WAVES = [
+  W("蜿蜒雪道", "超長 S 形路：善用全場開火時間。", [g(0, "workflow", [["pepe", 12]], 0.7)]),
+  W("冰眼加速", "光環加速全場，優先擊殺。", [
+    g(0, "workflow", [["cold_eye", 3], ["pepe", 8]], 0.8),
+  ]),
+  W("霜甲行軍", "抗緩＋護甲。", [
+    g(0, "workflow", [["pepe", 8], ["iron_hog", 3]], 0.85),
+  ]),
+  W("寒冰復活", "殭屍菇混雪原。", [
+    g(0, "workflow", [["zombie_mushroom", 8], ["pepe", 6]], 0.8),
+  ]),
+  W("【中Boss】冰眼統帥", "全場強光環＋高血。", [
+    g(0, "workflow", [["mid_cold_eye", 1]], 1),
+    g(2, "workflow", [["pepe", 10], ["cold_eye", 2]], 0.7),
+  ]),
+  W("喘息", "無光環。", [g(0, "workflow", [["green_mushroom", 18]], 0.5)]),
+  W("雙冰眼牆", "兩隻光環同場。", [
+    g(0, "workflow", [["cold_eye", 3]], 2.0),
+    g(1, "workflow", [["pepe", 10], ["fire_boar", 5]], 0.7),
+  ]),
+  W("暴風雪", "全機制混合。", [
+    g(0, "workflow", [["cold_eye", 2], ["pepe", 8], ["iron_hog", 3], ["hellhound", 3]], 0.65),
+  ]),
+  W("王前哨", "高速抗緩牆。", [
+    g(0, "workflow", [["pepe", 12], ["cold_eye", 2], ["hellhound", 4]], 0.6),
+  ]),
+  W("【Boss】雪吉拉王", "冰封巨塔之主！冰霜狂暴與召喚企鵝群。", [
+    g(0, "workflow", [["boss_yeti", 1]], 1),
+    g(3, "workflow", [["pepe", 8], ["cold_eye", 2]], 0.65),
+    g(6, "workflow", [["hellhound", 4], ["iron_hog", 2]], 0.85),
+  ]),
+];
+
+// ═══════════════════════════════════════
+// 第二章 · Stage 13 深淵漩渦 — 刺章魚王（螺旋）
+// ═══════════════════════════════════════
+const S13_WAVES = [
+  W("漩渦開場", "由外向內盤旋逼近核心。", [g(0, "workflow", [["bubbling", 12]], 0.65)]),
+  W("觸手召喚", "先殺章魚斷召喚源！", [
+    g(0, "workflow", [["octopus", 3]], 2.4),
+    g(1, "workflow", [["bubbling", 8]], 0.6),
+  ]),
+  W("深海護甲", "鱷魚＋召喚。", [
+    g(0, "workflow", [["croco", 6], ["octopus", 2]], 1.0),
+  ]),
+  W("復活漩渦", "殭屍菇＋水靈盤旋。", [
+    g(0, "workflow", [["zombie_mushroom", 7], ["slime", 6]], 0.75),
+  ]),
+  W("【中Boss】巨型觸手", "持續召喚，圍點清怪。", [
+    g(0, "workflow", [["mid_octopus", 1]], 1),
+    g(2, "workflow", [["croco", 5], ["bubbling", 8]], 0.7),
+  ]),
+  W("喘息", "無召喚。", [g(0, "workflow", [["bubbling", 16]], 0.5)]),
+  W("召喚牆", "多章魚圍核。", [
+    g(0, "workflow", [["octopus", 4]], 1.8),
+    g(0, "workflow", [["croco", 4], ["slime", 5]], 0.9),
+  ]),
+  W("深淵壓制", "全機制混合。", [
+    g(0, "workflow", [["octopus", 3], ["croco", 5], ["zombie_mushroom", 6]], 0.7),
+  ]),
+  W("王前哨", "召喚＋復活牆。", [
+    g(0, "workflow", [["octopus", 3], ["zombie_mushroom", 8], ["hellhound", 3]], 0.65),
+  ]),
+  W("【Boss】刺章魚王", "深淵漩渦霸主！八爪觸手潮與無盡召喚。", [
+    g(0, "workflow", [["boss_octopus", 1]], 1),
+    g(2, "workflow", [["octopus", 3], ["bubbling", 10]], 0.65),
+    g(5, "workflow", [["croco", 5], ["slime", 6]], 0.75),
+  ]),
+];
+
+// ═══════════════════════════════════════
+// 第二章 · Stage 14 鋼鐵要塞 — 機械豬王（三路）
+// ═══════════════════════════════════════
+const S14_WAVES = [
+  W("三線鋼鐵", "三路要塞防禦。", [
+    g(0, "workflow", [["iron_hog", 3]], 1.6),
+    g(0, "event", [["fire_boar", 5]], 0.8),
+    g(0, "pathC", [["croco", 5]], 1.0),
+  ]),
+  W("裝甲洪流", "三路護甲齊上。", [
+    g(0, "workflow", [["stone_golem", 3]], 1.8),
+    g(0, "event", [["iron_hog", 3]], 1.6),
+    g(0, "pathC", [["iron_hog", 3]], 1.6),
+  ]),
+  W("鋼鐵與火", "護甲＋高速。", [
+    g(0, "workflow", [["iron_hog", 3], ["fire_boar", 5]], 0.8),
+    g(0, "event", [["stone_golem", 2], ["croco", 5]], 1.0),
+    g(0, "pathC", [["fire_boar", 6]], 0.7),
+  ]),
+  W("空降螺絲", "中段蝙蝠空降。", [
+    { at: 0, path: "workflow", units: [["bat", 10]], interval: 0.4, distanceRatio: 0.5 },
+    g(0, "event", [["iron_hog", 3]], 1.5),
+    { at: 1, path: "pathC", units: [["bat", 8]], interval: 0.4, distanceRatio: 0.55 },
+  ]),
+  W("【中Boss】工廠總監", "三路壓力精英，超高護甲。", [
+    g(0, "event", [["mid_triple_elite", 1]], 1),
+    g(1, "workflow", [["iron_hog", 3]], 1.4),
+    g(1, "pathC", [["stone_golem", 2]], 1.8),
+  ]),
+  W("喘息", "低甲三路。", [
+    g(0, "workflow", [["pig", 8]], 0.6),
+    g(0, "event", [["green_mushroom", 10]], 0.55),
+    g(0, "pathC", [["snail", 10]], 0.6),
+  ]),
+  W("重裝牆", "全高甲。", [
+    g(0, "workflow", [["stone_golem", 3], ["iron_hog", 2]], 1.4),
+    g(0, "event", [["iron_hog", 4]], 1.3),
+    g(0, "pathC", [["croco", 6], ["stone_golem", 2]], 1.1),
+  ]),
+  W("鋼鐵狂潮", "全機制三路。", [
+    g(0, "workflow", [["iron_hog", 3], ["fire_boar", 5], ["hellhound", 3]], 0.65),
+    g(0, "event", [["stone_golem", 3], ["croco", 5]], 0.7),
+    g(0, "pathC", [["iron_hog", 3], ["fire_boar", 5]], 0.65),
+  ]),
+  W("王前哨", "三路重裝包夾。", [
+    g(0, "workflow", [["stone_golem", 3], ["iron_hog", 3]], 1.2),
+    g(0, "event", [["iron_hog", 4], ["hellhound", 3]], 0.9),
+    g(0, "pathC", [["croco", 6], ["fire_boar", 5]], 0.8),
+  ]),
+  W("【Boss】機械豬王", "鋼鐵要塞核心！裝甲衝鋒與飛彈齊射。", [
+    g(0, "event", [["boss_mech_pig", 1]], 1),
+    g(2, "workflow", [["iron_hog", 3], ["fire_boar", 5]], 0.7),
+    g(2, "pathC", [["stone_golem", 3], ["hellhound", 3]], 0.85),
+  ]),
+];
+
+// ═══════════════════════════════════════
+// 第二章 · Stage 15 時空盡頭 — 終極試煉（競技場）
+// ═══════════════════════════════════════
+const S15_WAVES = [
+  W("回顧·全機制", "隱形＋護甲＋復活。", [
+    g(0, "workflow", [["dark_stump", 6], ["iron_hog", 3]], 0.8),
+    g(0, "event", [["zombie_mushroom", 6], ["wraith", 4]], 0.8),
+  ]),
+  W("回顧·召喚換路", "章魚＋飛龍。", [
+    g(0, "workflow", [["octopus", 3], ["drake", 4]], 1.0),
+    g(0, "event", [["octopus", 2], ["red_drake", 4]], 1.0),
+  ]),
+  W("回顧·空降光環", "蝙蝠＋冰眼。", [
+    { at: 0, path: "workflow", units: [["bat", 12]], interval: 0.35, distanceRatio: 0.5 },
+    g(0, "event", [["cold_eye", 3], ["pepe", 8]], 0.75),
+  ]),
+  W("龍潮", "紅龍＋地獄犬。", [
+    g(0, "workflow", [["red_drake", 5], ["hellhound", 4]], 0.75),
+    g(0, "event", [["drake", 6], ["wraith", 4]], 0.75),
+  ]),
+  W("【中Boss】時空守衛×2", "雙精英同場！", [
+    g(0, "workflow", [["mid_ghost_lieutenant", 1]], 1),
+    g(0.5, "event", [["mid_cold_eye", 1]], 1),
+    g(2, "workflow", [["hellhound", 5], ["dark_stump", 5]], 0.65),
+  ]),
+  W("最後喘息", "補滿陣形。", [
+    g(0, "workflow", [["pig", 12]], 0.55),
+    g(0, "event", [["green_mushroom", 14]], 0.5),
+  ]),
+  W("裂縫爆發 A", "召喚＋護甲＋光環。", [
+    g(0, "workflow", [["octopus", 2], ["cold_eye", 2], ["iron_hog", 3]], 0.8),
+    g(0, "event", [["wraith", 4], ["stone_golem", 3]], 0.85),
+  ]),
+  W("裂縫爆發 B", "空降＋換路＋復活。", [
+    { at: 0, path: "workflow", units: [["bat", 10]], interval: 0.35, distanceRatio: 0.55 },
+    g(0, "event", [["red_drake", 5], ["zombie_mushroom", 6]], 0.75),
+    g(2, "workflow", [["hellhound", 5], ["fire_boar", 6]], 0.65),
+  ]),
+  W("盡頭狂潮", "全作最高壓力波。", [
+    g(0, "workflow", [
+      ["hellhound", 5],
+      ["wraith", 4],
+      ["iron_hog", 3],
+      ["red_drake", 3],
+    ], 0.6),
+    g(0, "event", [
+      ["dark_stump", 5],
+      ["octopus", 2],
+      ["stone_golem", 3],
+      ["cold_eye", 2],
+    ], 0.65),
+    { at: 4, path: "workflow", units: [["bat", 12]], interval: 0.3, distanceRatio: 0.6 },
+  ]),
+  W("【最終Boss】暗黑龍王·真", "時空盡頭的三頭龍王覺醒——第二章最難！", [
+    g(0, "workflow", [["boss_dark_dragon", 1]], 1),
+    g(3, "event", [["red_drake", 4], ["hellhound", 4]], 0.65),
+    g(6, "workflow", [["wraith", 5], ["iron_hog", 3]], 0.8),
+    g(9, "event", [["octopus", 2], ["cold_eye", 2]], 0.85),
+  ]),
+];
+
 export const CAMPAIGN_STAGES = [
   stage({
     id: "s01-victoria",
@@ -594,10 +840,56 @@ export const CAMPAIGN_STAGES = [
     map: MAP_ARENA,
     waves: S10_WAVES,
   }),
+  // ══════ 第二章 · 英雄的試煉（11~15）══════
+  stage({
+    id: "s11-ghostship",
+    index: 10,
+    code: "GHOSTSHIP",
+    name: "幽靈船・詛咒甲板",
+    briefing: "第二章開幕！十字交叉路 · 第 10 波幽靈船長（隱形突進）。",
+    map: MAP_CROSS,
+    waves: S11_WAVES,
+  }),
+  stage({
+    id: "s12-icetower",
+    index: 11,
+    code: "ICETOWER",
+    name: "冰封巨塔",
+    briefing: "蜿蜒長廊 · 抗緩光環 · 第 10 波雪吉拉王（冰霜狂暴）。",
+    map: MAP_SERPENTINE,
+    waves: S12_WAVES,
+  }),
+  stage({
+    id: "s13-abyss",
+    index: 12,
+    code: "ABYSS",
+    name: "深淵漩渦",
+    briefing: "螺旋逼近核心 · 無盡召喚 · 第 10 波刺章魚王。",
+    map: MAP_SPIRAL,
+    waves: S13_WAVES,
+  }),
+  stage({
+    id: "s14-fortress",
+    index: 13,
+    code: "FORTRESS",
+    name: "鋼鐵要塞",
+    briefing: "三路重裝 · 破甲為王 · 第 10 波機械豬王（裝甲衝鋒）。",
+    map: MAP_TRIPLE,
+    waves: S14_WAVES,
+  }),
+  stage({
+    id: "s15-endoftime",
+    index: 14,
+    code: "ENDTIME",
+    name: "時空盡頭",
+    briefing: "終極試煉 · 全機制融合 · 第 10 波暗黑龍王·真（第二章最難）！",
+    map: MAP_ARENA,
+    waves: S15_WAVES,
+  }),
 ];
 
 // 驗證
 const totalWaves = CAMPAIGN_STAGES.reduce((n, s) => n + s.waves.length, 0);
-if (totalWaves !== 100) {
-  console.warn(`[campaign] expected 100 waves, got ${totalWaves}`);
+if (totalWaves !== 150) {
+  console.warn(`[campaign] expected 150 waves, got ${totalWaves}`);
 }

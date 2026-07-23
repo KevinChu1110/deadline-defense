@@ -27,6 +27,7 @@ import {
   getUnlockHint,
   isSeriesUnlocked,
   markJobLearned,
+  loadLearnedJobs,
 } from "./data/job-tree.js";
 import { LOADOUT_PRESETS, loadStars } from "./data/meta-progress.js";
 import { sfx } from "./audio/sfx.js";
@@ -236,6 +237,11 @@ const els = {
   dialogOk: document.querySelector("#dialog-ok"),
   btnDiscordImport: document.querySelector("#btn-discord-import"),
   btnDiscordExport: document.querySelector("#btn-discord-export"),
+  discordBridgeBar: document.querySelector("#discord-bridge-bar"),
+  discordBridgeHint: document.querySelector("#discord-bridge-hint"),
+  discordLinkedRow: document.querySelector("#discord-linked-row"),
+  discordLinkedName: document.querySelector("#discord-linked-name"),
+  btnDiscordResync: document.querySelector("#btn-discord-resync"),
   discordImportOverlay: document.querySelector("#discord-import-overlay"),
   discordImportText: document.querySelector("#discord-import-text"),
   discordImportPreview: document.querySelector("#discord-import-preview"),
@@ -460,6 +466,8 @@ async function openArtaleHub() {
       if (sess.session?.discordId) {
         artaleHub.setLinkedDiscordId(sess.session.discordId);
       }
+      // 登入即自動帶入角色（非破壞性：只填空存檔，不覆蓋任何既有進度）
+      void autoSyncOnLogin();
     } catch {
       // 無 session — 停在登入頁
       hubState.me = null;
@@ -1013,6 +1021,12 @@ const STAGE_ACCENTS = {
   LEAFRE: ["#a3e635", "#3f6212"],
   TEMPLE: ["#c084fc", "#4c1d95"],
   ALTAR: ["#fca5a5", "#7f1d1d"],
+  // 第二章
+  GHOSTSHIP: ["#67e8f9", "#1e293b"],
+  ICETOWER: ["#a5f3fc", "#0891b2"],
+  ABYSS: ["#06b6d4", "#082f49"],
+  FORTRESS: ["#f59e0b", "#292524"],
+  ENDTIME: ["#e879f9", "#1e1b4b"],
 };
 
 function getStarsForStage(stageId) {
@@ -1266,6 +1280,42 @@ function showDiscordImportManual() {
 }
 
 /** 一鍵同步：重新打 API 拿最新資料（不用 hubState 那份可能已經過期的快照） */
+/**
+ * 登入後自動帶入 Discord 角色。**非破壞性**：只有在本機三個存檔「全空」時才動作
+ * （＝這台裝置第一次登入），把養好的角色直接帶進來，玩家不必再手動點「匯入」。
+ * 只要任何一個存檔有進度 → 尊重既有存檔，什麼都不改（回訪玩家可用「重新同步」）。
+ */
+async function autoSyncOnLogin() {
+  try {
+    const slots = listSaveSlots() || [];
+    const allEmpty = slots.length > 0 && slots.every((s) => s && s.empty);
+    if (!allEmpty) {
+      renderSaveSlots();
+      return;
+    }
+    const me = await artaleHub.loadMe();
+    hubState.me = me;
+    const payload = payloadFromAccountSummary(me);
+    if (!(payload.characters || []).length) {
+      renderSaveSlots();
+      return;
+    }
+    const { written } = importBridgeToSlots(payload);
+    syncNickInput();
+    refreshHomeMeta();
+    renderSaveSlots();
+    if (written.length) {
+      showToast(
+        `已自動帶入你的 ${written.length} 個角色：` +
+          written.map((w) => `${w.name}(槽${w.slot + 1})`).join("、")
+      );
+    }
+  } catch {
+    // 自動同步失敗不打斷玩家，維持登入狀態即可（仍可手動重新同步）
+    renderSaveSlots();
+  }
+}
+
 async function doLiveSync() {
   // ⚠️ 同步會覆蓋存檔 1~3。本機已有非空存檔時先確認 —— 這是不可逆的資料損失，
   //    比刪除還危險（刪除有確認，覆蓋反而沒有）。空存檔就不用煩玩家。
@@ -1499,8 +1549,23 @@ async function openOrCreateSlot(i, slot) {
   return true;
 }
 
+/**
+ * 依登入與否切換存檔區的橋接列：
+ * 已登入 = 角色自動帶入，手動「匯入/匯出」多餘 → 收起，改顯示一行連結狀態＋重新同步。
+ */
+function paintSaveBridgeBar() {
+  const logged = !!hubState.me;
+  if (els.discordBridgeBar) els.discordBridgeBar.hidden = logged;
+  if (els.discordBridgeHint) els.discordBridgeHint.hidden = logged;
+  if (els.discordLinkedRow) els.discordLinkedRow.hidden = !logged;
+  if (logged && els.discordLinkedName) {
+    els.discordLinkedName.textContent = hubState.me?.username || "冒險者";
+  }
+}
+
 function renderSaveSlots() {
   if (!els.saveSlotList) return;
+  paintSaveBridgeBar();
   ensureSaveSlotsMigrated();
   const slots = listSaveSlots();
   const active = getActiveSlotIndex();
@@ -1920,18 +1985,46 @@ function openStageSelect() {
   openTitleScreen();
 }
 
+/**
+ * 玩家「已學會且可部署」的職業，強度高→低排序（初心者永遠墊底）。
+ * 給登入/匯入角色後自動編隊用：有英雄就不該預設塞初心者。
+ */
+function deployableLearnedJobs() {
+  const learned = loadLearnedJobs();
+  return Object.keys(learned)
+    .filter(
+      (id) =>
+        canDeployJob(id) && (!pendingChallenge || isJobAllowedThisWeek(id, pendingChallenge))
+    )
+    .sort((a, b) => {
+      const ta = SPECIALISTS[a]?.jobTier ?? 0;
+      const tb = SPECIALISTS[b]?.jobTier ?? 0;
+      if (ta !== tb) return tb - ta; // 高轉優先
+      return (SPECIALISTS[b]?.dps || 0) - (SPECIALISTS[a]?.dps || 0);
+    });
+}
+
 function openCharacterSelect() {
   if (!game) return;
   screen = "char";
   document.body.classList.remove("home-open");
   hideAllOverlays();
+  markJobLearned("beginner");
   // Only keep deployable jobs in draft
-  const prev = game.loadout?.length ? game.loadout : DEFAULT_LOADOUT;
-  draftLoadout = prev.filter(
+  const prevSel = game.loadout?.length ? game.loadout : [];
+  let base = prevSel.filter(
     (id) => canDeployJob(id) && (!pendingChallenge || isJobAllowedThisWeek(id, pendingChallenge))
   );
-  if (!draftLoadout.length) draftLoadout = ["beginner"];
-  markJobLearned("beginner");
+  // ⚠️ 登入/匯入角色後最常見的抱怨：「有英雄了誰要用初心者」。
+  //    玩家若還沒手動編過隊（base 空、或只剩初心者），但已有更強的已學職業，
+  //    就自動把最強的幾個帶進編隊，讓養好的角色一進來就能打。
+  const onlyBeginner = base.length === 0 || (base.length === 1 && base[0] === "beginner");
+  if (onlyBeginner) {
+    const strong = deployableLearnedJobs().filter((id) => id !== "beginner");
+    if (strong.length) base = strong.slice(0, LOADOUT_MAX);
+  }
+  if (!base.length) base = ["beginner"];
+  draftLoadout = base;
   if (els.loadoutMaxLabel) els.loadoutMaxLabel.textContent = String(LOADOUT_MAX);
   focusCardId = draftLoadout[0] || "beginner";
   filterSeries = "all";
@@ -3347,6 +3440,7 @@ els.loadoutPresets?.addEventListener("click", (ev) => {
 });
 els.btnDiscordImport?.addEventListener("click", () => withAudio(openDiscordImport));
 els.btnDiscordExport?.addEventListener("click", () => withAudio(doDiscordExport));
+els.btnDiscordResync?.addEventListener("click", () => withAudio(doLiveSync));
 els.btnDiscordImportCancel?.addEventListener("click", () => withAudio(closeDiscordImport));
 els.btnDiscordImportPreview?.addEventListener("click", () => withAudio(doDiscordPreview));
 els.btnDiscordImportConfirm?.addEventListener("click", () => withAudio(doDiscordImport));

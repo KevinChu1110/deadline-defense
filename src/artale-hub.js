@@ -214,6 +214,80 @@ export function classLabel(id) {
   return CLASS_ZH[id] || id || "？";
 }
 
+// 部位（equipType/slot）→ 中文
+const SLOT_ZH = {
+  weapon: "武器",
+  bullet: "副武／彈藥",
+  helmet: "帽子",
+  overall: "套服",
+  top: "上衣",
+  bottom: "褲裙",
+  shoes: "鞋子",
+  glove: "手套",
+  cape: "披風",
+  shoulder: "肩飾",
+  belt: "腰帶",
+  face: "臉飾",
+  eye: "眼飾",
+  earring: "耳環",
+  ring: "戒指",
+  necklace: "項鍊",
+  pendant: "墜飾",
+  title: "稱號",
+  pet: "寵物",
+  totem: "圖騰",
+  badge: "徽章",
+  medal: "勳章",
+  shield: "盾牌",
+};
+
+// 武器 category → 中文
+const WEAPON_CAT_ZH = {
+  sword: "單手劍",
+  two_sword: "雙手劍",
+  axe: "斧",
+  two_axe: "雙手斧",
+  blunt: "鈍器",
+  two_blunt: "雙手鈍器",
+  spear: "槍",
+  polearm: "矛",
+  dagger: "短劍",
+  claw: "拳套",
+  gun: "火槍",
+  knuckle: "指虎",
+  bow: "弓",
+  crossbow: "弩",
+  staff: "長杖",
+  wand: "短杖",
+  cane: "手杖",
+  dual_bowgun: "雙弩槍",
+};
+
+// 三大分類（給背包分組）
+const CATEGORY_GROUPS = [
+  { key: "weapon", label: "🗡️ 武器", match: (t) => t === "weapon" },
+  { key: "armor", label: "🛡️ 防具", match: (t) => t === "armor" },
+  { key: "accessory", label: "💍 飾品", match: (t) => t === "accessory" || (t !== "weapon" && t !== "armor") },
+];
+
+function slotZh(item) {
+  const k = item?.equipType || item?.slot || item?.type || "";
+  return SLOT_ZH[k] || k || "裝備";
+}
+
+function weaponCatZh(item) {
+  const c = item?.category;
+  return c ? WEAPON_CAT_ZH[c] || c : "";
+}
+
+/** jobs 陣列 → 中文；null / 空 = 不限職業 */
+function itemJobsZh(item) {
+  const jobs = item?.jobs;
+  if (!jobs || (Array.isArray(jobs) && !jobs.length)) return "不限職業";
+  const arr = Array.isArray(jobs) ? jobs : [jobs];
+  return arr.map((j) => classLabel(j)).join("／");
+}
+
 /** 開發工具：?dev=1、localStorage artale-dev=1、或本機 */
 export function showDevTools() {
   try {
@@ -407,28 +481,58 @@ function renderMapleEquip(equip, me, active, equipFilter) {
   if (filter === "bag") inv = inv.filter((x) => !x.equipped);
   if (filter === "worn") inv = inv.filter((x) => x.equipped);
 
-  const invHtml = inv.length
-    ? inv
-        .map((it) => {
-          const stats = [];
-          if (it.totalAd) stats.push(`攻${it.totalAd}`);
-          if (it.str) stats.push(`力${it.str}`);
-          if (it.dex) stats.push(`敏${it.dex}`);
-          if (it.int) stats.push(`智${it.int}`);
-          if (it.luk) stats.push(`幸${it.luk}`);
-          return `
-          <button type="button" class="ms-inv-item ${it.equipped ? "is-worn" : ""}"
-            data-wear-id="${escapeHtml(it.itemId)}"
-            ${it.equipped ? "data-worn=1" : ""}
-            title="${escapeHtml(it.name)}">
-            <strong>${escapeHtml(it.name)}</strong>
-            <small>Lv.${it.level || "?"} · ${escapeHtml(it.slot || it.type || "")}
-            ${stats.length ? " · " + stats.join(" ") : ""}
-            ${it.equipped ? " · 已裝備" : ""}</small>
-          </button>`;
-        })
-        .join("")
-    : `<p class="muted">背包沒有可裝備物品</p>`;
+  const charLv = equip.charLevel || active?.level || 0;
+  const itemCard = (it) => {
+    const stats = [];
+    if (it.totalAd) stats.push(`攻${it.totalAd}`);
+    if (it.totalAp || it.int) stats.push(`魔${it.totalAp || it.int}`);
+    if (it.str) stats.push(`力${it.str}`);
+    if (it.dex) stats.push(`敏${it.dex}`);
+    if (it.int && !it.totalAp) stats.push(`智${it.int}`);
+    if (it.luk) stats.push(`幸${it.luk}`);
+    if (it.def) stats.push(`防${it.def}`);
+    const cat = weaponCatZh(it);
+    const req = it.reqLevel ?? it.level ?? 0;
+    // 需求等級高於角色 → 標紅提示不能穿
+    const cantWear = charLv && req && req > charLv;
+    const star = it.starforce ? ` ★${it.starforce}` : "";
+    return `
+      <button type="button" class="ms-inv-item ${it.equipped ? "is-worn" : ""} ${cantWear ? "is-locked-req" : ""}"
+        data-wear-id="${escapeHtml(it.itemId)}"
+        ${it.equipped ? "data-worn=1" : ""}
+        title="${escapeHtml(it.name)}${cantWear ? ` · 需 Lv.${req} 才能裝備` : ""}">
+        <strong>${escapeHtml(it.name)}${star}</strong>
+        <small class="ms-inv-meta">
+          <span class="ms-inv-slot">${escapeHtml(slotZh(it))}${cat ? `·${escapeHtml(cat)}` : ""}</span>
+          <span class="ms-inv-req ${cantWear ? "over" : ""}">需Lv.${req}</span>
+          <span class="ms-inv-jobs">${escapeHtml(itemJobsZh(it))}</span>
+        </small>
+        ${stats.length ? `<small class="ms-inv-stats">${stats.join(" · ")}</small>` : ""}
+        ${it.equipped ? `<span class="ms-inv-worn-tag">已裝備</span>` : ""}
+      </button>`;
+  };
+
+  let invHtml;
+  if (!inv.length) {
+    invHtml = `<p class="muted">背包沒有可裝備物品</p>`;
+  } else {
+    // 依三大分類分組顯示
+    const used = new Set();
+    const sections = [];
+    for (const grp of CATEGORY_GROUPS) {
+      const items = inv.filter((it) => !used.has(it.itemId) && grp.match(it.type));
+      items.forEach((it) => used.add(it.itemId));
+      if (!items.length) continue;
+      // 同組內依需求等級高→低排序
+      items.sort((a, b) => (b.reqLevel ?? b.level ?? 0) - (a.reqLevel ?? a.level ?? 0));
+      sections.push(`
+        <div class="ms-inv-group">
+          <div class="ms-inv-group-head">${grp.label}<span class="ms-inv-group-n">${items.length}</span></div>
+          <div class="ms-inv-grid">${items.map(itemCard).join("")}</div>
+        </div>`);
+    }
+    invHtml = sections.join("");
+  }
 
   return `
     <div class="ms-equip-window">
@@ -476,8 +580,13 @@ function renderMapleEquip(equip, me, active, equipFilter) {
               <button type="button" class="btn chip-preset ${filter === "worn" ? "is-on" : ""}" data-eq-filter="worn">已穿</button>
             </div>
           </div>
-          <p class="muted ms-inv-hint">點背包物品穿上 · 點紙娃娃槽位卸下</p>
-          <div class="ms-inv-grid">${invHtml}</div>
+          <p class="muted ms-inv-hint">點背包物品穿上 · 點紙娃娃槽位卸下 · <span class="ms-inv-req over">紅字</span>＝等級不足不能裝備</p>
+          <div class="ms-forge-bar">
+            <span class="ms-forge-q">想讓裝備更強？</span>
+            <button type="button" class="btn chip-preset" data-hub-goto="star">⭐ 衝星力</button>
+            <button type="button" class="btn chip-preset" data-hub-goto="pot">🔮 洗潛能</button>
+          </div>
+          <div class="ms-inv-scroll">${invHtml}</div>
         </div>
       </div>
     </div>`;
@@ -938,19 +1047,23 @@ export function bindHubEvents(els, ctx) {
     }
   });
 
+  const gotoTab = async (tab) => {
+    const next = { ...getState?.(), tab, starFlash: "", potFlash: "", error: "" };
+    try {
+      if (tab === "equip") next.equip = await fetchEquip();
+      if (tab === "star") next.starforce = await fetchStarforce();
+      if (tab === "pot") next.potential = await fetchPotential();
+    } catch (e) {
+      next.error = e.message;
+    }
+    onState?.(next);
+  };
   els.artaleHub?.querySelectorAll("[data-hub-tab]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const tab = btn.getAttribute("data-hub-tab");
-      const next = { ...getState?.(), tab, starFlash: "", potFlash: "", error: "" };
-      try {
-        if (tab === "equip") next.equip = await fetchEquip();
-        if (tab === "star") next.starforce = await fetchStarforce();
-        if (tab === "pot") next.potential = await fetchPotential();
-      } catch (e) {
-        next.error = e.message;
-      }
-      onState?.(next);
-    });
+    btn.addEventListener("click", () => gotoTab(btn.getAttribute("data-hub-tab")));
+  });
+  // 裝備頁的「衝星力／洗潛能」捷徑
+  els.artaleHub?.querySelectorAll("[data-hub-goto]").forEach((btn) => {
+    btn.addEventListener("click", () => gotoTab(btn.getAttribute("data-hub-goto")));
   });
 
   els.artaleHub?.querySelectorAll("[data-select-char]").forEach((btn) => {

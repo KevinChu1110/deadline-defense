@@ -890,7 +890,17 @@ function drawEnemies(ctx, enemies, now) {
     const bob = Math.sin(e.animTime * 6) * 1.5;
 
     ctx.save();
-    ctx.globalAlpha = hidden ? 0.3 : 1;
+    // 隱身怪：半透明只會被誤認成「破圖」。改成明顯的閃爍隱形處理 + 青色隱身環，一看就懂是機制。
+    ctx.globalAlpha = hidden ? 0.4 + Math.sin(e.animTime * 4) * 0.12 : 1;
+    if (hidden) {
+      ctx.strokeStyle = "rgba(94, 234, 212, 0.8)";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.arc(e.x, e.y + 2, e.def.radius + 5, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
 
     if (e.status.slowUntil > now) {
       ctx.strokeStyle = "rgba(125, 211, 252, 0.85)";
@@ -932,7 +942,17 @@ function drawEnemies(ctx, enemies, now) {
       if (e.hitFlash > 0) {
         ctx.filter = "brightness(2.2)";
       }
-      ctx.drawImage(frame, e.x - w / 2, e.y - h / 2 + bob - 4, w, h);
+      // 楓谷 mob GIF 慣例面右；怪往左走(faceDir<0)就水平翻轉，讓它朝著走的方向，不再倒退嚕。
+      const flip = (e.faceDir || -1) < 0;
+      if (flip) {
+        ctx.save();
+        ctx.translate(e.x, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(frame, -w / 2, e.y - h / 2 + bob - 4, w, h);
+        ctx.restore();
+      } else {
+        ctx.drawImage(frame, e.x - w / 2, e.y - h / 2 + bob - 4, w, h);
+      }
       ctx.filter = "none";
     } else {
       // fallback circle while loading

@@ -229,7 +229,7 @@
                     <h2>📁 冒險者存檔</h2>
                     <p class="muted">3 槽 ＝ Discord 最多 3 個角色</p>
                   </div>
-                  <div class="discord-bridge-bar">
+                  <div class="discord-bridge-bar" id="discord-bridge-bar">
                     <button type="button" id="btn-discord-import" class="btn primary maple-primary">
                       ⬇️ 匯入 Discord 進度
                     </button>
@@ -237,9 +237,15 @@
                       ⬆️ 匯出進度碼
                     </button>
                   </div>
-                  <p class="muted discord-bridge-hint">
-                    已用 Discord 登入的話可以一鍵同步最新角色；否則在 Discord 打 <code>/同步</code> 取得短碼貼上。
+                  <p class="muted discord-bridge-hint" id="discord-bridge-hint">
+                    未登入時在 Discord 打 <code>/同步</code> 取得短碼貼上，或用 Discord 登入一鍵帶入角色。
                   </p>
+                  <div class="discord-linked-row" id="discord-linked-row" hidden>
+                    <span class="discord-linked-badge">✓ 已連結 Discord</span>
+                    <strong class="discord-linked-name" id="discord-linked-name">冒險者</strong>
+                    <span class="discord-linked-note">角色已自動帶入</span>
+                    <button type="button" id="btn-discord-resync" class="linklike">🔄 重新同步</button>
+                  </div>
                   <div id="save-slot-list" class="save-slot-list"></div>
                   <div class="home-player maple-inset">
                     <div class="home-avatar" aria-hidden="true">🍁</div>

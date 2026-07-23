@@ -386,6 +386,9 @@ export function updateEnemy(enemy, dt, now, ctx = {}) {
   }
 
   const pos = samplePath(metrics, enemy.distance);
+  // 依移動方向記面向：怪物 sprite 要朝著走的方向，否則看起來「倒退嚕」
+  const dxMove = pos.x - enemy.x;
+  if (Math.abs(dxMove) > 0.02) enemy.faceDir = dxMove >= 0 ? 1 : -1;
   enemy.x = pos.x;
   enemy.y = pos.y;
 }

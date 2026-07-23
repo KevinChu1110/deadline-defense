@@ -161,10 +161,11 @@ export function drawFx(ctx, list) {
       ctx.fill();
     } else if (fx.kind === "slash") {
       ctx.strokeStyle = fx.color;
-      ctx.lineWidth = 3;
+      const sc = fx.scale || 1;
+      ctx.lineWidth = 3 * sc;
       ctx.beginPath();
       const f = fx.facing || 1;
-      ctx.arc(fx.x, fx.y, 20, -0.8 * f, 0.8 * f, f < 0);
+      ctx.arc(fx.x, fx.y, 20 * sc, -0.8 * f, 0.8 * f, f < 0);
       ctx.stroke();
     } else if (fx.kind === "banner") {
       ctx.globalAlpha = Math.min(1, a * 1.4);

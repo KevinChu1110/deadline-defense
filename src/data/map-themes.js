@@ -103,6 +103,57 @@ export const MAP_THEMES = {
     decor: "gears",
     bgAlpha: 0,
   },
+  // ── 第二章主題 ──
+  ghostship: {
+    id: "ghostship",
+    nameZh: "幽靈船",
+    sky: ["#0f172a", "#1e293b"],
+    ground: ["#334155", "#1e293b"],
+    accent: "#67e8f9",
+    path: "coral",
+    decor: "bubbles",
+    bgAlpha: 0,
+  },
+  icetower: {
+    id: "icetower",
+    nameZh: "冰封巨塔",
+    sky: ["#cffafe", "#a5f3fc"],
+    ground: ["#e0f2fe", "#bae6fd"],
+    accent: "#0891b2",
+    path: "ice",
+    decor: "ice",
+    bgAlpha: 0,
+  },
+  abyss: {
+    id: "abyss",
+    nameZh: "深淵漩渦",
+    sky: ["#082f49", "#0c4a6e"],
+    ground: ["#083344", "#0e7490"],
+    accent: "#06b6d4",
+    path: "coral",
+    decor: "bubbles",
+    bgAlpha: 0,
+  },
+  fortress: {
+    id: "fortress",
+    nameZh: "鋼鐵要塞",
+    sky: ["#44403c", "#57534e"],
+    ground: ["#292524", "#44403c"],
+    accent: "#f59e0b",
+    path: "gear",
+    decor: "gears",
+    bgAlpha: 0,
+  },
+  endtime: {
+    id: "endtime",
+    nameZh: "時空盡頭",
+    sky: ["#1e1b4b", "#4c1d95"],
+    ground: ["#0f0a2e", "#1e1b4b"],
+    accent: "#e879f9",
+    path: "lava",
+    decor: "lava",
+    bgAlpha: 0,
+  },
 };
 
 /** stage id / map type → theme */
@@ -121,6 +172,11 @@ export function themeForStage(stage) {
     ALTAR: "altar",
     TEMPLE: "temple",
     TIME: "temple",
+    GHOSTSHIP: "ghostship",
+    ICETOWER: "icetower",
+    ABYSS: "abyss",
+    FORTRESS: "fortress",
+    ENDTIME: "endtime",
   };
   const key = map[code] || "victoria";
   return MAP_THEMES[key] || MAP_THEMES.victoria;
