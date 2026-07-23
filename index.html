@@ -68,7 +68,7 @@
         </div>
         <div class="hud-actions">
           <button type="button" id="btn-mute" class="btn maple-btn" aria-pressed="false" title="音效">🔊</button>
-          <button type="button" id="btn-pause" class="btn maple-btn" title="暫停 (Space)" hidden>⏸</button>
+          <button type="button" id="btn-pause" class="btn maple-btn" title="暫停 (Space)" hidden>⏸️</button>
           <!-- kept for API / pause menu wiring -->
           <button type="button" id="btn-help" class="btn maple-btn" hidden title="操作說明">？</button>
           <button type="button" id="btn-chars" class="btn maple-btn" hidden title="重選職業">職業</button>
@@ -95,7 +95,7 @@
           <!-- 中央主 CTA：開始波次 -->
           <div id="wave-cta" class="wave-cta" hidden>
             <button type="button" id="btn-wave-cta" class="btn primary maple-primary wave-cta-btn">
-              ▶ 開始波次
+              ▶️ 開始波次
             </button>
             <p class="wave-cta-hint muted" id="wave-cta-hint">部署完成後開始</p>
           </div>
@@ -140,7 +140,7 @@
 
               <!-- 左側：冒險家角色 -->
               <aside class="title-showcase title-showcase-left" aria-hidden="true">
-                <div class="showcase-label">⚔ 冒險家</div>
+                <div class="showcase-label">⚔️ 冒險家</div>
                 <div class="showcase-stack heroes">
                   <div class="showcase-fig f1"><img src="/portraits/hero.png" alt="" draggable="false" /></div>
                   <div class="showcase-fig f2"><img src="/portraits/bowmaster.png" alt="" draggable="false" /></div>
@@ -192,7 +192,7 @@
                   </button>
                   <button type="button" id="btn-home-rank" class="btn title-icon-btn" title="排行榜">🏆 排行</button>
                   <button type="button" id="btn-home-guide" class="btn title-icon-btn" title="遊戲說明">📜 說明</button>
-                  <button type="button" id="btn-home-settings" class="btn title-icon-btn" title="設定">⚙ 設定</button>
+                  <button type="button" id="btn-home-settings" class="btn title-icon-btn" title="設定">⚙️ 設定</button>
                 </nav>
                 <p class="title-hint muted">點一下畫面開啟背景音樂 ♪</p>
               </div>
@@ -288,7 +288,7 @@
                     <div id="stage-list" class="world-map-path" role="list"></div>
                   </div>
                   <p class="world-map-legend muted">
-                    <span class="wm-leg next">▶ 下一關</span>
+                    <span class="wm-leg next">▶️ 下一關</span>
                     <span class="wm-leg clear">✓ 已通關</span>
                     <span class="wm-leg lock">🔒 未解鎖</span>
                   </p>
@@ -382,7 +382,7 @@
           <!-- Settings -->
           <div id="settings-overlay" class="overlay" hidden>
             <div class="overlay-card settings-card maple-panel maple-ornament">
-              <p class="overlay-kicker">⚙ 設定</p>
+              <p class="overlay-kicker">⚙️ 設定</p>
               <h2>遊戲設定</h2>
               <div class="settings-list">
                 <div class="settings-row">
@@ -516,7 +516,7 @@
               <div class="loadout-presets" id="loadout-presets">
                 <span class="presets-label">推薦編隊</span>
                 <button type="button" class="btn chip-preset" data-preset="starter">🌱 教學</button>
-                <button type="button" class="btn chip-preset" data-preset="balanced">⚖ 均衡</button>
+                <button type="button" class="btn chip-preset" data-preset="balanced">⚖️ 均衡</button>
                 <button type="button" class="btn chip-preset" data-preset="anti_stealth">👁 破隱</button>
                 <button type="button" class="btn chip-preset" data-preset="anti_armor">🔨 破甲</button>
               </div>
@@ -586,12 +586,12 @@
           <!-- Pause — full product menu -->
           <div id="pause-overlay" class="overlay" hidden>
             <div class="overlay-card pause-card maple-panel maple-ornament">
-              <p class="overlay-kicker">⏸ 暫停</p>
+              <p class="overlay-kicker">⏸️ 暫停</p>
               <h2 id="pause-title">戰鬥暫停中</h2>
               <p class="muted" id="pause-sub">時間已凍結</p>
               <div class="pause-menu">
                 <button type="button" id="btn-resume" class="btn primary maple-primary pause-main">
-                  ▶ 繼續 (Space)
+                  ▶️ 繼續 (Space)
                 </button>
                 <button type="button" id="btn-pause-chars" class="btn">重選職業</button>
                 <button type="button" id="btn-pause-stages" class="btn">選擇戰役</button>
@@ -625,7 +625,7 @@
                   </div>
                 </div>
                 <div class="help-item">
-                  <span class="help-icon">✕</span>
+                  <span class="help-icon">×</span>
                   <div>
                     <strong>取消部署</strong>
                     <small>點地圖空地，或按 Esc</small>
@@ -639,7 +639,7 @@
                   </div>
                 </div>
                 <div class="help-item">
-                  <span class="help-icon">⚔</span>
+                  <span class="help-icon">⚔️</span>
                   <div>
                     <strong>開始波次</strong>
                     <small>部署好後按「開始波次」；波間可繼續佈陣</small>
@@ -653,14 +653,14 @@
                   </div>
                 </div>
                 <div class="help-item">
-                  <span class="help-icon">⏸</span>
+                  <span class="help-icon">⏸️</span>
                   <div>
                     <strong>暫停</strong>
-                    <small>Space 或 ⏸ 按鈕；選道具時也會暫停</small>
+                    <small>Space 或 ⏸️ 按鈕；選道具時也會暫停</small>
                   </div>
                 </div>
                 <div class="help-item">
-                  <span class="help-icon">⌨</span>
+                  <span class="help-icon">⌨️</span>
                   <div>
                     <strong>快捷鍵</strong>
                     <small>Space 暫停 · Esc 取消部署 · 1–4 選出戰卡 · M 靜音</small>
@@ -684,7 +684,7 @@
             <button type="button" id="btn-start" class="btn primary maple-primary" hidden>開始波次</button>
             <div class="action-row">
               <button type="button" id="btn-speed" class="btn">速度 ×1</button>
-              <button type="button" id="btn-pause-side" class="btn">⏸ 暫停</button>
+              <button type="button" id="btn-pause-side" class="btn">⏸️ 暫停</button>
             </div>
             <div class="action-row td-only">
               <button type="button" id="btn-help-side" class="btn">？ 說明</button>

@@ -734,7 +734,15 @@ body.is-dragging-job .specialist-card {
 #rank-overlay,
 #settings-overlay,
 #weekly-overlay,
-#dex-overlay {
+#dex-overlay,
+/* ⚠️ 這四個在 in-play 時顯示，此時 canvas-wrap 只有 42vh，用 absolute 的話 overlay
+   只蓋住矮矮的戰場區、卡片被切、背後 deploy 面板還露出可穿透點擊。每局結束/暫停
+   都會撞到。 */
+#overlay,
+#pause-overlay,
+#reward-overlay,
+#help-overlay,
+#action-raid-overlay {
   position: fixed;
   z-index: 90;
 }
@@ -3942,8 +3950,10 @@ body.in-play .panel-left {
 }
 
 /* 單欄堆疊時要放掉固定欄位，否則會長出多餘的隱式欄（順序改由 order 控制）。
-   這段必須放在上面兩條之後 —— 同特異度時後寫的贏，寫在前面會被蓋掉。 */
-@media (max-width: 1100px) {
+   ⚠️ 斷點必須是 900（與下方 in-play 單欄救援對齊），不能是 1100：
+   in-play 的 .stage 一直是三欄模板，若在 901~1100 就把 grid-column 設回 auto，
+   canvas-wrap 會落入第一欄（寬 0）、右欄吃滿全寬 → iPad 橫向整張戰場消失。 */
+@media (max-width: 900px) {
   .panel-left,
   .canvas-wrap,
   .panel-right {
@@ -4270,24 +4280,30 @@ body.coach-highlight-start .wave-cta {
 
 /* 音樂提示橫幅（取代吵雜 toast） */
 .audio-banner {
+  /* ⚠️ 原本 bottom center 會擋住選單卡片、部署列、職業卡（那裡都是主要互動區）。
+     移到右下角、縮小，當純通知用。加安全區避免被手勢列蓋住。 */
   position: fixed;
-  left: 50%;
-  bottom: 18px;
-  transform: translateX(-50%);
+  right: max(14px, env(safe-area-inset-right));
+  bottom: max(14px, env(safe-area-inset-bottom));
   z-index: 96;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
+  gap: 8px;
+  padding: 8px 12px;
   border-radius: 999px;
   background: linear-gradient(180deg, #fff8e0, #e8d4a0);
   border: 2px solid #5a3a18;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
-  font-weight: 800;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.24);
+  font-weight: 700;
   color: #3a2412;
-  font-size: 0.88rem;
+  font-size: 0.8rem;
   cursor: pointer;
-  max-width: min(92vw, 420px);
+  max-width: min(80vw, 260px);
+  animation: audio-banner-in 0.3s ease both;
+}
+@keyframes audio-banner-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .audio-banner[hidden] {
@@ -6309,11 +6325,9 @@ body.mode-bc .wave-cta {
   color: #b45;
 }
 
-@media (prefers-color-scheme: dark) {
-  .dex-cell { background: rgba(255, 255, 255, 0.05); }
-  .dex-cell .dex-name { color: #e8e0d0; }
-  .dex-locked { background: rgba(0, 0, 0, 0.2); }
-}
+/* ⚠️ 移除半套深色模式：全站設計是 color-scheme:light（:root），這些 dark 規則
+   只改內層文字色卻沒改外層奶油色卡片，深色 OS 下變成淺字配淺底看不見。
+   要嘛整站卡片都做深色版、要嘛全站維持淺色 —— 選後者（一致、一人開發不維護兩套）。 */
 
 /* ══════════════════════════════════════════════════════════════
    每週挑戰（規則卡）2026-07-23
@@ -6404,11 +6418,6 @@ body.mode-bc .wave-cta {
   border-radius: inherit;
 }
 
-@media (prefers-color-scheme: dark) {
-  .weekly-stage { color: #e8e0d0; }
-  .weekly-mod strong { color: #e8e0d0; }
-  .weekly-mod { background: rgba(255,255,255,0.05); }
-}
 
 /* 首頁次選單：次要功能收成一排小圖示鈕（圖鑑/排行/說明/設定）
    主選單只留三大主行動，手機直向不再是一長條 8 顆按鈕。 */
@@ -6434,7 +6443,4 @@ body.mode-bc .wave-cta {
 }
 @media (max-width: 380px) {
   .title-icon-btn { font-size: 0.76rem; padding: 8px 10px; }
-}
-@media (prefers-color-scheme: dark) {
-  .title-icon-btn { background: rgba(255,255,255,0.06); color: #e8e0d0; }
 }

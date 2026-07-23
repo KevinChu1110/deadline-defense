@@ -3502,8 +3502,10 @@ const unlockOnce = () => {
     } else {
       sfx.startBgm("menu");
     }
-    hideAudioBanner();
   }
+  // ⚠️ 一律隱藏：原本只在非靜音時 hide，靜音玩家的提示橫幅會永遠卡在畫面擋內容。
+  //    玩家既然已互動過，這個一次性提示就沒有存在必要了。
+  hideAudioBanner();
   window.removeEventListener("pointerdown", unlockOnce);
   window.removeEventListener("keydown", unlockOnce);
 };
