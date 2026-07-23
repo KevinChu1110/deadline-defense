@@ -29,25 +29,28 @@ function job(p) {
 }
 
 // ── 攻擊動畫模板（依家族）──
+// ⚠️ 每種武器語意都要有各自的 projectile 視覺（見 sprites.js drawProjectileSprite）。
+// 之前 holy/dark/combo 都指向 "slash"、dart/card 指向 "star"、dragon 指向 "fireball"，
+// 導致「聖騎/黑騎/英雄跟劍士長一樣、暗器跟飛鏢一樣、龍息跟火球一樣」。這裡拆開。
 const ANIM = {
-  slash: { attackDuration: 0.32, projectile: "slash", hitStyle: "slash" },
-  holy: { attackDuration: 0.34, projectile: "slash", hitStyle: "slash" },
-  dark: { attackDuration: 0.36, projectile: "slash", hitStyle: "slash" },
+  slash: { attackDuration: 0.32, projectile: "sword", hitStyle: "slash" },
+  holy: { attackDuration: 0.34, projectile: "holy_slash", hitStyle: "slash" },
+  dark: { attackDuration: 0.36, projectile: "dark_slash", hitStyle: "slash" },
   fire: { attackDuration: 0.42, projectile: "fireball", hitStyle: "burst" },
   ice: { attackDuration: 0.4, projectile: "iceball", hitStyle: "burst" },
   heal: { attackDuration: 0.38, projectile: "holy", hitStyle: "burst" },
   arrow: { attackDuration: 0.28, projectile: "arrow", hitStyle: "pierce" },
   bolt: { attackDuration: 0.3, projectile: "bolt_arrow", hitStyle: "pierce" },
   star: { attackDuration: 0.2, projectile: "star", hitStyle: "flick", multiShot: 2, multiShotSpread: 0.12 },
-  dart: { attackDuration: 0.22, projectile: "star", hitStyle: "flick", multiShot: 3, multiShotSpread: 0.1 },
-  gun: { attackDuration: 0.3, projectile: "cannon", hitStyle: "explode" },
+  dart: { attackDuration: 0.22, projectile: "dart", hitStyle: "flick", multiShot: 3, multiShotSpread: 0.1 },
+  gun: { attackDuration: 0.3, projectile: "bullet", hitStyle: "explode" },
   knuckle: { attackDuration: 0.26, projectile: "punch", hitStyle: "slash" },
   // 英雄團
-  combo: { attackDuration: 0.3, projectile: "slash", hitStyle: "slash" },
-  dragon: { attackDuration: 0.4, projectile: "fireball", hitStyle: "burst" },
+  combo: { attackDuration: 0.3, projectile: "combo", hitStyle: "slash" },
+  dragon: { attackDuration: 0.4, projectile: "dragon", hitStyle: "burst" },
   dualbow: { attackDuration: 0.24, projectile: "bolt_arrow", hitStyle: "pierce", multiShot: 2, multiShotSpread: 0.08 },
   balance: { attackDuration: 0.36, projectile: "holy", hitStyle: "burst" },
-  card: { attackDuration: 0.22, projectile: "star", hitStyle: "flick", multiShot: 3, multiShotSpread: 0.14 },
+  card: { attackDuration: 0.22, projectile: "card", hitStyle: "flick", multiShot: 3, multiShotSpread: 0.14 },
 };
 
 export const SPECIALISTS = {

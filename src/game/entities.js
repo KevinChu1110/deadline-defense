@@ -116,6 +116,16 @@ export function createSpecialist(typeId, padIndex, pad, leveledDef = null) {
   };
 }
 
+// 楓谷戰士線武器混用（weapon 常寫成「劍/斧」「劍/棍+盾」），職業層級沒分斧棍。
+// 用 weapon 字串把「拿斧/棍的戰士」導向重擊視覺 heavy，跟純劍的 sword 區分開。
+function resolveProjectileKind(def) {
+  const base = def.anim?.projectile || "bolt";
+  if (base === "sword" && typeof def.weapon === "string") {
+    if (def.weapon.includes("斧") || def.weapon.includes("棍")) return "heavy";
+  }
+  return base;
+}
+
 export function createProjectile(from, to, def, effectPayload = {}) {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
@@ -137,7 +147,7 @@ export function createProjectile(from, to, def, effectPayload = {}) {
     effectDuration: def.effectDuration,
     effectPower: def.effectPower,
     ownerId: from.id,
-    projectileKind: def.anim?.projectile || "bolt",
+    projectileKind: resolveProjectileKind(def),
     ...effectPayload,
   };
 }

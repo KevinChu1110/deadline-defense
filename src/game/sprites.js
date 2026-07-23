@@ -785,19 +785,80 @@ export function drawProjectileSprite(ctx, p, now) {
   ctx.imageSmoothingEnabled = false;
   const kind = p.projectileKind || "bolt";
 
-  if (kind === "slash") {
-    ctx.strokeStyle = p.color;
-    ctx.lineWidth = 4;
+  if (kind === "slash" || kind === "sword") {
+    // 劍：藍白快速直斬（細長光刃 + 白芯直線）
     ctx.shadowColor = p.color;
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 12;
+    ctx.strokeStyle = p.color;
+    ctx.lineWidth = 5;
     ctx.beginPath();
-    ctx.arc(0, 0, 14, -0.9, 0.9);
+    ctx.arc(0, 0, 15, -0.55, 0.55);
     ctx.stroke();
     ctx.strokeStyle = "#fff";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(0, 0, 10, -0.7, 0.7);
+    ctx.moveTo(-14, 0);
+    ctx.lineTo(12, 0);
     ctx.stroke();
+  } else if (kind === "heavy") {
+    // 斧/棍：橘紅大重弧 + 震波環（慢而重）
+    ctx.shadowColor = "#ff7a1a";
+    ctx.shadowBlur = 14;
+    ctx.strokeStyle = "#ff9a3c";
+    ctx.lineWidth = 7;
+    ctx.beginPath();
+    ctx.arc(0, 0, 18, -1.1, 1.1);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(255,220,120,0.5)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(-4, 0, 12, -1.3, 1.3);
+    ctx.stroke();
+  } else if (kind === "holy_slash") {
+    // 聖騎：金色十字光斬
+    ctx.shadowColor = "#fde047";
+    ctx.shadowBlur = 16;
+    ctx.strokeStyle = "#fde047";
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(0, 0, 15, -0.7, 0.7);
+    ctx.stroke();
+    ctx.strokeStyle = "#fffbe6";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(2, -12);
+    ctx.lineTo(2, 12);
+    ctx.moveTo(-8, 0);
+    ctx.lineTo(14, 0);
+    ctx.stroke();
+  } else if (kind === "dark_slash") {
+    // 黑騎/龍騎：紫黑撕裂斬（雙爪痕）
+    ctx.shadowColor = "#a855f7";
+    ctx.shadowBlur = 14;
+    ctx.strokeStyle = "#7c3aed";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(0, -3, 16, -0.5, 0.7);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 4, 16, -0.7, 0.5);
+    ctx.stroke();
+    ctx.strokeStyle = "#e9d5ff";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, 12, -0.6, 0.6);
+    ctx.stroke();
+  } else if (kind === "combo") {
+    // 英雄連斬：三道橘紅殘影弧
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 10;
+    for (let i = 0; i < 3; i++) {
+      ctx.strokeStyle = `rgba(255,${140 - i * 30},60,${0.9 - i * 0.25})`;
+      ctx.lineWidth = 4 - i;
+      ctx.beginPath();
+      ctx.arc(-i * 4, 0, 14 - i * 2, -0.7, 0.7);
+      ctx.stroke();
+    }
   } else if (kind === "fireball") {
     const pulse = 1 + Math.sin(now * 20) * 0.15;
     ctx.fillStyle = "#ff6b1a";
@@ -870,13 +931,73 @@ export function drawProjectileSprite(ctx, p, now) {
     ctx.lineTo(4, 5);
     ctx.fill();
   } else if (kind === "star") {
+    // 飛鏢：旋轉四角手裡劍
     ctx.fillStyle = p.color;
     ctx.shadowColor = p.color;
     ctx.shadowBlur = 8;
+    ctx.rotate(now * 12); // 自轉
     for (let i = 0; i < 4; i++) {
-      ctx.rotate(Math.PI / 4);
-      ctx.fillRect(-6, -2, 12, 4);
+      ctx.rotate(Math.PI / 2);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(3, -3);
+      ctx.lineTo(0, -9);
+      ctx.lineTo(-3, -3);
+      ctx.fill();
     }
+  } else if (kind === "dart") {
+    // 暗器：細長飛針（跟旋轉飛鏢明顯不同），帶紫色殘影
+    ctx.fillStyle = "rgba(160,120,200,0.4)";
+    ctx.fillRect(-16, -1, 12, 2);
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.moveTo(10, 0);
+    ctx.lineTo(-6, -3);
+    ctx.lineTo(-6, 3);
+    ctx.fill();
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(4, -1, 5, 2);
+  } else if (kind === "card") {
+    // 幻影俠盜：翻飛撲克牌
+    ctx.rotate(now * 8);
+    ctx.fillStyle = "#fff";
+    ctx.strokeStyle = p.color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.rect(-6, -8, 12, 16);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(0, 0, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (kind === "dragon") {
+    // 龍魔導：拉長的龍息（跟圓火球不同）
+    const pulse = 1 + Math.sin(now * 16) * 0.2;
+    ctx.fillStyle = "rgba(180,80,255,0.35)";
+    ctx.fillRect(-20, -4, 16, 8);
+    ctx.fillStyle = "#c084fc";
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 11 * pulse, 6 * pulse, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#f0abfc";
+    ctx.beginPath();
+    ctx.ellipse(-2, 0, 5, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (kind === "bullet") {
+    // 火槍：黃色高速尖彈 + 拉長槍口火花（跟圓砲彈不同）
+    ctx.fillStyle = "rgba(255,220,80,0.5)";
+    ctx.fillRect(-18, -1.5, 14, 3);
+    ctx.fillStyle = "#fbbf24";
+    ctx.beginPath();
+    ctx.moveTo(8, 0);
+    ctx.lineTo(-4, -2.5);
+    ctx.lineTo(-4, 2.5);
+    ctx.fill();
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(3, 0, 1.5, 0, Math.PI * 2);
+    ctx.fill();
   } else if (kind === "cannon") {
     ctx.fillStyle = "#5c3a1e";
     ctx.beginPath();
