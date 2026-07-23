@@ -177,6 +177,9 @@
                   <button type="button" id="btn-start-game" class="btn title-btn title-btn-continue">
                     🛡 神木防衛戰
                   </button>
+                  <button type="button" id="btn-weekly" class="btn title-btn title-btn-weekly">
+                    ⚔️ 每週挑戰
+                  </button>
                   <button type="button" id="btn-continue" class="btn title-btn" hidden>
                     ↻ 繼續防衛戰
                   </button>
@@ -430,6 +433,22 @@
           </div>
 
           <!-- Ranking -->
+          <!-- 每週挑戰：規則卡 -->
+          <div id="weekly-overlay" class="overlay" hidden>
+            <div class="overlay-card weekly-card maple-panel">
+              <p class="overlay-kicker">⚔️ 每週挑戰</p>
+              <h2 id="weekly-title">本週規則卡</h2>
+              <p class="muted" id="weekly-reset">距離重置 —</p>
+              <div class="weekly-stage" id="weekly-stage">—</div>
+              <div class="weekly-mods" id="weekly-mods"></div>
+              <p class="weekly-restrict muted" id="weekly-restrict" hidden></p>
+              <div class="overlay-actions">
+                <button type="button" id="btn-weekly-cancel" class="btn">返回</button>
+                <button type="button" id="btn-weekly-start" class="btn primary maple-primary">開始挑戰</button>
+              </div>
+            </div>
+          </div>
+
           <!-- 圖鑑：職業 / 敵人 / 關卡三軸收集 -->
           <div id="dex-overlay" class="overlay" hidden>
             <div class="overlay-card dex-card maple-panel">

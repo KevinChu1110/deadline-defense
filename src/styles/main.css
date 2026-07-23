@@ -6298,3 +6298,98 @@ body.mode-bc .wave-cta {
   .dex-cell .dex-name { color: #e8e0d0; }
   .dex-locked { background: rgba(0, 0, 0, 0.2); }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   每週挑戰（規則卡）2026-07-23
+   會診共識「舊關變新關」：確定性種子 → 每週同一張地圖不同規則，
+   全服玩家打同一個挑戰，Discord 頻道自然長出話題。
+   ══════════════════════════════════════════════════════════════ */
+.title-btn-weekly {
+  position: relative;
+}
+.title-btn-weekly::after {
+  content: "NEW";
+  position: absolute;
+  top: -6px;
+  right: 8px;
+  font-size: 0.6rem;
+  font-weight: 900;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: #d4534e;
+  color: #fff;
+}
+
+.weekly-card {
+  max-width: 460px;
+  width: min(94vw, 460px);
+}
+
+.weekly-stage {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #4a3a1e;
+  margin: 8px 0 12px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(122, 90, 40, 0.1);
+}
+
+.weekly-mods {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.weekly-mod {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 2px solid rgba(122, 90, 40, 0.2);
+  background: rgba(247, 244, 234, 0.6);
+  text-align: left;
+}
+.weekly-mod-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+.weekly-mod strong {
+  display: block;
+  color: #4a3a1e;
+  font-size: 0.95rem;
+}
+.weekly-mod small {
+  color: rgba(74, 58, 30, 0.7);
+  font-size: 0.8rem;
+}
+
+.weekly-restrict {
+  color: #b45 !important;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* 週挑戰禁用的職業卡：比 locked 再多一道斜紋，跟「未解鎖」區分 */
+.char-pick.banned-week {
+  position: relative;
+}
+.char-pick.banned-week::after {
+  content: "本週禁用";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #fff;
+  background: rgba(180, 68, 68, 0.55);
+  border-radius: inherit;
+}
+
+@media (prefers-color-scheme: dark) {
+  .weekly-stage { color: #e8e0d0; }
+  .weekly-mod strong { color: #e8e0d0; }
+  .weekly-mod { background: rgba(255,255,255,0.05); }
+}

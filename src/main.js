@@ -42,6 +42,11 @@ import {
 } from "./data/ranking.js";
 import { getJobDex, getEnemyDex, getDexSummary } from "./data/dex.js";
 import {
+  getWeeklyChallenge,
+  isJobAllowedThisWeek,
+  hasJobRestriction,
+} from "./data/weekly-challenge.js";
+import {
   ARENA_BOSS_ROTATION,
   ARENA_BOSS_META,
   BOSSES,
@@ -160,6 +165,15 @@ const els = {
   wizardStepRaid: document.querySelector("#wizard-step-raid"),
   wizardDots: document.querySelectorAll(".wizard-dot"),
   btnHomeRank: document.querySelector("#btn-home-rank"),
+  btnWeekly: document.querySelector("#btn-weekly"),
+  weeklyOverlay: document.querySelector("#weekly-overlay"),
+  weeklyTitle: document.querySelector("#weekly-title"),
+  weeklyReset: document.querySelector("#weekly-reset"),
+  weeklyStage: document.querySelector("#weekly-stage"),
+  weeklyMods: document.querySelector("#weekly-mods"),
+  weeklyRestrict: document.querySelector("#weekly-restrict"),
+  btnWeeklyStart: document.querySelector("#btn-weekly-start"),
+  btnWeeklyCancel: document.querySelector("#btn-weekly-cancel"),
   btnHomeDex: document.querySelector("#btn-home-dex"),
   homeDexBadge: document.querySelector("#home-dex-badge"),
   dexOverlay: document.querySelector("#dex-overlay"),
@@ -286,6 +300,7 @@ let toastTimer = 0;
 let screen = "stage";
 /** Pending stage after stage pick, before char confirm */
 let pendingStageId = "s01-victoria";
+let pendingChallenge = null; // 非 null 時表示這局是「每週挑戰」，帶規則卡修飾符
 /** Draft loadout while on character select */
 let draftLoadout = [...DEFAULT_LOADOUT];
 
@@ -312,6 +327,7 @@ function hideAllOverlays() {
   setOverlayOpen(els.overlay, false);
   setOverlayOpen(els.rankOverlay, false);
   setOverlayOpen(els.dexOverlay, false);
+  setOverlayOpen(els.weeklyOverlay, false);
   setOverlayOpen(els.pauseOverlay, false);
   setOverlayOpen(els.helpOverlay, false);
   setOverlayOpen(els.guideOverlay, false);
@@ -1058,6 +1074,7 @@ function renderStageList() {
       void sfx.unlock();
       sfx.play("uiClick");
       pendingStageId = stage.id;
+      pendingChallenge = null; // 一般關卡：清掉週挑戰狀態
       openCharacterSelect();
     });
     els.stageList.appendChild(btn);
@@ -1420,6 +1437,7 @@ function renderArenaList() {
       void sfx.unlock();
       sfx.play("uiClick");
       pendingStageId = `arena-${bossId}`;
+      pendingChallenge = null; // 動作突襲：清掉週挑戰狀態
       openCharacterSelect();
     });
     els.arenaList.appendChild(btn);
@@ -1632,6 +1650,44 @@ function closeGuideOverlay() {
   sfx.play("uiClick");
 }
 
+function fmtEta(sec) {
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  if (d > 0) return `${d} 天 ${h} 小時`;
+  if (h > 0) return `${h} 小時 ${m} 分`;
+  return `${m} 分`;
+}
+
+function openWeeklyOverlay() {
+  const ch = getWeeklyChallenge();
+  pendingChallenge = ch; // 先記著，「開始挑戰」才真正用
+  hideAllOverlays();
+
+  els.weeklyTitle.textContent = `第 ${ch.week} 週挑戰`;
+  els.weeklyReset.textContent = `距離下週重置：${fmtEta(ch.resetEta)}`;
+  els.weeklyStage.textContent = `🗺️ ${ch.baseStageName}`;
+  els.weeklyMods.innerHTML = ch.modifiers
+    .map(
+      (m) =>
+        `<div class="weekly-mod"><span class="weekly-mod-icon">${m.icon}</span>
+          <div><strong>${escapeHtml(m.label)}</strong><small>${escapeHtml(m.desc)}</small></div></div>`
+    )
+    .join("");
+  if (els.weeklyRestrict) {
+    if (hasJobRestriction(ch)) {
+      els.weeklyRestrict.hidden = false;
+      els.weeklyRestrict.textContent = "⚠️ 本週有職業限制，部分職業無法出戰";
+    } else {
+      els.weeklyRestrict.hidden = true;
+    }
+  }
+
+  setOverlayOpen(els.weeklyOverlay, true);
+  void sfx.unlock();
+  sfx.play("uiClick");
+}
+
 let dexTab = "jobs";
 
 function openDexOverlay(tab = "jobs") {
@@ -1838,7 +1894,9 @@ function openCharacterSelect() {
   hideAllOverlays();
   // Only keep deployable jobs in draft
   const prev = game.loadout?.length ? game.loadout : DEFAULT_LOADOUT;
-  draftLoadout = prev.filter((id) => canDeployJob(id));
+  draftLoadout = prev.filter(
+    (id) => canDeployJob(id) && (!pendingChallenge || isJobAllowedThisWeek(id, pendingChallenge))
+  );
   if (!draftLoadout.length) draftLoadout = ["beginner"];
   markJobLearned("beginner");
   if (els.loadoutMaxLabel) els.loadoutMaxLabel.textContent = String(LOADOUT_MAX);
@@ -2140,9 +2198,12 @@ function buildCharPickButton(id, index = 0) {
   const focused = focusCardId === id;
   const lv = getCardLevel(id);
   const leveled = buildLeveledDef(id, lv);
-  const deployable = canDeployJob(id);
+  // 週挑戰的編隊限制：本週禁用的職業比照未解鎖處理（標灰、不可選）
+  const bannedThisWeek =
+    !!pendingChallenge && !isJobAllowedThisWeek(id, pendingChallenge);
+  const deployable = canDeployJob(id) && !bannedThisWeek;
   const unlocked = isJobUnlocked(id);
-  const lockHint = getUnlockHint(id);
+  const lockHint = bannedThisWeek ? "本週規則卡禁用此職業" : getUnlockHint(id);
 
   const btn = document.createElement("button");
   btn.type = "button";
@@ -2150,7 +2211,8 @@ function buildCharPickButton(id, index = 0) {
     "char-pick" +
     (selected ? " selected" : "") +
     (focused ? " focused" : "") +
-    (!deployable ? " locked" : "");
+    (!deployable ? " locked" : "") +
+    (bannedThisWeek ? " banned-week" : "");
   btn.style.setProperty("--bob-delay", `${(index % 8) * 0.12}s`);
   btn.setAttribute("aria-pressed", selected ? "true" : "false");
   btn.setAttribute("role", "listitem");
@@ -2302,7 +2364,7 @@ function confirmLoadoutAndStart() {
   }
   clearRunState();
   closeCharacterChrome();
-  game.loadStage(pendingStageId);
+  game.loadStage(pendingStageId, { challenge: pendingChallenge });
   game.setLoadout(draftLoadout);
   hideAllOverlays();
   screen = "play";
@@ -3165,6 +3227,22 @@ els.btnHomeRank?.addEventListener("click", () =>
 els.btnHomeDex?.addEventListener("click", () =>
   withAudio(() => {
     openDexOverlay(dexTab || "jobs");
+  })
+);
+els.btnWeekly?.addEventListener("click", () => withAudio(() => openWeeklyOverlay()));
+els.btnWeeklyCancel?.addEventListener("click", () =>
+  withAudio(() => {
+    pendingChallenge = null;
+    setOverlayOpen(els.weeklyOverlay, false);
+    openTitleScreen();
+  })
+);
+els.btnWeeklyStart?.addEventListener("click", () =>
+  withAudio(() => {
+    if (!pendingChallenge) return;
+    pendingStageId = pendingChallenge.baseStageId;
+    setOverlayOpen(els.weeklyOverlay, false);
+    openCharacterSelect(); // pendingChallenge 保留 → 職業選擇會套用限制，confirm 時帶進 loadStage
   })
 );
 els.btnDexClose?.addEventListener("click", () =>

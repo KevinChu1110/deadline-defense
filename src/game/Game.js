@@ -71,6 +71,7 @@ import {
 } from "../data/ranking.js";
 import { themeForStage } from "../data/map-themes.js";
 import { markJobUsed, markEnemy } from "../data/dex.js";
+import { applyChallengeToStage, isJobAllowedThisWeek } from "../data/weekly-challenge.js";
 import { BOSSES } from "../data/bosses.js";
 import { applyBossCast, tickBossAttacks } from "./boss-attacks.js";
 import {
@@ -129,9 +130,12 @@ export class Game {
     preloadMobs(files).catch(() => {});
   }
 
-  loadStage(stageId) {
+  loadStage(stageId, opts = {}) {
     this.stageId = stageId;
     this.stage = structuredClone(getStageById(stageId));
+    // 每週挑戰：把規則卡修飾符套進這個 stage 副本（改副本安全）
+    this.challenge = opts.challenge || null;
+    if (this.challenge) applyChallengeToStage(this.stage, this.challenge);
     const built = buildPathMap(this.stage);
     this.pathMap = built.paths;
     this.pathMetricsMap = built.metrics;
@@ -147,7 +151,8 @@ export class Game {
         SPECIALISTS[id] &&
         !clean.includes(id) &&
         clean.length < LOADOUT_MAX &&
-        canDeployJob(id)
+        canDeployJob(id) &&
+        (!this.challenge || isJobAllowedThisWeek(id, this.challenge)) // 週挑戰編隊限制
       ) {
         clean.push(id);
       }
