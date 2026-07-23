@@ -221,9 +221,13 @@ export function createActionRaid(opts) {
       crit ? "#fbbf24" : "#fff"
     );
     const ratio = bossState.hp / bossState.maxHp;
-    if (ratio <= 0.15) bossState.phase = 3;
-    else if (ratio <= 0.45) bossState.phase = 2;
-    else bossState.phase = 1;
+    const newPhase = ratio <= 0.15 ? 3 : ratio <= 0.45 ? 2 : 1;
+    if (newPhase > bossState.phase) {
+      bossState.phase = newPhase;
+      bossState.bannerT = 1.6;
+      bossState.bannerText = newPhase === 3 ? `${boss.nameZh} · 狂暴！` : `${boss.nameZh} · 第 ${newPhase} 階段`;
+      bossState.cast = null; // 打斷當前施放，進入新階段
+    }
     if (bossState.hp <= 0) {
       bossState.dead = true;
       setBossAnim("die1");
@@ -543,6 +547,7 @@ export function createActionRaid(opts) {
     }
     bossState.flash = Math.max(0, bossState.flash - dt);
     bossState.hitAnimT = Math.max(0, bossState.hitAnimT - dt);
+    bossState.bannerT = Math.max(0, (bossState.bannerT || 0) - dt);
     bossState.animClock += dt;
 
     // 輸入方向（鍵盤 + 觸控）
@@ -942,6 +947,24 @@ export function createActionRaid(opts) {
     }
     drawHud();
     drawTouchControls();
+
+    // 階段轉換橫幅
+    if (bossState.bannerT > 0) {
+      const a = Math.min(1, bossState.bannerT * 1.4);
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.fillStyle = "rgba(20,10,10,0.8)";
+      ctx.fillRect(W / 2 - 200, 120, 400, 46);
+      ctx.strokeStyle = boss.color || "#ef4444";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(W / 2 - 200, 120, 400, 46);
+      ctx.fillStyle = "#fecdd3";
+      ctx.font = "bold 20px system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText(bossState.bannerText || "", W / 2, 150);
+      ctx.textAlign = "left";
+      ctx.restore();
+    }
 
     if (ended) {
       ctx.fillStyle = "rgba(0,0,0,0.45)";

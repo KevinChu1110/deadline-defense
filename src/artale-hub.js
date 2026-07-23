@@ -912,33 +912,24 @@ function renderTab(tab, me, active, ui = {}) {
   }
 
   if (tab === "combat") {
+    // 五大王全開，各顯示招牌機制（由易到難）
     const bosses = [
-      {
-        id: "zakum",
-        name: "殘暴炎魔",
-        tier: "S+",
-        region: "冰原雪域",
-        blurb: "三階段戰 · 注意地上 telegraph",
-        open: true,
-      },
-      {
-        id: "horntail",
-        name: "暗黑龍王",
-        tier: "SS",
-        region: "神木村",
-        blurb: "更高難度 · 建議先磨裝",
-        open: true,
-      },
+      { id: "hainurs", name: "海怒斯", tier: "S", region: "水世界", emoji: "🦑", blurb: "潮汐吸引 · 千斤墜" },
+      { id: "papulatus", name: "拉圖斯", tier: "S", region: "玩具城", emoji: "⏰", blurb: "時空落柱 · 找空隙" },
+      { id: "zakum", name: "殘暴炎魔", tier: "S+", region: "冰原雪域", emoji: "🔥", blurb: "八臂連砸 · 詛咒霧" },
+      { id: "darkdragon", name: "暗黑龍王", tier: "SS", region: "神木村", emoji: "🐉", blurb: "全寬龍息 · 對角彈幕" },
+      { id: "pinkbean", name: "皮卡啾", tier: "SSS", region: "時間神殿", emoji: "🌸", blurb: "安全座椅 · 狂暴（最難）" },
     ];
     return `
       <div class="hub-combat-card highlight">
         <h3>Boss 突襲</h3>
-        <p>橫向動作戰：左右移動、跳躍、普攻與技能。裝備與星力會影響輸出。</p>
+        <p>橫向動作戰：移動、跳、普攻、技能、<strong>閃避（無敵幀）</strong>。每隻王機制不同、皆用官方動畫。難度隨你的裝備自動平衡。</p>
         <div class="hub-raid-boss-grid">
           ${bosses
             .map(
               (b) => `
-            <button type="button" class="hub-raid-boss-card" data-start-raid="${b.id}">
+            <button type="button" class="hub-raid-boss-card tier-${escapeHtml(b.tier.replace("+", "p"))}" data-start-raid="${b.id}">
+              <span class="hrb-emoji">${b.emoji}</span>
               <strong>${escapeHtml(b.name)}</strong>
               <span>${escapeHtml(b.region)} · ${escapeHtml(b.tier)}</span>
               <small>${escapeHtml(b.blurb)}</small>

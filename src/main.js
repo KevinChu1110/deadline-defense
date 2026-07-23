@@ -54,7 +54,9 @@ import {
   ARENA_BOSS_META,
   BOSSES,
   getArenaBossId,
+  buildActionBoss,
 } from "./data/bosses.js";
+import { resolveBossKey } from "./data/boss-anims.js";
 import {
   parseBridgePayload,
   importBridgeToSlots,
@@ -356,27 +358,35 @@ function stopActionRaid() {
   if (els.actionRaidResult) els.actionRaidResult.hidden = true;
 }
 
-async function launchActionRaid(bossId = "zakum") {
+async function launchActionRaid(bossId = "zakum", opts = {}) {
   lastRaidBossId = bossId || "zakum";
   if (!hubState.me) throw new Error("請先登入");
-  const payload = await artaleHub.startActionRaid(lastRaidBossId);
+  // profile 一定要向 server 拿（依 Discord 角色裝備算）；boss 資料改用本機 → 5 王全開不依賴 server
+  let payload;
+  try {
+    payload = await artaleHub.startActionRaid(lastRaidBossId);
+  } catch {
+    payload = await artaleHub.startActionRaid("zakum"); // server 不認新王時，仍能取得 profile
+  }
+  const bossKey = resolveBossKey({ id: lastRaidBossId });
+  const boss = buildActionBoss(bossKey, payload.profile, { partySize: opts.partySize || 1 });
   stopActionRaid();
   setOverlayOpen(els.artaleHubOverlay, false);
   setOverlayOpen(els.actionRaidOverlay, true);
   if (els.actionRaidTitle) {
-    els.actionRaidTitle.textContent = `${payload.boss.nameZh} · ${payload.profile.name}`;
+    els.actionRaidTitle.textContent = `${boss.nameZh} · ${payload.profile.name}`;
   }
   if (els.actionRaidResult) els.actionRaidResult.hidden = true;
 
   actionRaidSession = createActionRaid({
     canvas: els.actionRaidCanvas,
     profile: payload.profile,
-    boss: payload.boss,
+    boss,
     onEnd: async (result) => {
       try {
         await artaleHub.completeActionRaid({
           win: result.win,
-          bossId: result.bossId,
+          bossId: boss.botKey || lastRaidBossId, // server 用短 key(zakum..)發獎勵
           level: result.level,
         });
       } catch {

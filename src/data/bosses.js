@@ -233,6 +233,52 @@ export function getArenaBossId(weekOffset = 0) {
   return ARENA_BOSS_ROTATION[day % ARENA_BOSS_ROTATION.length];
 }
 
+// 動作突襲：每王難度倍率（由易到難）
+const ACTION_BOSS_TIER = {
+  boss_hainurs: 0.62,
+  boss_papulatus: 0.82,
+  boss_zakum: 1.0,
+  boss_dark_dragon: 1.28,
+  boss_pink_bean: 1.65,
+};
+
+/** 由玩家 profile 估每秒輸出（給 boss HP 縮放用） */
+function estimateDps(p) {
+  if (!p) return 60;
+  const basic = ((p.basicMin || 20) + (p.basicMax || 30)) / 2 / Math.max(0.2, p.attackCd || 0.5);
+  const skill = ((p.skillMin || 40) + (p.skillMax || 60)) / 2 / Math.max(1, p.skillCd || 3);
+  return basic + skill;
+}
+
+/**
+ * 建動作突襲用的 Boss（本機資料，不依賴 server）。
+ * maxHp 依玩家 profile DPS × 目標秒數 × 難度倍率動態縮放 → 每王都是平衡戰。
+ * 組隊時 partySize>1 會加大血量（見 launchActionRaid）。
+ */
+export function buildActionBoss(bossKey, profile, opts = {}) {
+  const src = BOSSES[bossKey] || BOSSES.boss_zakum;
+  const tier = ACTION_BOSS_TIER[bossKey] ?? 1.0;
+  const fightSec = 42;
+  const dps = estimateDps(profile);
+  let maxHp = Math.round(dps * fightSec * tier);
+  // 組隊：血量隨人數放大（略低於線性，鼓勵組隊）
+  const party = Math.max(1, opts.partySize || 1);
+  if (party > 1) maxHp = Math.round(maxHp * (1 + (party - 1) * 0.8));
+  maxHp = Math.max(400, maxHp);
+  return {
+    id: src.id,
+    botKey: src.botKey,
+    nameZh: src.nameZh,
+    region: src.region,
+    regionZh: src.regionZh,
+    tier: src.tier,
+    color: src.color,
+    armor: src.armor || 0.1,
+    maxHp,
+    sprite: src.sprite,
+  };
+}
+
 const g = (at, path, units, interval = 0.9) => ({ at, path, units, interval });
 
 /** 競賽難度：依 bot tier 調部署點／神木／波次壓 */
