@@ -2,7 +2,10 @@
  * M3 動作突襲 v1 — 橫向站場
  * 操作：←→/AD 移動 · Space/W 跳 · J/Z 普攻 · K/X 技能 · L/Shift 閃避(i-frame) · Esc 退出
  * 手機：canvas 觸控四鍵（方向/跳/攻/技/閃）
+ * Boss：真實 MapleStory 動畫(boss-anims.js) + 各王真實招式組(BOSS_KITS)
  */
+import { loadMobGif, sampleGifFrame } from "./assets.js";
+import { getBossKit, bossAnimFile, BOSS_ANIMS, resolveBossKey } from "../data/boss-anims.js";
 
 const W = 960;
 const H = 540;
@@ -74,11 +77,30 @@ export function createActionRaid(opts) {
     maxHp: boss.maxHp,
     face: -1,
     phase: 1,
-    cast: null, // { kind, t, duration, telegraph, hit }
+    cast: null, // { kind, anim, t, duration, telegraph, hit }
     nextAt: 1.2,
     flash: 0,
     dead: false,
+    animName: "stand",
+    animClock: 0,
+    hitAnimT: 0,
   };
+
+  // 各王真實招式組 + 真實動畫（正規化 id：短id/botKey/中文名皆可）
+  const bossKey = resolveBossKey(boss);
+  const bossKit = getBossKit(bossKey);
+  const bossGifs = {}; // animName → gif frames
+  const bossAnimList = (BOSS_ANIMS[bossKey] || {}).anims || ["stand"];
+  for (const a of bossAnimList) {
+    const file = bossAnimFile(bossKey, a);
+    if (file) loadMobGif(file).then((g) => { if (g) bossGifs[a] = g; }).catch(() => {});
+  }
+  function setBossAnim(name) {
+    if (bossState.animName !== name) {
+      bossState.animName = name;
+      bossState.animClock = 0;
+    }
+  }
 
   /** @type {Array<{x:number,y:number,vx:number,vy:number,life:number,dmg:number,r:number,from:string,color:string}>} */
   const projectiles = [];
@@ -87,11 +109,6 @@ export function createActionRaid(opts) {
   /** @type {Array<{x:number,y:number,w:number,h:number,life:number,color:string,alpha:number}>} */
   const zones = [];
 
-  let bossImg = null;
-  if (boss.sprite) {
-    bossImg = new Image();
-    bossImg.src = boss.sprite;
-  }
 
   const onKeyDown = (e) => {
     const k = e.key.toLowerCase();
@@ -196,6 +213,7 @@ export function createActionRaid(opts) {
     const reduced = Math.max(1, Math.round(dmg * (1 - (boss.armor || 0))));
     bossState.hp = Math.max(0, bossState.hp - reduced);
     bossState.flash = 0.12;
+    if (!bossState.cast) bossState.hitAnimT = 0.12; // 沒在施放時才播受擊動畫
     floatText(
       bossState.x + (Math.random() * 40 - 20),
       bossState.y - bossState.h + 20,
@@ -208,6 +226,7 @@ export function createActionRaid(opts) {
     else bossState.phase = 1;
     if (bossState.hp <= 0) {
       bossState.dead = true;
+      setBossAnim("die1");
       finish(true);
     }
   }
@@ -219,7 +238,8 @@ export function createActionRaid(opts) {
     player.animT = 0.25;
     const dmg = roll(profile.basicMin, profile.basicMax);
     const crit = Math.random() < 0.12;
-    const final = crit ? Math.round(dmg * 1.5) : dmg;
+    const curse = player.cursedT > 0 ? 0.7 : 1; // 詛咒霧：輸出降 30%
+    const final = Math.round((crit ? dmg * 1.5 : dmg) * curse);
 
     if (profile.style === "ranged") {
       projectiles.push({
@@ -254,7 +274,8 @@ export function createActionRaid(opts) {
     player.animT = 0.4;
     const dmg = roll(profile.skillMin, profile.skillMax);
     const crit = Math.random() < 0.2;
-    const final = crit ? Math.round(dmg * 1.6) : dmg;
+    const curse = player.cursedT > 0 ? 0.7 : 1;
+    const final = Math.round((crit ? dmg * 1.6 : dmg) * curse);
 
     if (profile.style === "ranged") {
       for (let i = 0; i < 5; i++) {
@@ -317,37 +338,109 @@ export function createActionRaid(opts) {
   }
 
   function pickBossAttack() {
-    const phase = bossState.phase;
-    const pool = ["smash", "pillar", "swipe"];
-    if (phase >= 2) pool.push("barrage");
-    if (phase >= 3) pool.push("rage");
-    return pool[Math.floor(Math.random() * pool.length)];
+    const avail = bossKit.filter((m) => (m.phase || 1) <= bossState.phase);
+    return avail[Math.floor(Math.random() * avail.length)] || bossKit[0];
   }
 
-  function startCast(kind) {
-    const table = {
-      smash: { duration: 1.35, telegraph: 0.9 },
-      pillar: { duration: 1.2, telegraph: 0.85 },
-      swipe: { duration: 1.1, telegraph: 0.75 },
-      barrage: { duration: 1.6, telegraph: 0.5 },
-      rage: { duration: 1.8, telegraph: 1.0 },
-    };
-    const t = table[kind] || table.smash;
+  function startCast(move) {
+    const rush = bossState.phase >= 3 ? 0.85 : 1;
+    setBossAnim(move.anim || "attack1");
     bossState.cast = {
-      kind,
+      kind: move.kind,
+      anim: move.anim,
       t: 0,
-      duration: t.duration * (bossState.phase >= 3 ? 0.85 : 1),
-      telegraph: t.telegraph * (bossState.phase >= 3 ? 0.85 : 1),
+      duration: (move.dur || 1.3) * rush,
+      telegraph: (move.tel || 0.8) * rush,
       hit: false,
+      hit2: false,
+      hit3: false,
       aimX: player.x,
+      fakeX: [],
     };
+    // 安全座椅：在預警期就生成平台，讓玩家有時間跑上去
+    if (move.kind === "safeseat") {
+      const seatX = roll(200, W - 200);
+      bossState.cast.seatX = seatX;
+      zones.push({ x: seatX - 45, y: GROUND - 54, w: 90, h: 14, life: bossState.cast.duration, color: "rgba(94,234,212,0.55)", alpha: 0.75 });
+    }
+  }
+
+  // 地面條狀 AOE 命中判定
+  function groundZone(zx, w, dmg, color) {
+    zones.push({ x: zx, y: GROUND - 20, w, h: 30, life: 0.45, color, alpha: 0.6 });
+    if (player.x > zx && player.x < zx + w && player.onGround) hurtPlayer(dmg, zx + w / 2);
+  }
+  function pillarAt(px, dmg, color = "rgba(249,115,22,0.5)") {
+    zones.push({ x: px - 28, y: GROUND - 200, w: 56, h: 200, life: 0.5, color, alpha: 0.7 });
+    if (player.x > px - 28 && player.x < px + 28) hurtPlayer(dmg, px);
   }
 
   function resolveCast(c) {
-    if (c.hit) return;
-    c.hit = true;
     const ph = bossState.phase;
     const base = 18 + ph * 8;
+
+    // ── 簽名機制：多段/延續型（自行管理命中，不受單次 c.hit 限制）──
+    if (c.kind === "multismash") {
+      // 炎魔八臂：3 段連砸，各段短預警落在隨機 x，強迫連續閃避
+      const seg = [0.0, 0.33, 0.66].map((f) => c.telegraph + f * (c.duration - c.telegraph));
+      if (!c.hit && c.t >= seg[0]) { c.hit = true; groundZone(roll(120, W - 320), 180, base + 10, "rgba(239,68,68,0.5)"); }
+      if (!c.hit2 && c.t >= seg[1]) { c.hit2 = true; groundZone(roll(120, W - 320), 180, base + 10, "rgba(239,68,68,0.5)"); }
+      if (!c.hit3 && c.t >= seg[2]) { c.hit3 = true; groundZone(roll(120, W - 320), 180, base + 12, "rgba(239,68,68,0.55)"); }
+      return;
+    }
+    if (c.kind === "fakepillar") {
+      // 拉圖斯：3 柱只 1 真，讀假落點
+      if (!c.hit) {
+        c.hit = true;
+        const realX = c.aimX;
+        const fakes = [realX - 180, realX + 180].map((x) => Math.max(80, Math.min(W - 80, x)));
+        pillarAt(realX, base + 18, "rgba(192,132,252,0.6)");
+        for (const fx of fakes) zones.push({ x: fx - 28, y: GROUND - 200, w: 56, h: 200, life: 0.25, color: "rgba(120,120,180,0.25)", alpha: 0.4 });
+      }
+      return;
+    }
+    if (c.kind === "tide") {
+      // 海怒斯潮汐：吸向 Boss + 彈幕
+      if (!c.hit) { c.hit = true; for (let i = 0; i < 5; i++) projectiles.push({ x: bossState.x - 20, y: GROUND - 60 - i * 20, vx: -180 - i * 25, vy: 0, life: 1.6, dmg: base, r: 12, from: "boss", color: "#38bdf8" }); }
+      // 持續吸引（預警後到結束）
+      if (c.t >= c.telegraph && player.onGround) player.x += (bossState.x < player.x ? -1 : 1) * 60 * (1 / 60);
+      return;
+    }
+    if (c.kind === "safeseat") {
+      // 皮卡啾：先生成安全座椅平台，再全屏；站座椅上免傷
+      if (!c.seatX) { c.seatX = roll(200, W - 200); zones.push({ x: c.seatX - 45, y: GROUND - 54, w: 90, h: 14, life: c.duration, color: "rgba(94,234,212,0.55)", alpha: 0.7 }); }
+      if (!c.hit && c.t >= c.telegraph) {
+        c.hit = true;
+        zones.push({ x: 40, y: GROUND - 40, w: W - 80, h: 50, life: 0.5, color: "rgba(236,72,153,0.45)", alpha: 0.6 });
+        const onSeat = player.onGround && Math.abs(player.x - c.seatX) < 50;
+        if (!onSeat && !(player.invuln > 0)) hurtPlayer(base + 26, player.x);
+      }
+      return;
+    }
+    if (c.kind === "beam") {
+      // 龍息：Boss 半側全寬橫掃（跳+閃可躲，站地必中）
+      if (!c.hit) {
+        c.hit = true;
+        const from = bossState.face < 0 ? 0 : bossState.x;
+        const w = bossState.face < 0 ? bossState.x + 60 : W - bossState.x;
+        zones.push({ x: from, y: GROUND - 70, w, h: 70, life: 0.5, color: "rgba(74,222,128,0.4)", alpha: 0.6 });
+        if (player.onGround && player.x > from && player.x < from + w) hurtPlayer(base + 20, bossState.x);
+      }
+      return;
+    }
+    if (c.kind === "diagbarrage") {
+      if (!c.hit) { c.hit = true; for (let i = 0; i < 6; i++) { const up = i % 2 === 0; projectiles.push({ x: bossState.x, y: GROUND - 40, vx: -260, vy: (up ? -1 : 1) * (80 + i * 20), life: 1.6, dmg: base, r: 11, from: "boss", color: "#818cf8" }); } }
+      return;
+    }
+    if (c.kind === "darkcurse") {
+      // 詛咒霧：命中降玩家攻擊 3s
+      if (!c.hit) { c.hit = true; zones.push({ x: player.x - 70, y: GROUND - 120, w: 140, h: 120, life: 0.5, color: "rgba(88,28,135,0.4)", alpha: 0.6 }); if (Math.abs(player.x - c.aimX) < 90 && !(player.invuln > 0)) { hurtPlayer(base + 8, c.aimX); player.cursedT = 3.0; floatText(player.x, player.y - player.h - 20, "詛咒!", "#c084fc"); } }
+      return;
+    }
+
+    // ── 基本招（單次命中）──
+    if (c.hit) return;
+    c.hit = true;
 
     if (c.kind === "smash") {
       const zx = bossState.x - 110;
@@ -443,11 +536,14 @@ export function createActionRaid(opts) {
     player.skillCd = Math.max(0, player.skillCd - dt);
     player.dashCd = Math.max(0, player.dashCd - dt);
     player.invuln = Math.max(0, player.invuln - dt);
+    player.cursedT = Math.max(0, (player.cursedT || 0) - dt);
     if (player.animT > 0) {
       player.animT -= dt;
       if (player.animT <= 0) player.anim = "idle";
     }
     bossState.flash = Math.max(0, bossState.flash - dt);
+    bossState.hitAnimT = Math.max(0, bossState.hitAnimT - dt);
+    bossState.animClock += dt;
 
     // 輸入方向（鍵盤 + 觸控）
     let move = 0;
@@ -513,6 +609,7 @@ export function createActionRaid(opts) {
     if (!bossState.dead) {
       bossState.face = player.x < bossState.x ? -1 : 1;
       if (!bossState.cast) {
+        if (bossState.hitAnimT <= 0) setBossAnim("stand");
         bossState.nextAt -= dt;
         if (bossState.nextAt <= 0) {
           startCast(pickBossAttack());
@@ -521,12 +618,13 @@ export function createActionRaid(opts) {
       } else {
         const c = bossState.cast;
         c.t += dt;
-        // telegraph zone preview
-        if (c.t < c.telegraph) {
-          if (c.kind === "pillar") c.aimX = player.x; // track until fire
-        }
+        // telegraph 追瞄（單柱/砸擊）
+        if (c.t < c.telegraph && (c.kind === "pillar" || c.kind === "smash")) c.aimX = player.x;
         if (c.t >= c.telegraph) resolveCast(c);
-        if (c.t >= c.duration) bossState.cast = null;
+        if (c.t >= c.duration) {
+          bossState.cast = null;
+          setBossAnim("stand");
+        }
       }
     }
 
@@ -621,6 +719,31 @@ export function createActionRaid(opts) {
       ctx.fillRect(40, GROUND - 40, W - 80, 40);
       ctx.font = "bold 16px system-ui";
       ctx.fillText("⚠ 全場震地 — 跳！", W / 2 - 70, GROUND - 50);
+    } else if (c.kind === "multismash") {
+      ctx.font = "bold 15px system-ui";
+      ctx.fillText("⚠ 八臂連砸 — 連續閃避！", bossState.x - 80, GROUND - 60);
+    } else if (c.kind === "fakepillar") {
+      ctx.font = "bold 14px system-ui";
+      ctx.fillText("時空落柱 — 找空隙！", c.aimX - 40, GROUND - 210);
+      ctx.fillRect(c.aimX - 28, GROUND - 200, 56, 200);
+    } else if (c.kind === "beam") {
+      const from = bossState.face < 0 ? 0 : bossState.x;
+      const w = bossState.face < 0 ? bossState.x + 60 : W - bossState.x;
+      ctx.fillRect(from, GROUND - 70, w, 70);
+      ctx.font = "bold 16px system-ui";
+      ctx.fillText("🐉 龍息 — 跳＋閃！", W / 2 - 60, GROUND - 90);
+    } else if (c.kind === "diagbarrage") {
+      ctx.fillText("對角彈幕！", bossState.x - 30, bossState.y - bossState.h - 10);
+    } else if (c.kind === "tide") {
+      ctx.font = "bold 15px system-ui";
+      ctx.fillText("🌊 潮汐吸引 — 逆向衝！", bossState.x - 70, GROUND - 90);
+    } else if (c.kind === "darkcurse") {
+      ctx.fillRect(player.x - 70, GROUND - 120, 140, 120);
+      ctx.fillText("詛咒霧 — 閃開！", player.x - 40, GROUND - 130);
+    } else if (c.kind === "safeseat") {
+      ctx.font = "bold 16px system-ui";
+      ctx.fillStyle = "#5eead4";
+      ctx.fillText("⚠ 全屏！站上綠色平台！", W / 2 - 90, 110);
     }
     ctx.restore();
   }
@@ -628,13 +751,30 @@ export function createActionRaid(opts) {
   function drawBoss() {
     const bx = bossState.x;
     const by = bossState.y;
+    // 選當前動畫：死亡>受擊>施放>待機
+    let animName = "stand";
+    if (bossState.dead) animName = "die1";
+    else if (bossState.hitAnimT > 0 && bossGifs.hit1) animName = "hit1";
+    else if (bossState.cast) animName = bossState.animName;
+    const gif = bossGifs[animName] || bossGifs.stand;
     ctx.save();
     if (bossState.flash > 0) ctx.globalAlpha = 0.55;
-    if (bossImg && bossImg.complete && bossImg.naturalWidth) {
-      const scale = 0.55;
-      const iw = bossImg.naturalWidth * scale;
-      const ih = bossImg.naturalHeight * scale;
-      ctx.drawImage(bossImg, bx - iw / 2, by - ih, iw, ih);
+    const frame = gif ? sampleGifFrame(gif, bossState.animClock) : null;
+    if (frame) {
+      // 依 radius 目標高度縮放（各王原圖尺寸差很多）
+      const targetH = 210;
+      const sc = Math.min(1.1, targetH / frame.height);
+      const iw = frame.width * sc;
+      const ih = frame.height * sc;
+      ctx.imageSmoothingEnabled = false;
+      // 面向玩家：Boss 慣例面左(-1)，玩家在右側就翻轉
+      if (bossState.face > 0) {
+        ctx.translate(bx, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(frame, -iw / 2, by - ih, iw, ih);
+      } else {
+        ctx.drawImage(frame, bx - iw / 2, by - ih, iw, ih);
+      }
     } else {
       ctx.fillStyle = boss.color || "#ef4444";
       ctx.beginPath();
