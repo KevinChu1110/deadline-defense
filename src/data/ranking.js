@@ -26,15 +26,16 @@ export function setNickname(name) {
 export function loadRanking() {
   try {
     const raw = localStorage.getItem(RANK_KEY);
-    if (!raw) return { stage: {}, arena: [], all: [] };
+    if (!raw) return { stage: {}, arena: [], all: [], weekly: {} };
     const data = JSON.parse(raw);
     return {
       stage: data.stage || {},
       arena: Array.isArray(data.arena) ? data.arena : [],
       all: Array.isArray(data.all) ? data.all : [],
+      weekly: data.weekly && typeof data.weekly === "object" ? data.weekly : {},
     };
   } catch {
-    return { stage: {}, arena: [], all: [] };
+    return { stage: {}, arena: [], all: [], weekly: {} };
   }
 }
 
@@ -116,6 +117,45 @@ export function submitArenaScore(entry) {
   data.all = data.all.slice(0, 50);
   saveRanking(data);
   return row;
+}
+
+/**
+ * 每週挑戰成績。榜按「週序」分開存 —— 每週重置就是換一個 key，舊週榜自動封存。
+ * 只保留最近幾週，避免無限長大。
+ */
+export function submitWeeklyScore(week, entry) {
+  const data = loadRanking();
+  const nick = entry.nick || getNickname() || "冒險者";
+  const row = {
+    nick,
+    score: entry.score,
+    stars: entry.stars || 0,
+    coreHp: entry.coreHp,
+    leaks: entry.leaks || 0,
+    at: Date.now(),
+    week,
+  };
+  const key = String(week);
+  if (!data.weekly[key]) data.weekly[key] = [];
+  // 同一暱稱只留最高分（週榜比的是「本週最佳」，不是刷榜次數）
+  const existing = data.weekly[key].find((r) => r.nick === nick);
+  if (existing) {
+    if (row.score > existing.score) Object.assign(existing, row);
+  } else {
+    data.weekly[key].push(row);
+  }
+  data.weekly[key].sort((a, b) => b.score - a.score);
+  data.weekly[key] = data.weekly[key].slice(0, 30);
+  // 只保留最近 6 週的榜
+  const keys = Object.keys(data.weekly).map(Number).sort((a, b) => b - a);
+  for (const k of keys.slice(6)) delete data.weekly[String(k)];
+  saveRanking(data);
+  return row;
+}
+
+export function getWeeklyLeaderboard(week, limit = 15) {
+  const data = loadRanking();
+  return (data.weekly[String(week)] || []).slice(0, limit);
 }
 
 export function getStageLeaderboard(stageId, limit = 10) {

@@ -717,13 +717,13 @@ body.is-dragging-job .specialist-card {
   position: absolute;
   inset: 0;
   display: none;
-  place-items: center;
   background: rgba(20, 40, 20, 0.55);
   backdrop-filter: blur(3px);
   z-index: 20;
-  padding: 12px;
   overflow: auto;
   pointer-events: none;
+  /* 手機安全區：瀏海/底部手勢列不要蓋住卡片 */
+  padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
 }
 
 /* 說明／排行／設定要蓋過全螢幕主選單 (z-index 80) */
@@ -736,9 +736,20 @@ body.is-dragging-job .specialist-card {
 
 /* Prefer class toggle over [hidden] alone — more reliable across browsers */
 .overlay.is-open {
-  display: grid;
+  /* flex column + 卡片 margin:auto → 卡片可垂直置中，但一旦超過視窗高度
+     margin 會塌縮成 0，卡片頂部不再被切掉、可以正常往上捲。
+     這修好所有 overlay（圖鑑/週挑戰/排行/設定/結算…）「內容太高頂部被橫幅擋住」的通病。 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   pointer-events: auto;
   animation: overlay-fade-in 0.28s ease both;
+}
+
+.overlay.is-open > .overlay-card,
+.overlay.is-open > .maple-panel,
+.overlay.is-open > .dialog-card {
+  margin: auto 0;
 }
 
 .overlay.is-open > .overlay-card,

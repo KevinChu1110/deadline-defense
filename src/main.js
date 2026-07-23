@@ -38,6 +38,7 @@ import {
   getGlobalLeaderboard,
   getArenaLeaderboard,
   getStageLeaderboard,
+  getWeeklyLeaderboard,
   exportRankingJson,
 } from "./data/ranking.js";
 import { getJobDex, getEnemyDex, getDexSummary } from "./data/dex.js";
@@ -823,7 +824,7 @@ function closePauseOverlay({ resume = true } = {}) {
   if (resume && game) game.setPaused(false);
 }
 
-let rankTab = "all";
+let rankTab = "weekly";  // 週榜是社群主戰場，排行榜預設開在這
 
 /** Clear end-of-run flags so menus work after victory/defeat. */
 function clearRunState() {
@@ -1766,7 +1767,15 @@ function openRankOverlay(tab = "all") {
 function renderRankList() {
   if (!els.rankList) return;
   let rows = [];
-  if (rankTab === "arena") {
+  if (rankTab === "weekly") {
+    const ch = getWeeklyChallenge();
+    rows = getWeeklyLeaderboard(ch.week, 15).map((r) => ({
+      nick: r.nick,
+      score: r.score,
+      detail: `★${r.stars || 0}`,
+      at: r.at,
+    }));
+  } else if (rankTab === "arena") {
     rows = getArenaLeaderboard(15).map((r) => ({
       nick: r.nick,
       score: r.score,
@@ -1797,7 +1806,10 @@ function renderRankList() {
     }));
   }
   if (!rows.length) {
-    els.rankList.innerHTML = `<p class="muted center-hint">尚無紀錄 — 通關或打競賽後寫入</p>`;
+    els.rankList.innerHTML =
+      rankTab === "weekly"
+        ? `<p class="muted center-hint">本週還沒有人達成 — 去「⚔️ 每週挑戰」搶頭香！</p>`
+        : `<p class="muted center-hint">尚無紀錄 — 通關或打競賽後寫入</p>`;
     return;
   }
   els.rankList.innerHTML = rows
@@ -3120,7 +3132,7 @@ els.btnNextStage?.addEventListener("click", (ev) => {
 });
 els.btnRank?.addEventListener("click", () =>
   withAudio(() => {
-    openRankOverlay(rankTab || "all");
+    openRankOverlay(rankTab || "weekly");
   })
 );
 els.btnEnterHub?.addEventListener("click", () => withAudio(() => openArtaleHub()));
@@ -3221,7 +3233,7 @@ els.btnContinue?.addEventListener("click", () =>
 );
 els.btnHomeRank?.addEventListener("click", () =>
   withAudio(() => {
-    openRankOverlay(rankTab || "all");
+    openRankOverlay(rankTab || "weekly");
   })
 );
 els.btnHomeDex?.addEventListener("click", () =>

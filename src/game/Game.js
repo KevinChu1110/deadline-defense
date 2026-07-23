@@ -66,6 +66,7 @@ import { buildHitVfx, buildShootVfx, createBossBanner } from "./combat-vfx.js";
 import {
   computeClearScore,
   submitStageScore,
+  submitWeeklyScore,
   submitArenaScore,
   getNickname,
 } from "../data/ranking.js";
@@ -998,8 +999,18 @@ export class Game {
           coreHp: this.coreHp,
           leaks: this.leaks || 0,
         });
+        // 週挑戰：額外寫進本週榜（全服同一個確定性挑戰，成績才可比）
+        if (this.challenge) {
+          submitWeeklyScore(this.challenge.week, {
+            nick,
+            score,
+            stars: evalS?.count || 0,
+            coreHp: this.coreHp,
+            leaks: this.leaks || 0,
+          });
+        }
         this.ui?.toast?.(
-          `通關 🍁+${winLeaves}${firstClear ? "（首通）" : ""} · ★${evalS?.count || 0} · 分數 ${score}`
+          `${this.challenge ? "⚔️ 週挑戰達成" : "通關"} 🍁+${winLeaves}${firstClear ? "（首通）" : ""} · ★${evalS?.count || 0} · 分數 ${score}`
         );
       }
       const core = this.stage.map.core;
