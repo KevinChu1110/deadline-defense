@@ -398,7 +398,12 @@ async function launchActionRaid(bossId = "zakum", opts = {}) {
   try {
     payload = await artaleHub.startActionRaid(lastRaidBossId);
   } catch {
-    payload = await artaleHub.startActionRaid("zakum"); // server 不認新王時，仍能取得 profile
+    try {
+      payload = await artaleHub.startActionRaid("zakum"); // server 不認新王時，仍能取得 profile
+    } catch {
+      // 後端不可用時仍可進場(預設 profile)
+      payload = { profile: { name: "冒險者", family: "warrior", style: "melee", maxHp: 800, attackCd: 0.5, skillCd: 3, skillName: "技能", level: 30 } };
+    }
   }
   const bossKey = resolveBossKey({ id: lastRaidBossId });
   const boss = buildActionBoss(bossKey, payload.profile, { partySize: opts.partySize || 1 });
@@ -4213,4 +4218,5 @@ if (location.search.includes("dev")) {
   window.__devCharSelect = () => { window.__devChars(); openCharSelect(); };
   window.__devTitle = () => { window.__devChars(); openTitleScreen(); };
   window.__devHunt = async () => { window.__devChars(); try { await openHunt("dev"); } catch (e) { console.error(e); } };
+  window.__devRaid = async () => { window.__devChars(); try { await launchActionRaid("zakum"); } catch (e) { console.error(e); } };
 }

@@ -6,6 +6,7 @@
  */
 import { loadMobGif, sampleGifFrame } from "./assets.js";
 import { getBossKit, bossAnimFile, BOSS_ANIMS, resolveBossKey } from "../data/boss-anims.js";
+import { drawHud as drawOfficialHud } from "./hud.js";
 
 const W = 960;
 const H = 540;
@@ -834,24 +835,18 @@ export function createActionRaid(opts) {
   }
 
   function drawHud() {
-    // player HP
-    const pBarW = 220;
-    ctx.fillStyle = "rgba(0,0,0,0.45)";
-    ctx.fillRect(16, H - 52, pBarW + 8, 36);
-    ctx.fillStyle = "#7f1d1d";
-    ctx.fillRect(20, H - 40, pBarW, 12);
-    ctx.fillStyle = "#22c55e";
-    ctx.fillRect(20, H - 40, pBarW * (player.hp / player.maxHp), 12);
-    ctx.fillStyle = "#fff8e0";
-    ctx.font = "bold 11px system-ui";
-    ctx.fillText(`HP ${Math.ceil(player.hp)} / ${player.maxHp}`, 22, H - 44);
-    ctx.fillStyle = "rgba(255,248,220,0.75)";
-    ctx.font = "10px system-ui";
-    ctx.fillText(
-      `J/Z 普攻 · K/X ${profile.skillName} · 技能CD ${player.skillCd.toFixed(1)}s`,
-      22,
-      H - 18
-    );
+    // 官方底部狀態列(HP=真實血量 / MP=技能就緒 / EXP=Boss擊破進度 / 技能格)
+    const skCdMax = profile.skillCd || 3, atkCdMax = profile.attackCd || 0.5;
+    drawOfficialHud(ctx, W, H, {
+      level: profile.level,
+      hp: player.hp, hpMax: player.maxHp,
+      mp: Math.max(0, 1 - player.skillCd / skCdMax) * 100, mpMax: 100,
+      expPct: 1 - bossState.hp / bossState.maxHp,
+      skills: [
+        { key: "J", cd: player.attackCd, cdMax: atkCdMax },
+        { key: "K", cd: player.skillCd, cdMax: skCdMax },
+      ],
+    });
 
     // boss HP top
     const bW = 520;
