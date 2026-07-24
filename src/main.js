@@ -4286,8 +4286,27 @@ async function openTown() {
     onNpc: (n) => openNpcDialog(n),
     onExit: () => { stopTown(); setOverlayOpen(overlay, false); openTitleScreen(); },
   });
+  // 進場前預載資產 + 進度條，避免物件逐張 pop-in
+  await townSession.preload((p) => drawTownLoading(document.querySelector("#town-canvas"), p));
   townSession.start();
   sfx.startBgm("menu");
+}
+// 城鎮載入進度條（畫在 town canvas 上）
+function drawTownLoading(canvas, pct) {
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, "#5aa8dd"); sky.addColorStop(1, "#c8e8f5");
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = "center"; ctx.fillStyle = "#fff";
+  ctx.font = "700 18px system-ui";
+  ctx.fillText("正在進入自由市場…", W / 2, H / 2 - 24);
+  const bw = 320, bh = 16, bx = (W - bw) / 2, by = H / 2;
+  ctx.fillStyle = "rgba(0,0,0,0.28)"; ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 8); ctx.fill();
+  ctx.fillStyle = "#ffe14d"; ctx.beginPath(); ctx.roundRect(bx, by, bw * Math.max(0.02, pct), bh, 8); ctx.fill();
+  ctx.fillStyle = "#fff"; ctx.font = "600 12px system-ui";
+  ctx.fillText(Math.round(pct * 100) + "%", W / 2, by + bh + 20);
 }
 document.querySelector("#btn-town-exit")?.addEventListener("click", () => withAudio(() => { stopTown(); setOverlayOpen(document.querySelector("#town-overlay"), false); openTitleScreen(); }));
 

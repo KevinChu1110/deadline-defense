@@ -24,11 +24,14 @@ export function createTown(opts) {
     if (objImgCache.has(key)) return objImgCache.get(key);
     const im = new Image(); im.src = `/town/fm/${kind}/${key}.png`; objImgCache.set(key, im); return im;
   }
-  // NPC 真 sprite（maplestory.io）
+  // NPC 真 sprite（已在地化到 /town/fm/npc/*.gif，避免每次進城打外部 maplestory.io）
   const npcImgCache = new Map();
   function npcImg(id) {
     if (npcImgCache.has(id)) return npcImgCache.get(id);
-    const im = new Image(); im.crossOrigin = "anonymous"; im.src = `https://maplestory.io/api/GMS/214/npc/${id}/render/stand`;
+    const im = new Image();
+    im.src = `/town/fm/npc/${id}.gif`;
+    // 本地缺圖 → 退回官方 API（極少數 NPC）
+    im.onerror = () => { im.onerror = null; im.crossOrigin = "anonymous"; im.src = `https://maplestory.io/api/GMS/214/npc/${id}/render/stand`; };
     npcImgCache.set(id, im); return im;
   }
   // 紙娃娃
@@ -350,7 +353,35 @@ export function createTown(opts) {
   function pMove(e) { if (!activePointers.has(e.pointerId)) return; const [cx, cy] = canvasXY(e); activePointers.set(e.pointerId, btnAt(cx, cy)); refreshTouch(); }
   function pUp(e) { if (activePointers.delete(e.pointerId)) refreshTouch(); }
 
+  // ── 資產預載入：進場前把 tile/obj/背景/NPC 圖 decode 完，消除逐張 pop-in ──
+  // 用 Set 去重（多物件共用同張圖），每張圖只算一次；4 秒硬上限保證絕不卡住進場。
+  function preload(onProgress) {
+    const imgs = new Set();
+    for (const { img } of backImgs) imgs.add(img);
+    for (const o of town.objects || []) {
+      if (o.frames) for (const fr of o.frames) imgs.add(objImgKey(o.kind, fr.key));
+      else imgs.add(objImgKey(o.kind, o.key));
+    }
+    for (const n of town.life || []) if (n.type === "n" && !n.hide) imgs.add(npcImg(n.id));
+    const list = [...imgs]; const total = list.length; let done = 0;
+    if (!total) { onProgress?.(1); return Promise.resolve(); }
+    return new Promise((resolve) => {
+      let finished = false;
+      const finish = () => { if (finished) return; finished = true; onProgress?.(1); resolve(); };
+      const tick = () => { done++; onProgress?.(done / total); if (done >= total) finish(); };
+      for (const im of list) {
+        if (im.complete) { tick(); continue; }
+        let settled = false;
+        const one = () => { if (settled) return; settled = true; tick(); };
+        im.addEventListener("load", one, { once: true });
+        im.addEventListener("error", one, { once: true });
+      }
+      setTimeout(finish, 4000); // 保險：任何 edge case 逾時直接進場
+    });
+  }
+
   return {
+    preload,
     start() {
       window.addEventListener("keydown", kd); window.addEventListener("keyup", ku);
       canvas.addEventListener("pointerdown", pDown); canvas.addEventListener("pointermove", pMove);
