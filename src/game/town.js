@@ -168,10 +168,14 @@ export function createTown(opts) {
     ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
     if (!window.__townNoBack) drawBack();
 
-    // 地圖真物件（tile 平台 + obj 蘑菇屋/招牌/梯子/自然/動畫大魚旗子），世界座標 + z 排序
+    // 地圖真物件（tile 平台 + obj 蘑菇屋/招牌/梯子/自然/動畫大魚旗子），世界座標 + z 排序。
+    // 最前 obj 層(FRONT_LAYER)延後到實體之後畫,做出「走到草叢/裝飾後方」的景深；
+    // tile 一律在實體之前(下方),絕不會蓋到站在地板上的玩家腳。
     ctx.imageSmoothingEnabled = false;
     const tms = performance.now();
-    for (const o of town.objects || []) {
+    const FRONT_LAYER = 5;
+    const frontObjs = [];
+    const drawObject = (o) => {
       let key = o.key, ow = o.ow, oh = o.oh;
       if (o.frames) {
         const tot = o._tot || (o._tot = o.frames.reduce((s, f) => s + f.delay, 0)) || 1;
@@ -180,11 +184,15 @@ export function createTown(opts) {
         const fr = o.frames[idx]; key = fr.key; ow = fr.w; oh = fr.h;
       }
       const im = objImgKey(o.kind, key);
-      if (!im.complete || !im.naturalWidth) continue;
+      if (!im.complete || !im.naturalWidth) return;
       const [sx, sy] = worldToScreen(o.x, o.y);
-      if (sx - o.ox > W + 60 || sx - o.ox + ow < -60) continue; // 水平裁切
+      if (sx - o.ox > W + 60 || sx - o.ox + ow < -60) return; // 水平裁切
       if (o.f) { ctx.save(); ctx.translate(sx, 0); ctx.scale(-1, 1); ctx.drawImage(im, -(ow - o.ox), sy - o.oy, ow, oh); ctx.restore(); }
       else ctx.drawImage(im, sx - o.ox, sy - o.oy, ow, oh);
+    };
+    for (const o of town.objects || []) {
+      if (o.kind === "obj" && Math.floor(o.z / 100000) >= FRONT_LAYER) { frontObjs.push(o); continue; }
+      drawObject(o);
     }
 
     // 活動傳送門（藍光環 + 招牌標籤）
@@ -207,11 +215,10 @@ export function createTown(opts) {
       ctx.fillStyle = "#fff4d8"; ctx.fillText(a.label, sx, sy - 68);
     }
 
-    // NPC（真 sprite + 名牌）
-    for (const n of town.life) {
-      if (n.type !== "n" || n.hide) continue;
+    // ── 實體(NPC + 玩家)：依「腳底螢幕 y」景深排序,越靠下(近鏡頭)越後畫→蓋住較遠的 ──
+    const drawNpc = (n) => {
       const [sx, sy] = worldToScreen(n.x, n.y);
-      if (sx < -80 || sx > W + 80) continue;
+      if (sx < -80 || sx > W + 80) return;
       const im = npcImg(n.id);
       ctx.save();
       ctx.imageSmoothingEnabled = false;
@@ -228,21 +235,32 @@ export function createTown(opts) {
       const tw = ctx.measureText(nm).width;
       ctx.fillStyle = "rgba(255,235,150,0.9)"; ctx.fillRect(sx - tw / 2 - 4, sy + 2, tw + 8, 13);
       ctx.fillStyle = "#5a3d10"; ctx.fillText(nm, sx, sy + 12);
+    };
+    const drawPlayerDoll = () => {
+      const [psx, psy] = worldToScreen(player.x, player.y);
+      const moving = Math.abs(player.vx) > 10 && player.onGround;
+      let anim = "stand1";
+      if (!player.onGround) anim = "jump"; else if (moving) anim = "walk1";
+      const drawn = avatar && drawAvatar(ctx, avatar, psx, psy + 4, { anim, dt: lastDt, flip: player.face, targetH: 74, maxW: 70 });
+      if (!drawn) { ctx.fillStyle = "#f87171"; ctx.fillRect(psx - 10, psy - 44, 20, 44); }
+      // 名牌
+      ctx.fillStyle = "rgba(0,0,0,0.5)"; const nm = profile?.name || "冒險者";
+      ctx.font = "700 11px system-ui"; ctx.textAlign = "center";
+      const tw = ctx.measureText(nm).width;
+      ctx.fillRect(psx - tw / 2 - 4, psy + 4, tw + 8, 14);
+      ctx.fillStyle = "#fff"; ctx.fillText(nm, psx, psy + 15);
+    };
+    const entities = [];
+    for (const n of town.life) {
+      if (n.type !== "n" || n.hide) continue;
+      entities.push({ y: worldToScreen(n.x, n.y)[1], draw: () => drawNpc(n) });
     }
+    entities.push({ y: worldToScreen(player.x, player.y)[1], draw: drawPlayerDoll });
+    entities.sort((a, b) => a.y - b.y); // 腳底越高(遠)越先畫
+    for (const e of entities) e.draw();
 
-    // 玩家紙娃娃
-    const [psx, psy] = worldToScreen(player.x, player.y);
-    const moving = Math.abs(player.vx) > 10 && player.onGround;
-    let anim = "stand1";
-    if (!player.onGround) anim = "jump"; else if (moving) anim = "walk1";
-    const drawn = avatar && drawAvatar(ctx, avatar, psx, psy + 4, { anim, dt: lastDt, flip: player.face, targetH: 74, maxW: 70 });
-    if (!drawn) { ctx.fillStyle = "#f87171"; ctx.fillRect(psx - 10, psy - 44, 20, 44); }
-    // 名牌
-    ctx.fillStyle = "rgba(0,0,0,0.5)"; const nm = profile?.name || "冒險者";
-    ctx.font = "700 11px system-ui"; ctx.textAlign = "center";
-    const tw = ctx.measureText(nm).width;
-    ctx.fillRect(psx - tw / 2 - 4, psy + 4, tw + 8, 14);
-    ctx.fillStyle = "#fff"; ctx.fillText(nm, psx, psy + 15);
+    // 前景層 obj(最上層草叢/裝飾)：畫在實體之後 → 玩家可走到其後方
+    for (const o of frontObjs) drawObject(o);
 
     // 互動提示
     if (nearInteract) {
