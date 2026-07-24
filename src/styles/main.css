@@ -932,20 +932,24 @@ body.is-dragging-job .specialist-card {
 .maple-book-mode .title-float-leaves {
   display: none;
 }
-/* Artale 招牌 + 選單置中於書本內頁 */
-/* 模式選單 = 木牌吊牌伺服器選擇風（靠右，像官方登入 signboard 位置） */
+/* Artale 招牌 + 選單：木牌吊牌伺服器選擇風，落在書本右頁(像官方 signboard) */
+/* 相對書本(共用 50% 中心)絕對定位，寬螢幕才不會跑出書外 */
+.maple-book-mode .title-menu:not([hidden]) { display: flex; }
 .maple-book-mode .title-menu {
-  position: relative;
+  position: absolute;
+  top: 50%;
+  left: calc(50% + var(--book-w) * 0.09);
+  transform: translate(-50%, -50%);
   z-index: 6;
-  width: min(40%, 320px);
-  margin-left: auto;
-  margin-right: 6%;
+  width: min(calc(var(--book-w) * 0.42), 320px);
+  max-height: 74vh;
+  overflow-y: auto;
+  margin: 0;
   background: none;
   box-shadow: none;
   border: none;
   padding: 0;
   backdrop-filter: none;
-  display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 0;
@@ -963,19 +967,21 @@ body.is-dragging-job .specialist-card {
   box-shadow: 0 4px 0 #3a2208, 0 6px 10px rgba(0, 0, 0, 0.3);
 }
 .maple-book-mode .title-sub { display: none; }
-.maple-book-mode .title-menu-btns { gap: 10px; margin-top: 8px; }
-/* 每個模式鈕 = 木牌吊牌 */
+.maple-book-mode .title-menu-btns { gap: 12px; margin-top: 6px; }
+/* 每個模式鈕 = 木牌吊牌（壓扁讓 5 顆全塞進書本） */
 .maple-book-mode .title-menu-btns .title-btn {
   position: relative;
+  min-height: 40px !important;
+  padding: 8px 12px !important;
   background: linear-gradient(180deg, #b47c3e 0%, #96632c 48%, #7a4e22 100%) !important;
   border: 3px solid #4a2c10 !important;
   border-radius: 6px !important;
   color: #fff3d8 !important;
   font-weight: 900 !important;
-  font-size: 1rem !important;
+  font-size: 0.98rem !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
   box-shadow: 0 4px 0 #3a2208, 0 6px 10px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 220, 160, 0.3) !important;
-  margin-top: 12px;
+  margin-top: 0;
   transition: transform 0.1s ease, filter 0.1s ease;
 }
 /* 吊繩：木牌上方兩條繩 */
@@ -1019,14 +1025,16 @@ body.is-dragging-job .specialist-card {
   display: flex;
 }
 .maple-book-mode .title-login {
-  position: relative;
+  position: absolute;
+  top: 50%;
+  left: calc(50% + var(--book-w) * 0.06);
+  transform: translate(-50%, -50%);
   z-index: 6;
   flex-direction: column;
   align-items: center;
-  gap: clamp(14px, 3vh, 30px);
-  width: min(70%, 460px);
-  margin-left: auto;
-  margin-right: 6%;
+  gap: clamp(12px, 2.6vh, 26px);
+  width: min(calc(var(--book-w) * 0.5), 400px);
+  margin: 0;
 }
 .tl-logo {
   display: flex;
