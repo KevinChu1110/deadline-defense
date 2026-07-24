@@ -7305,3 +7305,35 @@ body.mode-bc .wave-cta {
 .es-weapon { left: 72%; top: 56%; }
 .es-bottom { left: 33%; top: 69%; }
 .es-shoes  { left: 52%; top: 75%; }
+
+/* ── NPC 對話框（楓之谷風）── */
+#npc-dialog-overlay { display: none; position: fixed; inset: 0; z-index: 95; background: rgba(10,8,6,0.5); pointer-events: auto; }
+#npc-dialog-overlay.is-open { display: grid; place-items: center; }
+.npc-dialog {
+  display: flex; gap: 12px; align-items: flex-end;
+  width: min(92vw, 520px);
+  padding: 14px 16px;
+  background: linear-gradient(180deg, #fbf3df 0%, #f2e3c0 100%);
+  border: 3px solid #6b4a24;
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.6);
+}
+.npc-dialog-face {
+  width: 96px; height: auto; max-height: 130px;
+  object-fit: contain; object-position: bottom;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 4px rgba(0,0,0,0.25));
+  flex: 0 0 auto;
+}
+.npc-dialog-body { flex: 1; min-width: 0; }
+.npc-dialog-name {
+  font-weight: 900; color: #7a1f1f; font-size: 1rem; margin-bottom: 6px;
+  border-bottom: 2px solid rgba(120,80,40,0.4); padding-bottom: 4px;
+}
+.npc-dialog-text { color: #3a2412; font-size: 0.95rem; line-height: 1.5; margin: 0 0 12px; min-height: 42px; }
+.npc-dialog-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.npc-dialog-actions .btn {
+  background: linear-gradient(180deg, #b47a34, #8a5620); color: #fff3d8;
+  border: 2px solid #5a3410; border-radius: 8px; padding: 7px 16px; font-weight: 800; cursor: pointer;
+}
+.npc-dialog-actions .btn:hover { filter: brightness(1.08); }

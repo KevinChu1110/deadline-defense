@@ -4281,9 +4281,40 @@ async function openTown() {
       else if (a.act === "raid") void launchActionRaid("zakum");
       else if (a.act === "tower") { _townReturn = false; openCampaignPanel(1); } // 塔防有自己流程,暫回主城
     },
+    onNpc: (n) => openNpcDialog(n),
     onExit: () => { stopTown(); setOverlayOpen(overlay, false); openTitleScreen(); },
   });
   townSession.start();
   sfx.startBgm("menu");
 }
 document.querySelector("#btn-town-exit")?.addEventListener("click", () => withAudio(() => { stopTown(); setOverlayOpen(document.querySelector("#town-overlay"), false); openTitleScreen(); }));
+
+// NPC 對話框
+const NPC_LINES = {
+  "9030000": "冒險家你好！需要寄放物品嗎？倉庫隨時為你開著。",
+  "9030100": "嘿嘿，來看看我這邊有什麼好貨吧！",
+  "9300011": "呵呵呵～祝你在楓之谷發大財、掉寶連連！",
+};
+function closeNpcDialog() {
+  setOverlayOpen(document.querySelector("#npc-dialog-overlay"), false);
+  townSession?.resume();
+}
+function openNpcDialog(npc) {
+  townSession?.pause();
+  const img = document.querySelector("#npc-dialog-img");
+  if (img) img.src = `https://maplestory.io/api/GMS/214/npc/${npc.id}/render/stand`;
+  const nameEl = document.querySelector("#npc-dialog-name");
+  if (nameEl) nameEl.textContent = npc.name || "NPC";
+  const txtEl = document.querySelector("#npc-dialog-text");
+  if (txtEl) txtEl.textContent = NPC_LINES[String(npc.id)] || `你好，我是「${npc.name || "這裡的居民"}」，歡迎來到自由市場！`;
+  const acts = document.querySelector("#npc-dialog-actions");
+  if (acts) {
+    acts.innerHTML = "";
+    const close = document.createElement("button");
+    close.className = "btn"; close.textContent = "結束對話";
+    close.addEventListener("click", () => withAudio(closeNpcDialog));
+    acts.appendChild(close);
+  }
+  setOverlayOpen(document.querySelector("#npc-dialog-overlay"), true);
+  sfx.play("uiSelect");
+}

@@ -11,7 +11,7 @@ const W = 960, H = 540;
 const GRAVITY = 2000, WALK = 230, JUMP = 620;
 
 export function createTown(opts) {
-  const { canvas, town, appearance, charClass, profile, onAct, onExit } = opts;
+  const { canvas, town, appearance, charClass, profile, onAct, onNpc, onExit } = opts;
   const acts = opts.acts || []; // [{label, act, x, y, color}] 活動傳送門
   const ctx = canvas.getContext("2d");
   canvas.width = W; canvas.height = H;
@@ -35,8 +35,8 @@ export function createTown(opts) {
   let camCX = player.x, camCY = player.y - 80;
 
   const keys = new Set();
-  let running = true, raf = 0, last = performance.now(), lastDt = 0.016;
-  let nearPortal = null, upHeld = false;
+  let running = true, paused = false, raf = 0, last = performance.now(), lastDt = 0.016;
+  let nearInteract = null, nearType = null, upHeld = false;
 
   // ── foothold：取 px 下方最近可站的 y（水平/斜線；跳過垂直牆）──
   function footAt(px, fromY) {
@@ -53,6 +53,7 @@ export function createTown(opts) {
   }
 
   function update(dt) {
+    if (paused) { player.vx = 0; return; } // 對話中暫停操作
     // 輸入
     const left = keys.has("ArrowLeft") || keys.has("KeyA");
     const right = keys.has("ArrowRight") || keys.has("KeyD");
@@ -89,14 +90,23 @@ export function createTown(opts) {
     camCX = Math.max(town.vr.left + W / 2, Math.min(town.vr.right - W / 2, camCX));
     camCY = Math.max(town.vr.top + H / 2, Math.min(town.vr.bottom - H / 2, camCY));
 
-    // 活動傳送門偵測（掛機/神木/突襲）
-    nearPortal = null;
-    for (const a of acts) {
-      if (Math.abs(a.x - player.x) < 55 && Math.abs(a.y - player.y) < 80) { nearPortal = a; break; }
+    // 最近可互動：NPC 對話 / 活動傳送門
+    nearInteract = null; nearType = null; let bestD = 1e9;
+    for (const n of town.life) {
+      if (n.type !== "n" || n.hide) continue;
+      const d = Math.abs(n.x - player.x);
+      if (d < 45 && Math.abs(n.y - player.y) < 80 && d < bestD) { bestD = d; nearInteract = n; nearType = "npc"; }
     }
-    // 邊緣觸發：按下↑瞬間才進場（避免連續觸發）
+    for (const a of acts) {
+      const d = Math.abs(a.x - player.x);
+      if (d < 55 && Math.abs(a.y - player.y) < 80 && d < bestD) { bestD = d; nearInteract = a; nearType = "act"; }
+    }
+    // 邊緣觸發：按下↑瞬間才互動
     const up = keys.has("ArrowUp") || keys.has("KeyW");
-    if (nearPortal && up && !upHeld && onAct) onAct(nearPortal);
+    if (nearInteract && up && !upHeld) {
+      if (nearType === "npc" && onNpc) onNpc(nearInteract);
+      else if (nearType === "act" && onAct) onAct(nearInteract);
+    }
     upHeld = up;
   }
 
@@ -207,12 +217,14 @@ export function createTown(opts) {
     ctx.fillRect(psx - tw / 2 - 4, psy + 4, tw + 8, 14);
     ctx.fillStyle = "#fff"; ctx.fillText(nm, psx, psy + 15);
 
-    // 傳送門提示
-    if (nearPortal) {
+    // 互動提示
+    if (nearInteract) {
+      const txt = nearType === "npc" ? "↑ 對話" : "↑ 進入";
+      const [sx, sy] = worldToScreen(nearInteract.x, nearInteract.y);
       ctx.fillStyle = "#fff"; ctx.font = "bold 13px system-ui"; ctx.textAlign = "center";
       ctx.strokeStyle = "rgba(0,0,0,0.6)"; ctx.lineWidth = 3;
-      const [sx, sy] = worldToScreen(nearPortal.x, nearPortal.y);
-      ctx.strokeText("↑ 進入", sx, sy - 60); ctx.fillText("↑ 進入", sx, sy - 60);
+      const yy = nearType === "npc" ? sy - 78 : sy - 60;
+      ctx.strokeText(txt, sx, yy); ctx.fillText(txt, sx, yy);
     }
 
     // ── DEBUG：foothold 線 + 座標 ──
@@ -232,10 +244,39 @@ export function createTown(opts) {
       level: profile?.level, hp: profile?.maxHp || 100, hpMax: profile?.maxHp || 100,
       mp: profile?.maxMp || 60, mpMax: profile?.maxMp || 60, expPct: 0, skills: [],
     });
-    // 頂部地圖名
-    ctx.fillStyle = "rgba(255,255,255,0.9)"; ctx.font = "bold 14px system-ui"; ctx.textAlign = "left";
-    ctx.strokeStyle = "rgba(0,0,0,0.5)"; ctx.lineWidth = 3;
-    ctx.strokeText(town.name, 16, 28); ctx.fillText(town.name, 16, 28);
+    drawMinimap();
+  }
+
+  // ── 小地圖（左上，foothold 折線 + 玩家/NPC/傳送門點）──
+  function drawMinimap() {
+    const mw = 168, mh = 108, mx = 12, my = 12, pad = 8;
+    const wx0 = town.vr.left, wy0 = town.vr.top;
+    const ww = town.vr.right - town.vr.left, wh = town.vr.bottom - town.vr.top;
+    const sc = Math.min((mw - pad * 2) / ww, (mh - pad * 2) / wh);
+    const ox = mx + pad + ((mw - pad * 2) - ww * sc) / 2, oy = my + pad;
+    const mp = (wx, wy) => [ox + (wx - wx0) * sc, oy + (wy - wy0) * sc];
+    ctx.save();
+    // 框
+    ctx.fillStyle = "rgba(20,30,50,0.72)"; ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.lineWidth = 1;
+    ctx.fillRect(mx, my, mw, mh); ctx.strokeRect(mx, my, mw, mh);
+    ctx.fillStyle = "#fff"; ctx.font = "9px system-ui"; ctx.textAlign = "left";
+    ctx.fillText("小地圖 · " + town.name, mx + 5, my + 11);
+    // foothold
+    ctx.strokeStyle = "rgba(160,220,120,0.8)"; ctx.lineWidth = 1;
+    for (const f of town.foothold) {
+      if (f.x1 === f.x2) continue;
+      const [ax, ay] = mp(f.x1, f.y1), [bx, by] = mp(f.x2, f.y2);
+      ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+    }
+    // 活動傳送門(彩點) / NPC(橘點)
+    for (const a of acts) { const [x, y] = mp(a.x, a.y); ctx.fillStyle = a.color || "#5cf"; ctx.beginPath(); ctx.arc(x, y, 2.5, 0, 7); ctx.fill(); }
+    for (const n of town.life) { if (n.type !== "n" || n.hide) continue; const [x, y] = mp(n.x, n.y); ctx.fillStyle = "#ffb84d"; ctx.beginPath(); ctx.arc(x, y, 2, 0, 7); ctx.fill(); }
+    // 玩家(黃點閃)
+    const [px, py] = mp(player.x, player.y);
+    ctx.fillStyle = (performance.now() % 700 < 400) ? "#ffe14d" : "#fff";
+    ctx.beginPath(); ctx.arc(px, py, 3, 0, 7); ctx.fill();
+    ctx.strokeStyle = "#000"; ctx.lineWidth = 0.6; ctx.stroke();
+    ctx.restore();
   }
 
   function loop(now) {
@@ -245,6 +286,7 @@ export function createTown(opts) {
     raf = requestAnimationFrame(loop);
   }
   function onKey(e, down) {
+    if (paused) { keys.clear(); return; } // 對話中不吃操作(Esc 也不離開)
     if (down && e.code === "Escape") { if (onExit) onExit(); return; }
     if (down) keys.add(e.code); else keys.delete(e.code);
     if (["ArrowLeft", "ArrowRight", "ArrowUp", "Space", "KeyA", "KeyD", "KeyW"].includes(e.code)) e.preventDefault();
@@ -254,5 +296,7 @@ export function createTown(opts) {
   return {
     start() { window.addEventListener("keydown", kd); window.addEventListener("keyup", ku); last = performance.now(); raf = requestAnimationFrame(loop); },
     stop() { running = false; cancelAnimationFrame(raf); window.removeEventListener("keydown", kd); window.removeEventListener("keyup", ku); },
+    pause() { paused = true; keys.clear(); upHeld = true; },
+    resume() { paused = false; upHeld = true; }, // upHeld=true 避免 resume 當幀立刻再觸發
   };
 }
