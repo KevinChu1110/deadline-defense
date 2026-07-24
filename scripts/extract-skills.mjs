@@ -13,14 +13,20 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { createCanvas, loadImage } from "@napi-rs/canvas";
 const { WzFile, WzMapleVersion } = wz;
 
+// 參數化：WZ_DIR(含 Skill.wz+String.wz) 與 WZ_VER(GMS/EMS/BMS)；預設 v62
+const WZ_DIR = process.env.WZ_DIR || "/tmp/wz62";
+const WZ_VER = process.env.WZ_VER || "GMS";
 const WEB = "/Users/kevin.chu/develop/sideprojects/deadline-defense";
 const OUT = `${WEB}/public/skills`;
+const MANIFEST = `${WEB}/src/data/skills-anim-manifest.json`;
 mkdirSync(OUT, { recursive: true });
 
 const skillsJson = JSON.parse(readFileSync(`${WEB}/src/data/world/skills.json`, "utf8"));
+// 合併既有 manifest（累加補齊，不蓋掉其他版本已解出的）
+const manifest = existsSync(MANIFEST) ? JSON.parse(readFileSync(MANIFEST, "utf8")) : {};
 
 // String.wz: 官方id → 名稱
-const strf = new WzFile("/tmp/wz62/String.wz", WzMapleVersion.GMS);
+const strf = new WzFile(`${WZ_DIR}/String.wz`, WzMapleVersion[WZ_VER]);
 await strf.parseWzFile();
 const strImg = [...strf.wzDirectory.wzImages].find((i) => i.name === "Skill.img");
 await strImg.parseImage();
@@ -31,9 +37,26 @@ for (const p of strImg.wzProperties) {
 }
 
 // Skill.wz
-const skf = new WzFile("/tmp/wz62/Skill.wz", WzMapleVersion.GMS);
+const skf = new WzFile(`${WZ_DIR}/Skill.wz`, WzMapleVersion[WZ_VER]);
 await skf.parseWzFile();
 const skImgs = new Map([...skf.wzDirectory.wzImages].map((i) => [i.name.replace(".img", ""), i]));
+
+// 全域索引：技能名 → skill 節點（跨所有職業 img）。給 Artale 自訂職業碼(皇家6xx/英雄7xx)
+// 對不到同職 img 時，靠「真實技能名」跨職對到。
+const globalByName = new Map();
+const globalNodeById = new Map();
+for (const [imgName, img] of skImgs) {
+  try {
+    await img.parseImage();
+    const sn = img.at("skill");
+    if (!sn) continue;
+    for (const p of sn.wzProperties) {
+      globalNodeById.set(p.name, p);
+      const nm = nameById[p.name];
+      if (nm && !globalByName.has(nm)) globalByName.set(nm, p.name);
+    }
+  } catch {}
+}
 
 // 動畫節點優先序（要「特效」而非圖示）
 const ANIM_PRIORITY = ["ball", "effect", "effect0", "special", "special0", "keydownend", "hit", "hit0", "mob", "affected", "tile"];
@@ -56,29 +79,28 @@ function delayOf(frameNode) {
   return d && d.value != null ? Math.max(30, +d.value) : 100;
 }
 
-const manifest = {};
 let okIcon = 0, okFx = 0, noMatch = 0, total = 0;
 
 for (const [job, data] of Object.entries(skillsJson)) {
   const img = skImgs.get(job);
-  if (!img) continue;
-  await img.parseImage();
-  const skillNode = img.at("skill");
-  if (!skillNode) continue;
-  const wzIds = [...skillNode.wzProperties].map((p) => p.name);
-  // 官方id → 名稱（本 job）
+  let wzIds = [];
+  if (img) { await img.parseImage(); const sn = img.at("skill"); if (sn) wzIds = [...sn.wzProperties].map((p) => p.name); }
   const byName = {};
-  wzIds.forEach((id, idx) => { const nm = nameById[id]; if (nm) byName[nm] = id; });
+  wzIds.forEach((id) => { const nm = nameById[id]; if (nm) byName[nm] = id; });
 
   const jsonSkills = data.skills || [];
   for (let idx = 0; idx < jsonSkills.length; idx++) {
     const sk = jsonSkills[idx];
     total++;
-    // 對照：先名稱，後順序
-    let officialId = byName[String(sk.name).trim()] || wzIds[idx];
-    if (!officialId) { noMatch++; continue; }
-    const node = skillNode.at(officialId);
-    if (!node) { noMatch++; continue; }
+    const nm = String(sk.name).trim();
+    // 對照優先序：同職名稱 → 同職順序 → 全域名稱(跨職,給自訂職業碼)
+    let officialId = byName[nm] || wzIds[idx] || globalByName.get(nm);
+    const node = officialId ? globalNodeById.get(officialId) : null;
+    if (!node) {
+      // 若已在別版解出過就保留，否則計 noMatch
+      if (!(manifest[sk.id] && manifest[sk.id].fx)) noMatch++;
+      continue;
+    }
 
     const entry = { officialId };
 
@@ -127,7 +149,13 @@ for (const [job, data] of Object.entries(skillsJson)) {
         okFx++;
       }
     }
-    manifest[sk.id] = entry;
+    // 合併：保留既有版本已解出的 icon/fx（TMS 沒對到時不覆蓋 v62 成果）
+    const prev = manifest[sk.id] || {};
+    manifest[sk.id] = {
+      officialId: entry.officialId || prev.officialId,
+      icon: entry.icon || prev.icon || undefined,
+      fx: entry.fx || prev.fx || undefined,
+    };
   }
 }
 
