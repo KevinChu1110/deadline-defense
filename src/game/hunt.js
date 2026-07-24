@@ -11,6 +11,7 @@ import { SKILLS, JOB_SKILLS } from "../data/skills-generated.js";
 import { spawnSkillFx, updateSkillFx, drawSkillFx, preloadSkillFx, hasSkillFx } from "./skill-fx.js";
 import { createAvatar, drawAvatar } from "./avatar.js";
 import { drawHud as drawOfficialHud } from "./hud.js";
+import { drawDmgNumber } from "./damage-num.js";
 
 const W = 960, H = 540, GROUND = 452, GRAVITY = 1400;
 
@@ -120,6 +121,8 @@ export function createHunt(opts) {
 
   function rnd(a, b) { return a + Math.random() * (b - a); }
   function floatText(x, y, text, color) { floats.push({ x, y, t: 0, life: 0.8, text, color }); }
+  // 官方傷害跳字：kind = normal|crit|miss
+  function floatDamage(x, y, value, kind) { floats.push({ x, y, t: 0, life: kind === "crit" ? 0.95 : 0.75, dmg: value, kind }); }
 
   // ── buff 套用 ──
   function buffMul(kind) {
@@ -154,7 +157,7 @@ export function createHunt(opts) {
   function hurtMonster(m, dmg, crit) {
     if (!m.alive) return;
     m.hp -= dmg; m.hitFlash = 0.1;
-    floatText(m.x, m.y - m.def.radius * 2 - 6, `${Math.round(dmg)}${crit ? "!" : ""}`, crit ? "#fbbf24" : "#fff");
+    floatDamage(m.x, m.y - m.def.radius * 2 - 6, dmg, crit ? "crit" : "normal");
     if (m.hp <= 0) {
       m.alive = false; player.kills++;
       killLog[m.def.id] = (killLog[m.def.id] || 0) + 1;
@@ -381,7 +384,18 @@ export function createHunt(opts) {
 
     for (const p of projectiles) { ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill(); }
     drawSkillFx(ctx, fx);
-    for (const f of floats) { ctx.save(); ctx.globalAlpha = Math.max(0, 1 - f.t / f.life); ctx.fillStyle = f.color; ctx.font = "bold 14px system-ui"; ctx.textAlign = "center"; ctx.fillText(f.text, f.x, f.y); ctx.restore(); }
+    for (const f of floats) {
+      const prog = f.t / f.life, alpha = Math.max(0, 1 - prog);
+      if (f.kind) {
+        // 官方傷害數字：暴擊較大 + 起始彈跳放大
+        const base = f.kind === "crit" ? 0.82 : 0.62;
+        const pop = f.t < 0.12 ? 1 + (0.12 - f.t) * 2.2 : 1;
+        const drawn = drawDmgNumber(ctx, f.x, f.y, f.dmg, f.kind, alpha, base * pop);
+        if (!drawn) { ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = f.kind === "crit" ? "#ff5aa5" : "#ffcc33"; ctx.font = "bold 16px system-ui"; ctx.textAlign = "center"; ctx.fillText(String(Math.round(f.dmg)), f.x, f.y); ctx.restore(); }
+      } else {
+        ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = f.color; ctx.font = "bold 14px system-ui"; ctx.textAlign = "center"; ctx.fillText(f.text, f.x, f.y); ctx.restore();
+      }
+    }
 
     drawHud();
   }
