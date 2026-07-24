@@ -10,6 +10,7 @@ import { getCachedMob, sampleGifFrame, loadMobGif } from "./assets.js";
 import { SKILLS, JOB_SKILLS } from "../data/skills-generated.js";
 import { spawnSkillFx, updateSkillFx, drawSkillFx, preloadSkillFx, hasSkillFx } from "./skill-fx.js";
 import { createAvatar, drawAvatar } from "./avatar.js";
+import { drawHud as drawOfficialHud } from "./hud.js";
 
 const W = 960, H = 540, GROUND = 452, GRAVITY = 1400;
 
@@ -386,34 +387,22 @@ export function createHunt(opts) {
   }
 
   function drawHud() {
-    // HP/MP
-    ctx.fillStyle = "rgba(0,0,0,0.45)"; ctx.fillRect(14, 14, 232, 44);
-    ctx.fillStyle = "#7f1d1d"; ctx.fillRect(18, 20, 220, 12); ctx.fillStyle = "#22c55e"; ctx.fillRect(18, 20, 220 * (player.hp / player.maxHp), 12);
-    ctx.fillStyle = "#1e3a8a"; ctx.fillRect(18, 36, 220, 10); ctx.fillStyle = "#3b82f6"; ctx.fillRect(18, 36, 220 * (player.mp / player.maxMp), 10);
-    ctx.fillStyle = "#fff8e0"; ctx.font = "bold 10px system-ui"; ctx.textAlign = "left";
-    ctx.fillText(`HP ${Math.ceil(player.hp)}/${player.maxHp}  MP ${Math.ceil(player.mp)}`, 22, 30);
+    // 官方底部狀態列(HP/MP/EXP/LV + 快捷技能格)
+    drawOfficialHud(ctx, W, H, {
+      level: profile.level,
+      hp: player.hp, hpMax: player.maxHp,
+      mp: player.mp, mpMax: player.maxMp,
+      expPct: (player.kills % 25) / 25,
+      skills: skills.map((s) => ({
+        key: keyLabel(s.key), cd: s.cd, cdMax: s.cdMax,
+        icon: iconCache(s.def.id)?.img,
+      })),
+    });
 
-    // 模式 + 擊殺
+    // 模式 + 擊殺(右上)
     ctx.textAlign = "right"; ctx.fillStyle = mode === "ai" ? "#a3e635" : "#fbbf24"; ctx.font = "bold 13px system-ui";
     ctx.fillText(mode === "ai" ? "🤖 掛機中（按任意鍵接管）" : "🎮 手動（3秒不動回掛機）", W - 16, 28);
     ctx.fillStyle = "#fde68a"; ctx.fillText(`擊殺 ${player.kills}`, W - 16, 46);
-
-    // 技能列
-    const bx = W / 2 - (skills.length * 52) / 2;
-    skills.forEach((s, i) => {
-      const x = bx + i * 52, y = H - 60;
-      ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(x, y, 46, 46);
-      const rec = s.def.id;
-      // icon
-      const iconImg = iconCache(s.def.id);
-      if (iconImg?.ready) ctx.drawImage(iconImg.img, x + 5, y + 3, 32, 32);
-      else { ctx.fillStyle = "#333"; ctx.fillRect(x + 5, y + 3, 32, 32); }
-      // 冷卻遮罩
-      if (s.cd > 0) { ctx.fillStyle = "rgba(0,0,0,0.6)"; const ch = 46 * (s.cd / s.cdMax); ctx.fillRect(x, y + 46 - ch, 46, ch); }
-      // 鍵位
-      ctx.fillStyle = "#fff8e0"; ctx.font = "bold 10px system-ui"; ctx.textAlign = "center";
-      ctx.fillText(keyLabel(s.key), x + 23, y + 44);
-    });
 
     // buff 列（真 icon + 倒數）
     const now = performance.now();

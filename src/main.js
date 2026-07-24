@@ -3771,7 +3771,7 @@ els.btnStartGame?.addEventListener("click", () =>
 );
 // 官方登入頁
 document.querySelector("#btn-login-discord")?.addEventListener("click", () => withAudio(() => artaleHub.startDiscordOAuth()));
-document.querySelector("#btn-login-guest")?.addEventListener("click", () => withAudio(() => openCampaignPanel(1)));
+document.querySelector("#btn-login-guest")?.addEventListener("click", (e) => { e.preventDefault(); withAudio(() => openCampaignPanel(1)); });
 // 未登入：Discord 登入(選單內備用)
 document.querySelector("#btn-maple-login")?.addEventListener("click", () => withAudio(() => artaleHub.startDiscordOAuth()));
 // 已登入模式：掛機探險 / Boss 突襲
@@ -4212,4 +4212,5 @@ if (location.search.includes("dev")) {
   };
   window.__devCharSelect = () => { window.__devChars(); openCharSelect(); };
   window.__devTitle = () => { window.__devChars(); openTitleScreen(); };
+  window.__devHunt = async () => { window.__devChars(); try { await openHunt("dev"); } catch (e) { console.error(e); } };
 }
