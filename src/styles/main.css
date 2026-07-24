@@ -1236,17 +1236,16 @@ body.is-dragging-job .specialist-card {
   justify-content: flex-end;
   gap: 4px;
 }
-/* 紙娃娃腳下陰影：讓角色「站在地上」不再浮空 */
-.cs-stage-ground {
-  position: absolute;
-  bottom: 26px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: clamp(70px, calc(var(--book-w) * 0.18), 118px);
-  height: 14px;
-  background: radial-gradient(ellipse at center, rgba(30, 22, 10, 0.42) 0%, rgba(30, 22, 10, 0.18) 55%, transparent 75%);
+/* 官方吊橋橋面：角色實際站在橋上(不再浮空) */
+.cs-stage-bridge {
+  width: clamp(180px, calc(var(--book-w) * 0.42), 300px);
+  aspect-ratio: 410 / 74;
+  margin-top: -28px;   /* 上移使橋面圓木塞到角色腳下 */
+  background: url("/ui/cs-bridge.png") center top / contain no-repeat;
+  image-rendering: pixelated;
   pointer-events: none;
   z-index: 0;
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.28));
 }
 .cs-avatar-canvas { position: relative; z-index: 1; }
 .cs-stage-name {
