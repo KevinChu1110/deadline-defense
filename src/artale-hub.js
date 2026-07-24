@@ -184,6 +184,18 @@ export async function completeActionRaid(payload) {
   });
 }
 
+/**
+ * 掛機探險戰報 → bot 權威結算經驗/掉落（bot 是唯一寫入者）。
+ * payload: { mapId, kills:{monsterId:count}, durationSec }
+ * ⚠️ 需 bot 端 /api/combat/hunt/report 路由 + web-ops 'hunt.report' handler。
+ */
+export async function reportHunt(payload) {
+  return api("/api/combat/hunt/report", {
+    method: "POST",
+    body: JSON.stringify(payload || {}),
+  });
+}
+
 const CLASS_ZH = {
   beginner: "初心者",
   gunslinger: "槍神／槍手",
@@ -943,23 +955,8 @@ function renderTab(tab, me, active, ui = {}) {
       </div>
       <div class="hub-combat-card highlight">
         <h3>🗡️ 探險掛機</h3>
-        <p>選地圖打怪，<strong>掛機自動打</strong>、也可<strong>一按鍵親自操控</strong>。技能用官方真實動畫。</p>
-        <div class="hub-raid-boss-grid">
-          ${(() => {
-            try {
-              const ch = getWorldChapters();
-              // 各大陸挑第一張圖當入口（涵蓋不同難度）
-              return ch.slice(0, 8).map((c) => {
-                const s = c.stages[0];
-                return `<button type="button" class="hub-raid-boss-card" data-start-hunt="${escapeHtml(s.id)}">
-                  <strong>${escapeHtml(c.nameZh)}</strong>
-                  <span>${escapeHtml(s.name)} · Lv.${s.stageLevel}</span>
-                  <em>掛機 ▶</em>
-                </button>`;
-              }).join("");
-            } catch { return '<p class="muted">地圖載入中…</p>'; }
-          })()}
-        </div>
+        <p>全 448 張真實地圖任你選，<strong>掛機自動打</strong>、也可<strong>一按鍵親自操控</strong>。技能用官方真實動畫、可自訂按鍵。</p>
+        <button type="button" class="btn primary maple-primary" id="hub-btn-open-hunt">選地圖開打 ▶</button>
       </div>
       <div class="hub-combat-card">
         <h3>無止境</h3>
@@ -1001,6 +998,7 @@ export function bindHubEvents(els, ctx) {
 
   els.artaleHub?.querySelector("#hub-btn-back-title")?.addEventListener("click", () => onBackTitle?.());
   els.artaleHub?.querySelector("#hub-btn-open-defense")?.addEventListener("click", () => onOpenDefense?.());
+  els.artaleHub?.querySelector("#hub-btn-open-hunt")?.addEventListener("click", () => ctx.onOpenHuntPicker?.());
 
   els.artaleHub?.querySelector("#hub-btn-discord")?.addEventListener("click", () => {
     startDiscordOAuth();

@@ -67,7 +67,7 @@ import {
 } from "./data/discord-bridge.js";
 import * as artaleHub from "./artale-hub.js";
 import { createActionRaid } from "./game/action-raid.js";
-import { createHunt } from "./game/hunt.js";
+import { createHunt, keyLabel, DEFAULT_KEYBINDS } from "./game/hunt.js";
 import { getStageById } from "./data/stages.js";
 import { themeForStage } from "./data/map-themes.js";
 import {
@@ -268,6 +268,15 @@ const els = {
   huntCanvas: document.querySelector("#hunt-canvas"),
   huntTitle: document.querySelector("#hunt-title"),
   btnHuntExit: document.querySelector("#btn-hunt-exit"),
+  huntPickerOverlay: document.querySelector("#hunt-picker-overlay"),
+  huntContinentTabs: document.querySelector("#hunt-continent-tabs"),
+  huntMapList: document.querySelector("#hunt-map-list"),
+  btnHuntPickerClose: document.querySelector("#btn-hunt-picker-close"),
+  btnHuntKeys: document.querySelector("#btn-hunt-keys"),
+  keybindOverlay: document.querySelector("#keybind-overlay"),
+  keybindList: document.querySelector("#keybind-list"),
+  btnKeybindSave: document.querySelector("#btn-keybind-save"),
+  btnKeybindReset: document.querySelector("#btn-keybind-reset"),
   actionRaidOverlay: document.querySelector("#action-raid-overlay"),
   actionRaidCanvas: document.querySelector("#action-raid-canvas"),
   actionRaidTitle: document.querySelector("#action-raid-title"),
@@ -425,6 +434,8 @@ async function launchActionRaid(bossId = "zakum", opts = {}) {
 }
 
 let huntSession = null;
+let lastHuntMapId = null;
+let huntStartedAt = 0;
 function stopHunt() {
   if (huntSession) { huntSession.stop(); huntSession = null; }
 }
@@ -449,18 +460,145 @@ async function openHunt(stageId) {
   hideAllOverlays();
   setOverlayOpen(els.huntOverlay, true);
   if (els.huntTitle) els.huntTitle.textContent = `${stage.continentZh || ""} · ${stage.name}`;
+  lastHuntMapId = stage.id;
+  huntStartedAt = Date.now();
   huntSession = createHunt({
     canvas: els.huntCanvas, profile, enemies, theme,
     keybinds: loadKeybinds(),
-    onExit: () => { stopHunt(); setOverlayOpen(els.huntOverlay, false); openArtaleHub(); },
+    onExit: () => {
+      void reportHuntSession(lastHuntMapId, huntStartedAt);
+      stopHunt();
+      setOverlayOpen(els.huntOverlay, false);
+      openArtaleHub();
+    },
   });
   huntSession.start();
   sfx.play("uiClick");
 }
 
-// 按鍵配置（localStorage）
+/** 把這場掛機的擊殺回報給 bot 權威結算經驗/掉落 */
+async function reportHuntSession(mapId, startAt) {
+  try {
+    const st = huntSession?.getState?.();
+    const kills = st?.killLog || {};
+    if (!Object.keys(kills).length) return;
+    const durationSec = Math.round((Date.now() - startAt) / 1000);
+    const res = await artaleHub.reportHunt({ mapId, kills, durationSec });
+    if (res?.expGained) showToast(`本場結算：+${res.expGained} 經驗${res.drops?.length ? ` · 掉落 ${res.drops.length} 件` : ""}`);
+  } catch {
+    /* bot 端未部署 hunt.report 時靜默略過（不影響遊玩） */
+  }
+}
+
+// ── 按鍵配置（localStorage）──
+const KEYBIND_KEY = "deadline-defense-hunt-keys";
 function loadKeybinds() {
-  try { const r = localStorage.getItem("deadline-defense-hunt-keys"); return r ? JSON.parse(r) : null; } catch { return null; }
+  try { const r = localStorage.getItem(KEYBIND_KEY); return r ? JSON.parse(r) : { ...DEFAULT_KEYBINDS }; }
+  catch { return { ...DEFAULT_KEYBINDS }; }
+}
+function saveKeybinds(kb) {
+  try { localStorage.setItem(KEYBIND_KEY, JSON.stringify(kb)); } catch { /* ignore */ }
+}
+
+let _kbDraft = null;
+const KB_ROWS = [
+  { k: "attack", label: "普攻" },
+  { k: "jump", label: "跳躍" },
+  { k: "dash", label: "閃避" },
+  { k: "skill0", label: "技能 1" },
+  { k: "skill1", label: "技能 2" },
+  { k: "skill2", label: "技能 3" },
+  { k: "skill3", label: "技能 4" },
+];
+function kbGet(kb, k) { return k.startsWith("skill") ? (kb.skills || [])[+k.slice(5)] : kb[k]; }
+function kbSet(kb, k, code) { if (k.startsWith("skill")) { kb.skills = kb.skills || [...DEFAULT_KEYBINDS.skills]; kb.skills[+k.slice(5)] = code; } else kb[k] = code; }
+
+function renderKeybinds() {
+  if (!els.keybindList) return;
+  els.keybindList.innerHTML = "";
+  for (const row of KB_ROWS) {
+    const code = kbGet(_kbDraft, row.k);
+    const div = document.createElement("div");
+    div.className = "keybind-row";
+    div.innerHTML = `<span class="kb-label">${row.label}</span>
+      <button type="button" class="btn kb-key" data-kb="${row.k}">${escapeHtml(keyLabel(code))}</button>`;
+    els.keybindList.appendChild(div);
+  }
+  els.keybindList.querySelectorAll("[data-kb]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const others = els.keybindList.querySelectorAll(".kb-key.capturing");
+      others.forEach((o) => o.classList.remove("capturing"));
+      btn.classList.add("capturing");
+      btn.textContent = "按鍵…";
+    });
+  });
+}
+function openKeybinds() {
+  _kbDraft = loadKeybinds();
+  renderKeybinds();
+  setOverlayOpen(els.keybindOverlay, true);
+}
+function onKeybindCapture(e) {
+  if (!els.keybindOverlay || els.keybindOverlay.hidden) return;
+  const active = els.keybindList?.querySelector(".kb-key.capturing");
+  if (!active) return;
+  e.preventDefault();
+  const code = e.code;
+  const k = active.getAttribute("data-kb");
+  // 去除與其他綁定的重複
+  for (const row of KB_ROWS) if (row.k !== k && kbGet(_kbDraft, row.k) === code) kbSet(_kbDraft, row.k, null);
+  kbSet(_kbDraft, k, code);
+  renderKeybinds();
+}
+
+// ── 掛機地圖選單（全 448 圖，依大陸）──
+let huntSelectedContinent = null;
+function openHuntPicker() {
+  setOverlayOpen(els.artaleHubOverlay, false);
+  setOverlayOpen(els.huntPickerOverlay, true);
+  renderHuntPicker();
+}
+function renderHuntPicker() {
+  if (!els.huntMapList) return;
+  const progress = loadProgress();
+  const chapters = getWorldChapters();
+  const contUnlocked = (ch) => isStageUnlocked(ch.stages[0].index, progress);
+  if (!huntSelectedContinent || !chapters.some((c) => c.code === huntSelectedContinent && contUnlocked(c))) {
+    huntSelectedContinent = (chapters.find(contUnlocked) || chapters[0]).code;
+  }
+  // 大陸列
+  els.huntContinentTabs.innerHTML = "";
+  chapters.forEach((ch) => {
+    const unlocked = contUnlocked(ch);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "continent-chip" + (ch.code === huntSelectedContinent ? " is-active" : "") + (!unlocked ? " is-locked" : "");
+    const colors = STAGE_ACCENTS[ch.code.toUpperCase()] || STAGE_ACCENTS.VICTORIA;
+    btn.style.setProperty("--wn-a", colors[0]); btn.style.setProperty("--wn-b", colors[1]);
+    btn.innerHTML = `<span class="cc-name">${!unlocked ? "🔒 " : ""}${escapeHtml(ch.nameZh)}</span><span class="cc-prog">${ch.stages.length} 圖</span>`;
+    btn.addEventListener("click", () => { if (!unlocked) { showToast("通關前面大陸解鎖"); return; } huntSelectedContinent = ch.code; sfx.play("uiClick"); renderHuntPicker(); });
+    els.huntContinentTabs.appendChild(btn);
+  });
+  // 地圖格
+  els.huntMapList.innerHTML = "";
+  const chapter = chapters.find((c) => c.code === huntSelectedContinent) || chapters[0];
+  chapter.stages.forEach((stage, li) => {
+    const unlocked = isStageUnlocked(stage.index, progress);
+    const colors = STAGE_ACCENTS[stage.code] || STAGE_ACCENTS.VICTORIA;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "world-node" + (!unlocked ? " is-locked" : "");
+    btn.style.setProperty("--wn-a", colors[0]); btn.style.setProperty("--wn-b", colors[1]);
+    btn.title = unlocked ? `${stage.name} · Lv.${stage.stageLevel}` : "未解鎖";
+    btn.innerHTML = `<span class="world-node-orb">${unlocked ? "🗡️" : "🔒"}</span>
+      <span class="world-node-name">${escapeHtml(stage.name)}</span>
+      <span class="world-node-lv">Lv.${stage.stageLevel}</span>`;
+    if (unlocked) btn.addEventListener("click", () => {
+      setOverlayOpen(els.huntPickerOverlay, false);
+      openHunt(stage.id).catch((e) => showToast(e?.message || "無法開始"));
+    });
+    els.huntMapList.appendChild(btn);
+  });
 }
 
 function paintHub() {
@@ -495,6 +633,7 @@ function paintHub() {
         paintHub();
       }
     },
+    onOpenHuntPicker: () => openHuntPicker(),
   });
 }
 
@@ -3367,11 +3506,17 @@ els.btnActionRaidExit?.addEventListener("click", () =>
 );
 els.btnHuntExit?.addEventListener("click", () =>
   withAudio(() => {
+    if (huntSession) void reportHuntSession(lastHuntMapId, huntStartedAt);
     stopHunt();
     setOverlayOpen(els.huntOverlay, false);
     openArtaleHub();
   })
 );
+els.btnHuntPickerClose?.addEventListener("click", () => withAudio(() => { setOverlayOpen(els.huntPickerOverlay, false); openArtaleHub(); }));
+els.btnHuntKeys?.addEventListener("click", () => withAudio(openKeybinds));
+els.btnKeybindReset?.addEventListener("click", () => withAudio(() => { _kbDraft = { ...DEFAULT_KEYBINDS, skills: [...DEFAULT_KEYBINDS.skills] }; renderKeybinds(); }));
+els.btnKeybindSave?.addEventListener("click", () => withAudio(() => { saveKeybinds(_kbDraft); setOverlayOpen(els.keybindOverlay, false); showToast("按鍵已儲存"); }));
+window.addEventListener("keydown", onKeybindCapture, true);
 els.btnActionRaidHub?.addEventListener("click", () =>
   withAudio(() => {
     stopActionRaid();

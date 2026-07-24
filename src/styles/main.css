@@ -4355,6 +4355,58 @@ body.coach-highlight-start .wave-cta {
 }
 
 /* World map */
+/* 掛機地圖選單 */
+.hunt-picker-card {
+  width: min(96vw, 720px) !important;
+  text-align: left !important;
+}
+.hunt-picker-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.hunt-picker-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+/* 按鍵設定 */
+.keybind-card {
+  width: min(94vw, 420px) !important;
+  text-align: left !important;
+}
+.keybind-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 10px 0;
+}
+.keybind-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.kb-label {
+  font-weight: 700;
+  color: #5a2810;
+}
+.kb-key {
+  min-width: 84px;
+  font-weight: 800 !important;
+  font-family: ui-monospace, monospace;
+}
+.kb-key.capturing {
+  background: linear-gradient(180deg, #fde68a, #fbbf24);
+  border-color: #a16207;
+  color: #3a2412;
+}
+@media (prefers-color-scheme: dark) {
+  .kb-label { color: #e8d9b8; }
+}
+
 /* 大陸選擇列（14 大陸，橫向捲動 chip） */
 .continent-tabs {
   display: flex;

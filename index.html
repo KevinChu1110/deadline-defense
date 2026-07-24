@@ -343,6 +343,40 @@
             </div>
           </div>
 
+          <!-- 掛機探險：選地圖 -->
+          <div id="hunt-picker-overlay" class="overlay dialog-overlay" hidden>
+            <div class="dialog-card maple-panel maple-ornament hunt-picker-card" role="dialog" aria-modal="true">
+              <div class="hunt-picker-head">
+                <div>
+                  <p class="overlay-kicker">探險掛機</p>
+                  <h2>選地圖開打</h2>
+                </div>
+                <div class="hunt-picker-actions">
+                  <button type="button" class="btn" id="btn-hunt-keys">⌨️ 按鍵設定</button>
+                  <button type="button" class="btn" id="btn-hunt-picker-close">關閉</button>
+                </div>
+              </div>
+              <div id="hunt-continent-tabs" class="continent-tabs" role="tablist"></div>
+              <div id="hunt-map-scroll" class="world-map-scroll">
+                <div id="hunt-map-list" class="world-map-path" role="list"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 按鍵設定 -->
+          <div id="keybind-overlay" class="overlay dialog-overlay" hidden>
+            <div class="dialog-card maple-panel maple-ornament keybind-card" role="dialog" aria-modal="true">
+              <p class="overlay-kicker">按鍵設定</p>
+              <h2>掛機探險 · 按鍵配置</h2>
+              <p class="muted">點欄位再按你要的鍵。移動/跳/普攻/閃避與 4 個技能鍵皆可改。</p>
+              <div id="keybind-list" class="keybind-list"></div>
+              <div class="overlay-actions">
+                <button type="button" class="btn" id="btn-keybind-reset">還原預設</button>
+                <button type="button" class="btn primary maple-primary" id="btn-keybind-save">儲存</button>
+              </div>
+            </div>
+          </div>
+
           <!-- 掛機探險 -->
           <div id="hunt-overlay" class="overlay action-raid-overlay" hidden>
             <div class="action-raid-shell maple-panel maple-ornament">

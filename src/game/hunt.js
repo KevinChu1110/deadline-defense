@@ -27,7 +27,9 @@ function pickLoadout(family) {
   return out.slice(0, 4);
 }
 
-const DEFAULT_KEYS = ["KeyA", "KeyS", "KeyD", "KeyF"];
+// 技能預設鍵：用數字列(不與 WASD 移動衝突)
+const DEFAULT_SKILL_KEYS = ["Digit1", "Digit2", "Digit3", "Digit4"];
+export const DEFAULT_KEYBINDS = { attack: "KeyJ", jump: "Space", dash: "KeyL", skills: [...DEFAULT_SKILL_KEYS] };
 
 export function createHunt(opts) {
   const { canvas, profile, enemies, theme, keybinds, onExit } = opts;
@@ -46,12 +48,16 @@ export function createHunt(opts) {
   };
   const dashType = profile.style === "ranged" ? "backstep" : profile.family === "thief" ? "blink" : "lunge";
 
+  // 按鍵配置（物件；相容舊陣列格式）
+  const kb = Array.isArray(keybinds)
+    ? { ...DEFAULT_KEYBINDS, skills: keybinds }
+    : { ...DEFAULT_KEYBINDS, ...(keybinds || {}), skills: (keybinds && keybinds.skills) || DEFAULT_SKILL_KEYS };
+
   // 技能列
   const loadout = pickLoadout(profile.family || "warrior");
   preloadSkillFx(loadout.map((s) => s.id));
-  const keyMap = (keybinds && keybinds.length ? keybinds : DEFAULT_KEYS);
   const skills = loadout.map((def, i) => ({
-    def, key: keyMap[i] || DEFAULT_KEYS[i], cd: 0,
+    def, key: kb.skills[i] || DEFAULT_SKILL_KEYS[i], cd: 0,
     cdMax: def.kind === "buff" ? 12 : def.kind === "heal" ? 8 : 2.4 + i * 0.3,
     mp: (def.mp && def.mp[Math.min(def.mp.length - 1, 9)]) || 15,
     lv: Math.min(def.maxLv, 10),
@@ -101,10 +107,16 @@ export function createHunt(opts) {
     });
   }
 
+  const killLog = {}; // monster id → count（給 bot 結算經驗掉落）
   function hurtMonster(m, dmg, crit) {
+    if (!m.alive) return;
     m.hp -= dmg; m.hitFlash = 0.1;
     floatText(m.x, m.y - m.def.radius * 2 - 6, `${Math.round(dmg)}${crit ? "!" : ""}`, crit ? "#fbbf24" : "#fff");
-    if (m.hp <= 0) { m.alive = false; player.kills++; floatText(m.x, m.y - 30, "+經驗", "#fde68a"); }
+    if (m.hp <= 0) {
+      m.alive = false; player.kills++;
+      killLog[m.def.id] = (killLog[m.def.id] || 0) + 1;
+      floatText(m.x, m.y - 30, "+經驗", "#fde68a");
+    }
   }
   function hurtPlayer(dmg) {
     if (player.invuln > 0) return;
@@ -190,9 +202,10 @@ export function createHunt(opts) {
   }
 
   // ── 輸入 ──
+  const boundKeys = new Set(["ArrowLeft", "ArrowRight", "ArrowUp", "KeyA", "KeyD", "ShiftLeft", kb.attack, kb.jump, kb.dash, ...kb.skills]);
   const onKey = (e, down) => {
     const c = e.code;
-    if (["ArrowLeft", "ArrowRight", "ArrowUp", "Space", "KeyJ", "KeyL", ...DEFAULT_KEYS].includes(c) || keyMap.includes(c)) e.preventDefault();
+    if (boundKeys.has(c)) e.preventDefault();
     if (down) { keys.add(c); if (c === "Escape") { stop(); onExit?.(); return; } idleT = 0; if (mode === "ai" && c !== "Escape") mode = "human"; }
     else keys.delete(c);
   };
@@ -203,9 +216,9 @@ export function createHunt(opts) {
     let move = 0;
     if (keys.has("ArrowLeft") || keys.has("KeyA")) move -= 1;
     if (keys.has("ArrowRight") || keys.has("KeyD")) move += 1;
-    if ((keys.has("ArrowUp") || keys.has("Space")) && player.onGround) { player.vy = -(profile.jump || 560); player.onGround = false; }
-    if (keys.has("KeyJ")) doBasic();
-    if (keys.has("KeyL") || keys.has("ShiftLeft")) doDash(move);
+    if ((keys.has("ArrowUp") || keys.has(kb.jump)) && player.onGround) { player.vy = -(profile.jump || 560); player.onGround = false; }
+    if (keys.has(kb.attack)) doBasic();
+    if (keys.has(kb.dash) || keys.has("ShiftLeft")) doDash(move);
     skills.forEach((s) => { if (keys.has(s.key)) useSkill(s); });
     return move;
   }
@@ -328,7 +341,7 @@ export function createHunt(opts) {
       if (s.cd > 0) { ctx.fillStyle = "rgba(0,0,0,0.6)"; const ch = 46 * (s.cd / s.cdMax); ctx.fillRect(x, y + 46 - ch, 46, ch); }
       // 鍵位
       ctx.fillStyle = "#fff8e0"; ctx.font = "bold 10px system-ui"; ctx.textAlign = "center";
-      ctx.fillText(s.key.replace("Key", ""), x + 23, y + 44);
+      ctx.fillText(keyLabel(s.key), x + 23, y + 44);
     });
 
     // buff 列（真 icon + 倒數）
@@ -366,5 +379,19 @@ export function createHunt(opts) {
   function stop() { running = false; cancelAnimationFrame(raf); window.removeEventListener("keydown", kd); window.removeEventListener("keyup", ku); }
   function finish() { /* 倒下：補血續戰(掛機不死機制) */ player.hp = player.maxHp; player.invuln = 1.5; floatText(player.x, player.y - 40, "復活", "#fde68a"); }
 
-  return { start, stop, canvas, getState: () => ({ kills: player.kills }) };
+  return {
+    start, stop, canvas,
+    getState: () => ({ kills: player.kills, killLog: { ...killLog } }),
+  };
+}
+
+/** KeyboardEvent.code → 顯示標籤 */
+export function keyLabel(code) {
+  if (!code) return "—";
+  if (code.startsWith("Key")) return code.slice(3);
+  if (code.startsWith("Digit")) return code.slice(5);
+  if (code === "Space") return "空白";
+  if (code.startsWith("Arrow")) return { ArrowUp: "↑", ArrowDown: "↓", ArrowLeft: "←", ArrowRight: "→" }[code];
+  if (code === "ShiftLeft" || code === "ShiftRight") return "Shift";
+  return code;
 }
