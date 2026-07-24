@@ -571,6 +571,29 @@ function avatarUrl(appearance, anim = "stand1", frame = 0) {
 }
 function itemIconUrl(id) { return `${MSIO}/GMS/214/item/${id}/icon`; }
 
+// 唯讀裝備視窗：真實裝備 → 官方物品圖示疊在官方框槽位
+async function openEquip() {
+  const c = (hubState.me?.characters || []).find((x) => x.isActive) || (hubState.me?.characters || [])[0];
+  let app;
+  try { app = equipToAppearance(await artaleHub.fetchEquip(), c?.class); }
+  catch { app = loadAppearance(c?.charId, c?.class); }
+  const setSlot = (cls, id) => {
+    const img = document.querySelector(`#equip-overlay .${cls} img`);
+    if (!img) return;
+    if (id && id > 0) { img.src = itemIconUrl(id); img.style.display = ""; }
+    else { img.removeAttribute("src"); img.style.display = "none"; }
+  };
+  setSlot("es-hat", app.hat);
+  setSlot("es-cape", app.cape);
+  setSlot("es-glove", app.glove);
+  setSlot("es-top", app.overall || app.top);
+  setSlot("es-weapon", app.weapon);
+  setSlot("es-bottom", app.overall || app.bottom);
+  setSlot("es-shoes", app.shoes);
+  setOverlayOpen(document.querySelector("#equip-overlay"), true);
+  sfx.play("uiClick");
+}
+
 function openCustomize() {
   _czChar = (hubState.me?.characters || []).find((c) => c.isActive) || (hubState.me?.characters || [])[0];
   _czDraft = { ...loadAppearance(_czChar?.charId, _czChar?.class) };
@@ -3745,6 +3768,8 @@ els.btnHuntExit?.addEventListener("click", () =>
 );
 els.btnCsEnter?.addEventListener("click", () => withAudio(() => { stopCsAvatarLoop(); csEnter(); }));
 els.btnCsCustomize?.addEventListener("click", () => withAudio(openCustomize));
+document.querySelector("#btn-cs-equip")?.addEventListener("click", () => withAudio(openEquip));
+document.querySelector("#btn-equip-close")?.addEventListener("click", () => withAudio(() => setOverlayOpen(document.querySelector("#equip-overlay"), false)));
 els.btnCsBack?.addEventListener("click", () => withAudio(() => { stopCsAvatarLoop(); setOverlayOpen(els.charSelectOverlay, false); openTitleScreen(); }));
 els.btnCzSave?.addEventListener("click", () => withAudio(czSave));
 els.btnCzCancel?.addEventListener("click", () => withAudio(() => setOverlayOpen(els.customizeOverlay, false)));

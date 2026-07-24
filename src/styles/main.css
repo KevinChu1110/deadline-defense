@@ -7264,3 +7264,41 @@ body.mode-bc .wave-cta {
 .title-btn-hub {
   background: rgba(247, 244, 234, 0.55);
 }
+
+/* ── 唯讀裝備視窗（官方 UIWindow/Equip 框 175x304）── */
+#equip-overlay { display: none; }
+#equip-overlay.is-open { display: grid; place-items: center; }
+.equip-window {
+  position: relative;
+  width: min(78vw, 300px);
+  aspect-ratio: 175 / 304;
+  background: url("/ui/equip-window.png") center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.5));
+}
+.equip-close {
+  position: absolute; top: 1.5%; right: 3%;
+  width: 22px; height: 18px; padding: 0;
+  border: none; background: transparent; color: #2a3550;
+  font-size: 13px; font-weight: 900; cursor: pointer; line-height: 1;
+}
+.equip-slot {
+  position: absolute;
+  width: 18.3%; aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  display: grid; place-items: center;
+}
+.equip-slot img {
+  max-width: 92%; max-height: 92%;
+  image-rendering: auto;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+.equip-slot img:not([src]), .equip-slot img[src=""] { display: none; }
+/* 槽位中心(占框 %)— 依官方 Equip 佈局 */
+.es-hat    { left: 33%; top: 18%; }
+.es-cape   { left: 13%; top: 49%; }
+.es-glove  { left: 13%; top: 63%; }
+.es-top    { left: 33%; top: 56%; }
+.es-weapon { left: 72%; top: 56%; }
+.es-bottom { left: 33%; top: 69%; }
+.es-shoes  { left: 52%; top: 75%; }

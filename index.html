@@ -408,6 +408,7 @@
                 <!-- 官方「選擇角色」木牌 -->
                 <button type="button" id="btn-cs-enter" class="cs-wood-select" aria-label="進入遊戲" disabled></button>
                 <button type="button" id="btn-cs-customize" class="cs-sign-btn cs-sign-sub">✂️ 造型</button>
+                <button type="button" id="btn-cs-equip" class="cs-sign-btn cs-sign-sub">🎒 裝備</button>
                 <button type="button" id="btn-cs-back" class="cs-sign-btn cs-sign-sub">返回</button>
               </div>
             </div>
@@ -433,6 +434,20 @@
                 <button type="button" class="btn" id="btn-cz-cancel">取消</button>
                 <button type="button" class="btn primary maple-primary" id="btn-cz-save">儲存造型</button>
               </div>
+            </div>
+          </div>
+
+          <!-- 唯讀裝備視窗（官方 UIWindow/Equip 框 + 真實裝備圖示） -->
+          <div id="equip-overlay" class="overlay dialog-overlay" hidden>
+            <div class="equip-window" role="dialog" aria-modal="true" aria-label="裝備視窗">
+              <button type="button" class="equip-close" id="btn-equip-close" aria-label="關閉">✕</button>
+              <div class="equip-slot es-hat"><img alt="帽子" /></div>
+              <div class="equip-slot es-cape"><img alt="披風" /></div>
+              <div class="equip-slot es-glove"><img alt="手套" /></div>
+              <div class="equip-slot es-top"><img alt="上衣" /></div>
+              <div class="equip-slot es-weapon"><img alt="武器" /></div>
+              <div class="equip-slot es-bottom"><img alt="下著" /></div>
+              <div class="equip-slot es-shoes"><img alt="鞋子" /></div>
             </div>
           </div>
 
