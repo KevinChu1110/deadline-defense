@@ -40,6 +40,15 @@ body {
   background-position: center, center, center;
   background-attachment: fixed;
   color: var(--text);
+  /* 官方楓之谷白手套鼠標(UI.wz Basic.img/Cursor 0) */
+  cursor: url("/ui/cursor.png") 5 2, auto;
+}
+/* 可點元素 → 官方指向手指(Cursor 12) */
+button:not(:disabled), a, [role="button"], .cs-fig, label, select, summary {
+  cursor: url("/ui/cursor-link.png") 10 2, pointer;
+}
+button:active:not(:disabled), a:active, [role="button"]:active {
+  cursor: url("/ui/cursor-click.png") 6 2, pointer;
 }
 
 body {
@@ -941,9 +950,11 @@ body.is-dragging-job .specialist-card {
   top: 50%;
   left: calc(50% + var(--book-w) * 0.09);
   transform: translate(-50%, -50%);
+  /* 關掉 menu-pop-in：其 fill:both 的末幀 transform 會蓋掉上面的置中位移 → 偏下 */
+  animation: none !important;
   z-index: 6;
   width: min(calc(var(--book-w) * 0.42), 320px);
-  max-height: 74vh;
+  max-height: 88%;
   overflow-y: auto;
   margin: 0;
   background: none;
@@ -969,42 +980,57 @@ body.is-dragging-job .specialist-card {
 }
 .maple-book-mode .title-sub { display: none; }
 .maple-book-mode .title-menu-btns { gap: 12px; margin-top: 6px; }
-/* 每個模式鈕 = 木牌吊牌（壓扁讓 5 顆全塞進書本） */
+/* 每個模式鈕 = 官方風橘木牌吊牌：木紋 + 四角鉚釘 + 吊繩 */
 .maple-book-mode .title-menu-btns .title-btn {
   position: relative;
-  min-height: 40px !important;
-  padding: 8px 12px !important;
-  background: linear-gradient(180deg, #b47c3e 0%, #96632c 48%, #7a4e22 100%) !important;
+  min-height: 42px !important;
+  padding: 8px 14px !important;
+  /* 疊層：四角鉚釘(radial) + 木紋條(repeating) + 橘木底色漸層 */
+  background:
+    radial-gradient(circle at 9px 8px, #3a2208 0 1.6px, transparent 2.2px),
+    radial-gradient(circle at calc(100% - 9px) 8px, #3a2208 0 1.6px, transparent 2.2px),
+    radial-gradient(circle at 9px calc(100% - 8px), #3a2208 0 1.6px, transparent 2.2px),
+    radial-gradient(circle at calc(100% - 9px) calc(100% - 8px), #3a2208 0 1.6px, transparent 2.2px),
+    repeating-linear-gradient(90deg, rgba(90,55,20,0.12) 0 3px, rgba(255,220,160,0.06) 3px 7px),
+    linear-gradient(180deg, #cf9a4e 0%, #b2762f 46%, #8f5a22 100%) !important;
   border: 3px solid #4a2c10 !important;
-  border-radius: 6px !important;
-  color: #fff3d8 !important;
+  border-radius: 7px !important;
+  color: #fff6e0 !important;
   font-weight: 900 !important;
   font-size: 0.98rem !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
-  box-shadow: 0 4px 0 #3a2208, 0 6px 10px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 220, 160, 0.3) !important;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 0 #6b3f14, 0 1px 3px rgba(0, 0, 0, 0.55) !important;
+  box-shadow: 0 4px 0 #3a2208, 0 7px 11px rgba(0, 0, 0, 0.32), inset 0 2px 0 rgba(255, 230, 175, 0.4), inset 0 -3px 4px rgba(80, 45, 15, 0.4) !important;
   margin-top: 0;
   transition: transform 0.1s ease, filter 0.1s ease;
 }
-/* 吊繩：木牌上方兩條繩 */
+/* 吊繩：木牌上方兩條繩(綁到書頁上緣感) */
 .maple-book-mode .title-menu-btns .title-btn::before,
 .maple-book-mode .title-menu-btns .title-btn::after {
   content: "";
   position: absolute;
-  top: -12px;
-  width: 3px;
+  top: -11px;
+  width: 4px;
   height: 12px;
-  background: #6b4a24;
+  background: linear-gradient(180deg, #8a6636, #5a3c1c);
   border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.25);
 }
-.maple-book-mode .title-menu-btns .title-btn::before { left: 22%; transform: rotate(-8deg); }
-.maple-book-mode .title-menu-btns .title-btn::after { right: 22%; transform: rotate(8deg); }
-.maple-book-mode .title-menu-btns .title-btn:hover:not(:disabled) { filter: brightness(1.08); }
-.maple-book-mode .title-menu-btns .title-btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #3a2208 !important; }
+.maple-book-mode .title-menu-btns .title-btn::before { left: 20%; transform: rotate(-10deg); }
+.maple-book-mode .title-menu-btns .title-btn::after { right: 20%; transform: rotate(10deg); }
+.maple-book-mode .title-menu-btns .title-btn:hover:not(:disabled) { filter: brightness(1.07) saturate(1.05); }
+.maple-book-mode .title-menu-btns .title-btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #3a2208, inset 0 2px 4px rgba(80,45,15,0.5) !important; }
 /* 主推(掛機探險)綠木牌 */
 .maple-book-mode .title-menu-btns .title-btn-primary {
-  background: linear-gradient(180deg, #7aa53f 0%, #5c8a30 50%, #47701f 100%) !important;
+  background:
+    radial-gradient(circle at 9px 8px, #223a0e 0 1.6px, transparent 2.2px),
+    radial-gradient(circle at calc(100% - 9px) 8px, #223a0e 0 1.6px, transparent 2.2px),
+    radial-gradient(circle at 9px calc(100% - 8px), #223a0e 0 1.6px, transparent 2.2px),
+    radial-gradient(circle at calc(100% - 9px) calc(100% - 8px), #223a0e 0 1.6px, transparent 2.2px),
+    repeating-linear-gradient(90deg, rgba(40,70,20,0.14) 0 3px, rgba(200,240,160,0.06) 3px 7px),
+    linear-gradient(180deg, #8fbe4c 0%, #6b9a34 48%, #517d22 100%) !important;
   border-color: #2e4d14 !important;
-  box-shadow: 0 4px 0 #223a0e, 0 6px 10px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(200, 240, 160, 0.35) !important;
+  box-shadow: 0 4px 0 #223a0e, 0 7px 11px rgba(0, 0, 0, 0.32), inset 0 2px 0 rgba(210, 245, 165, 0.45), inset 0 -3px 4px rgba(40, 70, 15, 0.4) !important;
 }
 .maple-book-mode .title-btn-note {
   color: #ffe0b0 !important;
