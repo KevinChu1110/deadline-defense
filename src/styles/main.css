@@ -933,17 +933,87 @@ body.is-dragging-job .specialist-card {
   display: none;
 }
 /* Artale 招牌 + 選單置中於書本內頁 */
+/* 模式選單 = 木牌吊牌伺服器選擇風（靠右，像官方登入 signboard 位置） */
 .maple-book-mode .title-menu {
   position: relative;
   z-index: 6;
-  width: min(72%, 460px);
-  background: rgba(255, 250, 235, 0.72);
-  box-shadow: 0 6px 24px rgba(60, 40, 20, 0.3);
-  border: 2px solid rgba(120, 80, 40, 0.4);
-  border-radius: 14px;
-  padding: 16px 18px;
-  backdrop-filter: blur(2px);
+  width: min(40%, 320px);
+  margin-left: auto;
+  margin-right: 6%;
+  background: none;
+  box-shadow: none;
+  border: none;
+  padding: 0;
+  backdrop-filter: none;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
 }
+/* 標題改木質招牌 */
+.maple-book-mode .title-main {
+  font-size: clamp(1.1rem, 2.6vh, 1.5rem) !important;
+  color: #fff3d8 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+  background: linear-gradient(180deg, #9a6a30, #6e4620);
+  border: 3px solid #4a2c10;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 0 0 4px;
+  box-shadow: 0 4px 0 #3a2208, 0 6px 10px rgba(0, 0, 0, 0.3);
+}
+.maple-book-mode .title-sub { display: none; }
+.maple-book-mode .title-menu-btns { gap: 10px; margin-top: 8px; }
+/* 每個模式鈕 = 木牌吊牌 */
+.maple-book-mode .title-menu-btns .title-btn {
+  position: relative;
+  background: linear-gradient(180deg, #b47c3e 0%, #96632c 48%, #7a4e22 100%) !important;
+  border: 3px solid #4a2c10 !important;
+  border-radius: 6px !important;
+  color: #fff3d8 !important;
+  font-weight: 900 !important;
+  font-size: 1rem !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+  box-shadow: 0 4px 0 #3a2208, 0 6px 10px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 220, 160, 0.3) !important;
+  margin-top: 12px;
+  transition: transform 0.1s ease, filter 0.1s ease;
+}
+/* 吊繩：木牌上方兩條繩 */
+.maple-book-mode .title-menu-btns .title-btn::before,
+.maple-book-mode .title-menu-btns .title-btn::after {
+  content: "";
+  position: absolute;
+  top: -12px;
+  width: 3px;
+  height: 12px;
+  background: #6b4a24;
+  border-radius: 2px;
+}
+.maple-book-mode .title-menu-btns .title-btn::before { left: 22%; transform: rotate(-8deg); }
+.maple-book-mode .title-menu-btns .title-btn::after { right: 22%; transform: rotate(8deg); }
+.maple-book-mode .title-menu-btns .title-btn:hover:not(:disabled) { filter: brightness(1.08); }
+.maple-book-mode .title-menu-btns .title-btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #3a2208 !important; }
+/* 主推(掛機探險)綠木牌 */
+.maple-book-mode .title-menu-btns .title-btn-primary {
+  background: linear-gradient(180deg, #7aa53f 0%, #5c8a30 50%, #47701f 100%) !important;
+  border-color: #2e4d14 !important;
+  box-shadow: 0 4px 0 #223a0e, 0 6px 10px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(200, 240, 160, 0.35) !important;
+}
+.maple-book-mode .title-btn-note {
+  color: #ffe0b0 !important;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 0 6px;
+  border-radius: 6px;
+}
+/* 次選單圖示鈕也木質化 */
+.maple-book-mode .title-menu-icons { margin-top: 10px; justify-content: center; gap: 6px; }
+.maple-book-mode .title-menu-icons .title-icon-btn {
+  background: linear-gradient(180deg, #a1783f, #7a5628) !important;
+  border: 2px solid #4a2c10 !important;
+  color: #fff3d8 !important;
+  font-weight: 800 !important;
+}
+.maple-book-mode .title-hint { color: rgba(255, 245, 220, 0.85) !important; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
 /* 官方登入頁（display 交給 :not([hidden])，別覆蓋 hidden 屬性） */
 .maple-book-mode .title-login:not([hidden]) {
   display: flex;
