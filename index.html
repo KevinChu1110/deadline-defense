@@ -343,6 +343,23 @@
             </div>
           </div>
 
+          <!-- 掛機探險 -->
+          <div id="hunt-overlay" class="overlay action-raid-overlay" hidden>
+            <div class="action-raid-shell maple-panel maple-ornament">
+              <header class="action-raid-bar">
+                <div>
+                  <p class="overlay-kicker">探險掛機 · HUNT</p>
+                  <h2 id="hunt-title">探險</h2>
+                </div>
+                <div class="action-raid-bar-actions">
+                  <span class="muted">掛機自動打 · 按鍵接管 · L/Shift 閃避 · Esc 離開</span>
+                  <button type="button" class="btn" id="btn-hunt-exit">離開</button>
+                </div>
+              </header>
+              <canvas id="hunt-canvas" width="960" height="540" aria-label="探險掛機場景"></canvas>
+            </div>
+          </div>
+
           <!-- Discord import -->
           <div id="discord-import-overlay" class="overlay dialog-overlay" hidden>
             <div class="dialog-card maple-panel maple-ornament discord-import-card" role="dialog" aria-modal="true">

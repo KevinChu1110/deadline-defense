@@ -1,6 +1,7 @@
 /**
  * Artale 主城 Hub — Discord OAuth 登入 + 角色／裝備／星力／潛能
  */
+import { getWorldChapters } from "./data/world-stages.js";
 
 const SESSION_KEY = "artale-web-discord-id";
 
@@ -940,6 +941,26 @@ function renderTab(tab, me, active, ui = {}) {
         </div>
         <p class="muted" style="margin-top:8px;font-size:0.78rem">←→ 移動 · 空白鍵跳 · J 普攻 · K 技能 · <strong>L/Shift 閃避（無敵幀）</strong> · Esc 離開 · 手機用畫面觸控鍵</p>
       </div>
+      <div class="hub-combat-card highlight">
+        <h3>🗡️ 探險掛機</h3>
+        <p>選地圖打怪，<strong>掛機自動打</strong>、也可<strong>一按鍵親自操控</strong>。技能用官方真實動畫。</p>
+        <div class="hub-raid-boss-grid">
+          ${(() => {
+            try {
+              const ch = getWorldChapters();
+              // 各大陸挑第一張圖當入口（涵蓋不同難度）
+              return ch.slice(0, 8).map((c) => {
+                const s = c.stages[0];
+                return `<button type="button" class="hub-raid-boss-card" data-start-hunt="${escapeHtml(s.id)}">
+                  <strong>${escapeHtml(c.nameZh)}</strong>
+                  <span>${escapeHtml(s.name)} · Lv.${s.stageLevel}</span>
+                  <em>掛機 ▶</em>
+                </button>`;
+              }).join("");
+            } catch { return '<p class="muted">地圖載入中…</p>'; }
+          })()}
+        </div>
+      </div>
       <div class="hub-combat-card">
         <h3>無止境</h3>
         <p class="muted">持續挑戰、競速排行——即將開放</p>
@@ -1291,6 +1312,15 @@ export function bindHubEvents(els, ctx) {
       const bossId = btn.getAttribute("data-start-raid");
       try {
         await onStartRaid?.(bossId);
+      } catch (e) {
+        onState?.({ ...getState?.(), tab: "combat", error: e.message });
+      }
+    });
+  });
+  els.artaleHub?.querySelectorAll("[data-start-hunt]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      try {
+        await ctx.onStartHunt?.(btn.getAttribute("data-start-hunt"));
       } catch (e) {
         onState?.({ ...getState?.(), tab: "combat", error: e.message });
       }

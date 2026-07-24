@@ -67,6 +67,9 @@ import {
 } from "./data/discord-bridge.js";
 import * as artaleHub from "./artale-hub.js";
 import { createActionRaid } from "./game/action-raid.js";
+import { createHunt } from "./game/hunt.js";
+import { getStageById } from "./data/stages.js";
+import { themeForStage } from "./data/map-themes.js";
 import {
   listSaveSlots,
   switchToSlot,
@@ -261,6 +264,10 @@ const els = {
   artaleHubOverlay: document.querySelector("#artale-hub-overlay"),
   artaleHub: document.querySelector("#artale-hub"),
   btnEnterHub: document.querySelector("#btn-enter-hub"),
+  huntOverlay: document.querySelector("#hunt-overlay"),
+  huntCanvas: document.querySelector("#hunt-canvas"),
+  huntTitle: document.querySelector("#hunt-title"),
+  btnHuntExit: document.querySelector("#btn-hunt-exit"),
   actionRaidOverlay: document.querySelector("#action-raid-overlay"),
   actionRaidCanvas: document.querySelector("#action-raid-canvas"),
   actionRaidTitle: document.querySelector("#action-raid-title"),
@@ -417,6 +424,45 @@ async function launchActionRaid(bossId = "zakum", opts = {}) {
   sfx.play("uiClick");
 }
 
+let huntSession = null;
+function stopHunt() {
+  if (huntSession) { huntSession.stop(); huntSession = null; }
+}
+async function openHunt(stageId) {
+  if (!hubState.me) throw new Error("請先登入");
+  // profile 向 server 拿（依角色裝備），與突襲同源
+  let payload;
+  try { payload = await artaleHub.startActionRaid("zakum"); } catch { payload = { profile: null }; }
+  const profile = payload.profile || {
+    name: "冒險者", family: "warrior", style: "melee", maxHp: 600,
+    attackCd: 0.5, basicMin: 30, basicMax: 45, skillMin: 80, skillMax: 120, skillCd: 3, moveSpeed: 210, jump: 560, level: 30,
+  };
+  const stage = getStageById(stageId) || getStageById(STAGES[0].id);
+  // 收集該圖真實怪（去重）
+  const ids = new Set();
+  for (const w of stage.waves || []) for (const g of w.groups || []) for (const u of g.units || []) ids.add(Array.isArray(u) ? u[0] : u);
+  const enemies = [...ids].map((id) => ({ id }));
+  const theme = themeForStage(stage);
+
+  stopHunt();
+  setOverlayOpen(els.artaleHubOverlay, false);
+  hideAllOverlays();
+  setOverlayOpen(els.huntOverlay, true);
+  if (els.huntTitle) els.huntTitle.textContent = `${stage.continentZh || ""} · ${stage.name}`;
+  huntSession = createHunt({
+    canvas: els.huntCanvas, profile, enemies, theme,
+    keybinds: loadKeybinds(),
+    onExit: () => { stopHunt(); setOverlayOpen(els.huntOverlay, false); openArtaleHub(); },
+  });
+  huntSession.start();
+  sfx.play("uiClick");
+}
+
+// 按鍵配置（localStorage）
+function loadKeybinds() {
+  try { const r = localStorage.getItem("deadline-defense-hunt-keys"); return r ? JSON.parse(r) : null; } catch { return null; }
+}
+
 function paintHub() {
   artaleHub.renderHubShell(els, hubState);
   artaleHub.bindHubEvents(els, {
@@ -436,6 +482,14 @@ function paintHub() {
     onStartRaid: async (bossId) => {
       try {
         await launchActionRaid(bossId);
+      } catch (e) {
+        hubState = { ...hubState, tab: "combat", error: e.message || String(e) };
+        paintHub();
+      }
+    },
+    onStartHunt: async (stageId) => {
+      try {
+        await openHunt(stageId);
       } catch (e) {
         hubState = { ...hubState, tab: "combat", error: e.message || String(e) };
         paintHub();
@@ -3308,6 +3362,13 @@ els.btnActionRaidExit?.addEventListener("click", () =>
   withAudio(() => {
     stopActionRaid();
     setOverlayOpen(els.actionRaidOverlay, false);
+    openArtaleHub();
+  })
+);
+els.btnHuntExit?.addEventListener("click", () =>
+  withAudio(() => {
+    stopHunt();
+    setOverlayOpen(els.huntOverlay, false);
     openArtaleHub();
   })
 );
