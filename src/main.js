@@ -4184,3 +4184,17 @@ ui.onState(game.getPublicState());
 game.start();
 openTitleScreen();
 void bootAuthCheck();
+
+// DEV：截圖驗證登入態畫面（?devcs / ?devhunt），僅測試用
+if (location.search.includes("dev")) {
+  window.__devChars = () => {
+    hubState.me = { username: "測試員", characters: [
+      { charId: "1", name: "阿劍", class: "hero", level: 50, isActive: true, levelStats: { str: 80, dex: 20, int: 4, luk: 15 } },
+      { charId: "2", name: "小弓", class: "bowmaster", level: 30, levelStats: { str: 10, dex: 90, int: 4, luk: 30 } },
+      { charId: "3", name: "法師", class: "fire_mage", level: 40, levelStats: { str: 4, dex: 20, int: 95, luk: 10 } },
+    ] };
+    hubState.session = { discordId: "dev" };
+  };
+  window.__devCharSelect = () => { window.__devChars(); openCharSelect(); };
+  window.__devTitle = () => { window.__devChars(); openTitleScreen(); };
+}

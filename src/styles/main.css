@@ -944,11 +944,13 @@ body.is-dragging-job .specialist-card {
   padding: 16px 18px;
   backdrop-filter: blur(2px);
 }
-/* 官方登入頁 */
+/* 官方登入頁（display 交給 :not([hidden])，別覆蓋 hidden 屬性） */
+.maple-book-mode .title-login:not([hidden]) {
+  display: flex;
+}
 .maple-book-mode .title-login {
   position: relative;
   z-index: 6;
-  display: flex;
   flex-direction: column;
   align-items: center;
   gap: clamp(14px, 3vh, 30px);
