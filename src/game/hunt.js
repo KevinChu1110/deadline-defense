@@ -9,6 +9,7 @@ import { ENEMIES } from "../data/enemies.js";
 import { getCachedMob, sampleGifFrame, loadMobGif } from "./assets.js";
 import { SKILLS, JOB_SKILLS } from "../data/skills-generated.js";
 import { spawnSkillFx, updateSkillFx, drawSkillFx, preloadSkillFx, hasSkillFx } from "./skill-fx.js";
+import { createAvatar, drawAvatar } from "./avatar.js";
 
 const W = 960, H = 540, GROUND = 452, GRAVITY = 1400;
 
@@ -65,14 +66,15 @@ const DEFAULT_SKILL_KEYS = ["Digit1", "Digit2", "Digit3", "Digit4"];
 export const DEFAULT_KEYBINDS = { attack: "KeyJ", jump: "Space", dash: "KeyL", skills: [...DEFAULT_SKILL_KEYS] };
 
 export function createHunt(opts) {
-  const { canvas, profile, enemies, theme, keybinds, charClass, bgCode, onExit } = opts;
+  const { canvas, profile, enemies, theme, keybinds, charClass, bgCode, appearance, onExit } = opts;
   const ctx = canvas.getContext("2d");
   canvas.width = W; canvas.height = H;
 
   // 真實地圖背景（Map.wz 擷取）
   let bgImg = null;
   if (bgCode) { const im = new Image(); im.src = `/hunt-bg/${bgCode}.png`; im.onload = () => (bgImg = im); }
-  // 玩家紙娃娃立繪
+  // 玩家紙娃娃：動畫版(appearance) + 靜態墊底
+  const avatar = appearance ? createAvatar(appearance) : null;
   let avatarImg = null;
   if (charClass) { const a = new Image(); a.src = `/avatars/${charClass}.png`; a.onload = () => (avatarImg = a); }
 
@@ -263,7 +265,9 @@ export function createHunt(opts) {
     return move;
   }
 
+  let lastDt = 0.016;
   function update(dt) {
+    lastDt = dt;
     player.attackCd = Math.max(0, player.attackCd - dt);
     player.dashCd = Math.max(0, player.dashCd - dt);
     player.invuln = Math.max(0, player.invuln - dt);
@@ -345,25 +349,28 @@ export function createHunt(opts) {
       } else { ctx.fillStyle = m.def.color; ctx.beginPath(); ctx.arc(m.x, m.y - m.def.radius, m.def.radius, 0, Math.PI * 2); ctx.fill(); }
     }
 
-    // 玩家（紙娃娃立繪；還沒載入用色塊墊）
+    // 玩家（紙娃娃動畫；載入中用靜態圖或色塊墊）
     ctx.save();
     if (player.invuln > 0 && Math.floor(player.invuln * 20) % 2 === 0) ctx.globalAlpha = 0.4;
-    if (avatarImg) {
-      ctx.imageSmoothingEnabled = false;
-      const sc = (player.h + 24) / avatarImg.height;
-      const w = avatarImg.width * sc, h = avatarImg.height * sc;
-      const bob = player.onGround ? Math.sin(performance.now() / 200) * 1 : 0;
-      if (player.face < 0) {
-        ctx.translate(player.x, 0); ctx.scale(-1, 1);
-        ctx.drawImage(avatarImg, -w / 2, player.y - h + 6 + bob, w, h);
+    const moving = Math.abs(player.vx) > 24 && player.onGround;
+    const anim = (player.anim === "atk" || player.anim === "skill") ? "swingO1" : (moving ? "walk1" : "stand1");
+    const targetH = player.h + 44;
+    const drawn = avatar && drawAvatar(ctx, avatar, player.x, player.y + 6, {
+      anim, dt: lastDt, flip: player.face, targetH,
+    });
+    if (!drawn) {
+      if (avatarImg) {
+        ctx.imageSmoothingEnabled = false;
+        const sc = targetH / avatarImg.height;
+        const w = avatarImg.width * sc, h = avatarImg.height * sc;
+        if (player.face < 0) { ctx.translate(player.x, 0); ctx.scale(-1, 1); ctx.drawImage(avatarImg, -w / 2, player.y - h + 6, w, h); }
+        else ctx.drawImage(avatarImg, player.x - w / 2, player.y - h + 6, w, h);
       } else {
-        ctx.drawImage(avatarImg, player.x - w / 2, player.y - h + 6 + bob, w, h);
+        const body = { mage: "#60a5fa", thief: "#a78bfa", archer: "#4ade80", pirate: "#fbbf24" }[profile.family] || "#f87171";
+        ctx.fillStyle = "#2a1f14"; ctx.fillRect(player.x - player.w / 2 - 1, player.y - player.h - 1, player.w + 2, player.h + 2);
+        ctx.fillStyle = body; ctx.fillRect(player.x - player.w / 2, player.y - player.h, player.w, player.h);
+        ctx.fillStyle = "#f0c8a0"; ctx.fillRect(player.x - 9, player.y - player.h - 15, 18, 15);
       }
-    } else {
-      const body = { mage: "#60a5fa", thief: "#a78bfa", archer: "#4ade80", pirate: "#fbbf24" }[profile.family] || "#f87171";
-      ctx.fillStyle = "#2a1f14"; ctx.fillRect(player.x - player.w / 2 - 1, player.y - player.h - 1, player.w + 2, player.h + 2);
-      ctx.fillStyle = body; ctx.fillRect(player.x - player.w / 2, player.y - player.h, player.w, player.h);
-      ctx.fillStyle = "#f0c8a0"; ctx.fillRect(player.x - 9, player.y - player.h - 15, 18, 15);
     }
     ctx.restore();
 

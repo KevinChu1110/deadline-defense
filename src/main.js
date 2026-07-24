@@ -68,6 +68,7 @@ import {
 import * as artaleHub from "./artale-hub.js";
 import { createActionRaid } from "./game/action-raid.js";
 import { createHunt, keyLabel, DEFAULT_KEYBINDS } from "./game/hunt.js";
+import { loadAppearance, saveAppearance, defaultAppearance, AVATAR_CATALOG, appearanceItems } from "./data/avatar-items.js";
 import { getStageById } from "./data/stages.js";
 import { themeForStage } from "./data/map-themes.js";
 import {
@@ -268,6 +269,12 @@ const els = {
   huntCanvas: document.querySelector("#hunt-canvas"),
   huntTitle: document.querySelector("#hunt-title"),
   btnHuntExit: document.querySelector("#btn-hunt-exit"),
+  customizeOverlay: document.querySelector("#customize-overlay"),
+  czPreviewImg: document.querySelector("#cz-preview-img"),
+  czTabs: document.querySelector("#cz-tabs"),
+  czOptions: document.querySelector("#cz-options"),
+  btnCzSave: document.querySelector("#btn-cz-save"),
+  btnCzCancel: document.querySelector("#btn-cz-cancel"),
   charSelectOverlay: document.querySelector("#char-select-overlay"),
   csFigures: document.querySelector("#cs-figures"),
   btnCsEnter: document.querySelector("#btn-cs-enter"),
@@ -459,10 +466,13 @@ function renderCharFigures() {
     btn.type = "button";
     btn.className = "cs-fig" + (_csSelected === c.charId ? " is-picked" : "");
     btn.dataset.charId = c.charId;
-    const avatar = `/avatars/${c.class || "hero"}.png`;
+    // 有存造型就用即時紙娃娃(反映換裝)，否則用預設立繪
+    const app = loadAppearance(c.charId, c.class);
+    const hasCustom = (() => { try { return !!localStorage.getItem(`deadline-defense-avatar-${c.charId}`); } catch { return false; } })();
+    const avatarSrc = hasCustom ? avatarUrl(app) : `/avatars/${c.class || "hero"}.png`;
     btn.innerHTML = `
       <div class="cs-fig-plate">
-        <img class="cs-fig-img cs-fig-avatar" src="${escapeHtml(avatar)}" alt="" draggable="false"
+        <img class="cs-fig-img cs-fig-avatar" src="${escapeHtml(avatarSrc)}" alt="" draggable="false"
              onerror="this.onerror=null;this.src='/avatars/hero.png'" />
       </div>
       <div class="cs-fig-name">${escapeHtml(c.name || artaleHub.classLabel(c.class))}</div>
@@ -489,6 +499,76 @@ async function csEnter() {
   hubState._charPicked = true;
   setOverlayOpen(els.charSelectOverlay, false);
   openArtaleHub();
+}
+
+// ── 造型工房（換裝/美髮/整形）──
+const CZ_TABS = [
+  { key: "hair", label: "美髮" },
+  { key: "face", label: "整形" },
+  { key: "overall", label: "套服" },
+  { key: "top", label: "上衣" },
+  { key: "bottom", label: "下著" },
+  { key: "hat", label: "帽子" },
+  { key: "cape", label: "披風" },
+];
+let _czDraft = null, _czChar = null, _czTab = "hair";
+const MSIO = "https://maplestory.io/api";
+function avatarUrl(appearance, anim = "stand1", frame = 0) {
+  const enc = encodeURIComponent(appearanceItems(appearance).map((o) => JSON.stringify(o)).join(","));
+  return `${MSIO}/character/${enc}/${anim}/${frame}?resize=2`;
+}
+function itemIconUrl(id) { return `${MSIO}/GMS/214/item/${id}/icon`; }
+
+function openCustomize() {
+  _czChar = (hubState.me?.characters || []).find((c) => c.isActive) || (hubState.me?.characters || [])[0];
+  _czDraft = { ...loadAppearance(_czChar?.charId, _czChar?.class) };
+  _czTab = "hair";
+  renderCzTabs();
+  renderCzOptions();
+  updateCzPreview();
+  setOverlayOpen(els.customizeOverlay, true);
+}
+function updateCzPreview() { if (els.czPreviewImg) els.czPreviewImg.src = avatarUrl(_czDraft); }
+function renderCzTabs() {
+  if (!els.czTabs) return;
+  els.czTabs.innerHTML = "";
+  for (const t of CZ_TABS) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "cz-tab" + (t.key === _czTab ? " is-active" : "");
+    b.textContent = t.label;
+    b.addEventListener("click", () => { _czTab = t.key; renderCzTabs(); renderCzOptions(); });
+    els.czTabs.appendChild(b);
+  }
+}
+function renderCzOptions() {
+  if (!els.czOptions) return;
+  els.czOptions.innerHTML = "";
+  const opts = AVATAR_CATALOG[_czTab] || [];
+  // 套服/上衣下著互斥：選套服清 top/bottom；選 top/bottom 清 overall
+  for (const id of opts) {
+    const cur = _czDraft[_czTab] || 0;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "cz-opt" + (cur === id ? " is-picked" : "");
+    if (id === 0) btn.innerHTML = `<span class="cz-opt-none">無</span>`;
+    else btn.innerHTML = `<img src="${itemIconUrl(id)}" alt="" loading="lazy" onerror="this.style.opacity=0.2" />`;
+    btn.addEventListener("click", () => {
+      _czDraft[_czTab] = id;
+      if (_czTab === "overall" && id) { _czDraft.top = 0; _czDraft.bottom = 0; }
+      if ((_czTab === "top" || _czTab === "bottom") && id) _czDraft.overall = 0;
+      renderCzOptions();
+      updateCzPreview();
+      sfx.play("uiClick");
+    });
+    els.czOptions.appendChild(btn);
+  }
+}
+function czSave() {
+  if (_czChar && _czDraft) saveAppearance(_czChar.charId, _czDraft);
+  setOverlayOpen(els.customizeOverlay, false);
+  showToast("造型已儲存");
+  if (screen === "charselect") renderCharFigures();
 }
 
 let huntSession = null;
@@ -526,6 +606,7 @@ async function openHunt(stageId) {
     canvas: els.huntCanvas, profile, enemies, theme,
     bgCode: stage.continent,
     charClass: activeChar?.class,
+    appearance: loadAppearance(activeChar?.charId, activeChar?.class),
     keybinds: loadKeybinds(),
     onExit: () => {
       void reportHuntSession(lastHuntMapId, huntStartedAt);
@@ -3581,7 +3662,10 @@ els.btnHuntExit?.addEventListener("click", () =>
   })
 );
 els.btnCsEnter?.addEventListener("click", () => withAudio(csEnter));
+els.btnCsCustomize?.addEventListener("click", () => withAudio(openCustomize));
 els.btnCsBack?.addEventListener("click", () => withAudio(() => { setOverlayOpen(els.charSelectOverlay, false); openTitleScreen(); }));
+els.btnCzSave?.addEventListener("click", () => withAudio(czSave));
+els.btnCzCancel?.addEventListener("click", () => withAudio(() => setOverlayOpen(els.customizeOverlay, false)));
 els.btnHuntPickerClose?.addEventListener("click", () => withAudio(() => { setOverlayOpen(els.huntPickerOverlay, false); openArtaleHub(); }));
 els.btnHuntKeys?.addEventListener("click", () => withAudio(openKeybinds));
 els.btnKeybindReset?.addEventListener("click", () => withAudio(() => { _kbDraft = { ...DEFAULT_KEYBINDS, skills: [...DEFAULT_KEYBINDS.skills] }; renderKeybinds(); }));

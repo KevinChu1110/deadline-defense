@@ -353,7 +353,31 @@
               <div id="cs-figures" class="cs-figures"></div>
               <div class="cs-signboard">
                 <button type="button" id="btn-cs-enter" class="cs-sign-btn" disabled>進入遊戲</button>
+                <button type="button" id="btn-cs-customize" class="cs-sign-btn cs-sign-sub">✂️ 造型</button>
                 <button type="button" id="btn-cs-back" class="cs-sign-btn cs-sign-sub">返回</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 造型：換裝/美髮/整形 -->
+          <div id="customize-overlay" class="overlay dialog-overlay" hidden>
+            <div class="dialog-card maple-panel maple-ornament customize-card" role="dialog" aria-modal="true">
+              <div class="cz-head">
+                <p class="overlay-kicker">造型工房</p>
+                <h2>換裝 · 美髮 · 整形</h2>
+              </div>
+              <div class="cz-body">
+                <div class="cz-preview">
+                  <img id="cz-preview-img" class="cz-preview-img" alt="角色預覽" />
+                </div>
+                <div class="cz-panel">
+                  <div id="cz-tabs" class="cz-tabs"></div>
+                  <div id="cz-options" class="cz-options"></div>
+                </div>
+              </div>
+              <div class="overlay-actions">
+                <button type="button" class="btn" id="btn-cz-cancel">取消</button>
+                <button type="button" class="btn primary maple-primary" id="btn-cz-save">儲存造型</button>
               </div>
             </div>
           </div>
