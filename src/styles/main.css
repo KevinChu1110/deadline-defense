@@ -1104,6 +1104,29 @@ body.is-dragging-job .specialist-card {
   box-shadow: 0 4px 0 #4a2c0e, 0 6px 12px rgba(0, 0, 0, 0.3);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
+/* 官方「登入」木牌(zh-login 95x48) */
+.tl-wood-login {
+  appearance: none;
+  border: none;
+  cursor: pointer;
+  align-self: center;
+  background: url("/ui/zh-login.png") center / contain no-repeat;
+  image-rendering: pixelated;
+  width: clamp(150px, calc(var(--book-w) * 0.24), 210px);
+  aspect-ratio: 95 / 48;
+  filter: drop-shadow(0 4px 7px rgba(0, 0, 0, 0.4));
+  transition: transform 0.1s ease, filter 0.1s ease;
+}
+.tl-wood-login:hover { filter: brightness(1.08) drop-shadow(0 5px 8px rgba(0, 0, 0, 0.45)); transform: translateY(-1px); }
+.tl-wood-login:active { transform: translateY(2px); }
+.tl-login-hint {
+  margin: -2px 0 2px;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #4a3418;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
 .tl-sign-btn:hover { filter: brightness(1.08); }
 .tl-sign-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #4a2c0e; }
 .tl-sign-ico { margin-right: 4px; }
@@ -1206,11 +1229,26 @@ body.is-dragging-job .specialist-card {
   flex: 0 0 auto;
 }
 .cs-stage {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-end;
   gap: 4px;
 }
+/* 紙娃娃腳下陰影：讓角色「站在地上」不再浮空 */
+.cs-stage-ground {
+  position: absolute;
+  bottom: 26px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: clamp(70px, calc(var(--book-w) * 0.18), 118px);
+  height: 14px;
+  background: radial-gradient(ellipse at center, rgba(30, 22, 10, 0.42) 0%, rgba(30, 22, 10, 0.18) 55%, transparent 75%);
+  pointer-events: none;
+  z-index: 0;
+}
+.cs-avatar-canvas { position: relative; z-index: 1; }
 .cs-stage-name {
   font-weight: 800;
   font-size: 0.9rem;
@@ -1219,33 +1257,32 @@ body.is-dragging-job .specialist-card {
   padding: 2px 12px;
   border-radius: 10px;
 }
-.cs-stats {
-  background: rgba(255, 250, 235, 0.92);
-  border: 2px solid rgba(120, 80, 40, 0.5);
-  border-radius: 12px;
-  padding: clamp(7px, 1.4vh, 12px) clamp(10px, 1.6vw, 16px);
-  min-width: clamp(130px, calc(var(--book-w) * 0.3), 170px);
-  box-shadow: 0 4px 14px rgba(60, 40, 20, 0.3);
+/* 官方繁中素質捲軸(cs_charInfo 183x152)，數值疊在對應欄位 */
+.cs-stats-scroll {
+  position: relative;
+  flex: 0 0 auto;
+  width: clamp(150px, calc(var(--book-w) * 0.32), 200px);
+  aspect-ratio: 183 / 152;
+  background: url("/ui/zh-charinfo.png") center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 10px rgba(60, 40, 20, 0.35));
 }
-.cs-stats-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 0.9rem;
-  margin-bottom: 4px;
+.cs-stats-scroll .csv {
+  position: absolute;
+  font-weight: 800;
+  font-size: clamp(0.62rem, calc(var(--book-w) * 0.017), 0.9rem);
+  color: #3a2412;
+  line-height: 1;
+  transform: translateY(-50%);
+  text-align: right;
 }
-.cs-stats-row span, .cs-stats-grid span { color: #7c5a2e; font-weight: 700; }
-.cs-stats-row b, .cs-stats-grid b { color: #3a2412; }
-.cs-stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px 14px;
-  margin-top: 6px;
-  padding-top: 6px;
-  border-top: 1px solid rgba(120, 80, 40, 0.3);
-  font-size: 0.82rem;
-}
-.cs-stats-grid > div { display: flex; justify-content: space-between; }
+/* 欄位位置(相對 183x152 百分比，數值右對齊) */
+.cs-stats-scroll .csv-job { right: 6%;  top: 9%;  }
+.cs-stats-scroll .csv-lv  { right: 50%; top: 21%; }
+.cs-stats-scroll .csv-str { right: 51%; top: 33%; }
+.cs-stats-scroll .csv-int { right: 5%;  top: 32%; }
+.cs-stats-scroll .csv-dex { right: 50%; top: 45%; }
+.cs-stats-scroll .csv-luk { right: 5%;  top: 45%; }
 
 .cs-figures {
   display: flex;
@@ -1312,6 +1349,21 @@ body.is-dragging-job .specialist-card {
   gap: 10px;
   align-items: center;
 }
+/* 官方「選擇角色」木牌(zh-cs-select 101x30) 當進入遊戲鈕 */
+.cs-wood-select {
+  appearance: none;
+  border: none;
+  cursor: pointer;
+  background: url("/ui/zh-cs-select.png") center / contain no-repeat;
+  image-rendering: pixelated;
+  width: clamp(120px, calc(var(--book-w) * 0.3), 168px);
+  aspect-ratio: 101 / 30;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.35));
+  transition: transform 0.1s ease, filter 0.1s ease;
+}
+.cs-wood-select:hover:not(:disabled) { filter: brightness(1.08) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4)); transform: translateY(-1px); }
+.cs-wood-select:active:not(:disabled) { transform: translateY(2px); }
+.cs-wood-select:disabled { opacity: 0.5; cursor: not-allowed; }
 .cs-sign-btn {
   appearance: none;
   cursor: pointer;

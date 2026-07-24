@@ -170,9 +170,9 @@
                   <span class="tl-leaf" aria-hidden="true">🍁</span>
                 </div>
                 <div class="tl-signboard">
-                  <button type="button" id="btn-login-discord" class="tl-sign-btn">
-                    <span class="tl-sign-ico">🎮</span> 用 Discord 登入
-                  </button>
+                  <!-- 官方「登入」木牌(zh-login) → Discord 綁定登入 -->
+                  <button type="button" id="btn-login-discord" class="tl-wood-login" aria-label="用 Discord 登入"></button>
+                  <p class="tl-login-hint">🎮 以 Discord 綁定帶入角色</p>
                   <button type="button" id="btn-login-guest" class="tl-sign-btn tl-sign-sub">
                     免登入 · 試玩神木防衛戰
                   </button>
@@ -381,23 +381,24 @@
               <div class="cs-title">選擇角色</div>
               <div class="cs-main">
                 <div class="cs-stage">
+                  <div class="cs-stage-ground" aria-hidden="true"></div>
                   <canvas id="cs-avatar-canvas" class="cs-avatar-canvas" width="180" height="240" aria-label="角色預覽"></canvas>
                   <div id="cs-name" class="cs-stage-name"></div>
                 </div>
-                <div id="cs-stats" class="cs-stats" hidden>
-                  <div class="cs-stats-row"><span>JOB</span><b id="cs-st-job">—</b></div>
-                  <div class="cs-stats-row"><span>LV.</span><b id="cs-st-lv">—</b></div>
-                  <div class="cs-stats-grid">
-                    <div><span>STR</span><b id="cs-st-str">—</b></div>
-                    <div><span>DEX</span><b id="cs-st-dex">—</b></div>
-                    <div><span>INT</span><b id="cs-st-int">—</b></div>
-                    <div><span>LUK</span><b id="cs-st-luk">—</b></div>
-                  </div>
+                <!-- 官方繁中素質捲軸(cs_charInfo)，數值疊在對應欄位 -->
+                <div id="cs-stats" class="cs-stats-scroll" hidden>
+                  <span class="csv csv-job" id="cs-st-job">—</span>
+                  <span class="csv csv-lv" id="cs-st-lv">—</span>
+                  <span class="csv csv-str" id="cs-st-str">—</span>
+                  <span class="csv csv-int" id="cs-st-int">—</span>
+                  <span class="csv csv-dex" id="cs-st-dex">—</span>
+                  <span class="csv csv-luk" id="cs-st-luk">—</span>
                 </div>
               </div>
               <div id="cs-figures" class="cs-figures"></div>
               <div class="cs-signboard">
-                <button type="button" id="btn-cs-enter" class="cs-sign-btn" disabled>進入遊戲</button>
+                <!-- 官方「選擇角色」木牌 -->
+                <button type="button" id="btn-cs-enter" class="cs-wood-select" aria-label="進入遊戲" disabled></button>
                 <button type="button" id="btn-cs-customize" class="cs-sign-btn cs-sign-sub">✂️ 造型</button>
                 <button type="button" id="btn-cs-back" class="cs-sign-btn cs-sign-sub">返回</button>
               </div>
