@@ -906,11 +906,12 @@ body.is-dragging-job .specialist-card {
   height: var(--book-h);
   transform: translate(-50%, -50%);
   background:
-    url("/hunt-bg/maple.png") center bottom / cover no-repeat,
+    url("/ui/login-scene.png") center / cover no-repeat,
     linear-gradient(180deg, #a9dcf0 0%, #cfeeda 60%, #e6d9a8 100%);
   border-radius: 8px;
   animation: none;
   filter: none;
+  image-rendering: auto;
   /* 只露書本內頁(避開羊皮紙邊框) */
   clip-path: inset(6.5% 8% 9% 8% round 4px);
   z-index: 1;
