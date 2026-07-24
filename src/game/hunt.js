@@ -178,6 +178,7 @@ export function createHunt(opts) {
     if (player.invuln > 0) return;
     player.hp = Math.max(0, player.hp - Math.round(dmg));
     player.invuln = 0.7;
+    player.anim = "hit"; player.animT = 0.35; // 受擊硬直姿勢
     floatText(player.x, player.y - player.h - 8, `-${Math.round(dmg)}`, "#f87171");
     if (player.hp <= 0) finish();
   }
@@ -386,8 +387,14 @@ export function createHunt(opts) {
     // 玩家（紙娃娃動畫；載入中用靜態圖或色塊墊）
     ctx.save();
     if (player.invuln > 0 && Math.floor(player.invuln * 20) % 2 === 0) ctx.globalAlpha = 0.4;
+    // 動作狀態機：攻擊/技能 → 揮擊或射擊；受擊 → 硬直；空中 → 跳；移動 → 走；否則站
     const moving = Math.abs(player.vx) > 24 && player.onGround;
-    const anim = (player.anim === "atk" || player.anim === "skill") ? "swingO1" : (moving ? "walk1" : "stand1");
+    let anim;
+    if (player.anim === "atk" || player.anim === "skill") anim = profile.style === "ranged" ? "shoot1" : "swingO1";
+    else if (player.anim === "hit") anim = "alert";
+    else if (!player.onGround) anim = "jump";
+    else if (moving) anim = "walk1";
+    else anim = "stand1";
     const targetH = player.h + 44;
     const drawn = avatar && drawAvatar(ctx, avatar, player.x, player.y + 6, {
       anim, dt: lastDt, flip: player.face, targetH,

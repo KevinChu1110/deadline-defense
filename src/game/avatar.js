@@ -5,7 +5,7 @@
 import { appearanceItems } from "../data/avatar-items.js";
 
 // 各動畫幀數（超出範圍的幀 API 會 404，載入失敗自動忽略）
-const ANIMS = { stand1: 3, walk1: 4, alert: 3, swingO1: 3, proneStab: 2 };
+const ANIMS = { stand1: 3, walk1: 4, alert: 3, swingO1: 3, proneStab: 2, jump: 1, shoot1: 2 };
 
 const imgCache = new Map(); // url → {img, ready}
 function loadImg(url) {
@@ -36,6 +36,8 @@ export function createAvatar(appearance) {
   };
   ensure("stand1");
   ensure("walk1");
+  ensure("jump");
+  ensure("swingO1");
   return { items, frames, ensure, _t: {} };
 }
 
