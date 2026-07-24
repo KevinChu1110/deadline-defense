@@ -69,6 +69,7 @@ import * as artaleHub from "./artale-hub.js";
 import { createActionRaid } from "./game/action-raid.js";
 import { createHunt, keyLabel, DEFAULT_KEYBINDS } from "./game/hunt.js";
 import { loadAppearance, saveAppearance, defaultAppearance, AVATAR_CATALOG, appearanceItems } from "./data/avatar-items.js";
+import { equipToAppearance } from "./data/avatar-map.js";
 import { getStageById } from "./data/stages.js";
 import { themeForStage } from "./data/map-themes.js";
 import {
@@ -602,11 +603,19 @@ async function openHunt(stageId) {
   huntStartedAt = Date.now();
   // 用玩家「目前選的角色」職業挑真實技能
   const activeChar = (hubState.me?.characters || []).find((c) => c.isActive) || (hubState.me?.characters || [])[0];
+  // 紙娃娃外觀：優先「角色真實裝備」(對照官方 id)，失敗才用自訂造型/職業預設
+  let appearance;
+  try {
+    const eq = await artaleHub.fetchEquip();
+    appearance = equipToAppearance(eq, activeChar?.class);
+  } catch {
+    appearance = loadAppearance(activeChar?.charId, activeChar?.class);
+  }
   huntSession = createHunt({
     canvas: els.huntCanvas, profile, enemies, theme,
     bgCode: stage.continent,
     charClass: activeChar?.class,
-    appearance: loadAppearance(activeChar?.charId, activeChar?.class),
+    appearance,
     keybinds: loadKeybinds(),
     onExit: () => {
       void reportHuntSession(lastHuntMapId, huntStartedAt);

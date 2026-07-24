@@ -321,13 +321,17 @@ export function createHunt(opts) {
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, sky[0]); g.addColorStop(1, sky[1]);
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    // 真實地圖背景（貼近地面，橫向平鋪填滿）
+    // 真實地圖背景（貼近地面，橫向平鋪填滿）。平滑取樣把 WZ 抖動色偏averaging掉
     if (bgImg) {
       const targetH = Math.min(H * 0.78, GROUND);
       const sc = targetH / bgImg.height;
       const dw = bgImg.width * sc, dh = targetH;
-      const yTop = GROUND - dh + 30; // 讓底緣壓在地面下一點
+      const yTop = GROUND - dh + 30;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.globalAlpha = 0.96;
       for (let x = 0; x < W; x += dw) ctx.drawImage(bgImg, x, yTop, dw, dh);
+      ctx.globalAlpha = 1;
     }
     ctx.fillStyle = theme?.ground?.[1] || "#3d2a18"; ctx.fillRect(0, GROUND, W, H - GROUND);
     ctx.fillStyle = "rgba(255,248,220,0.25)"; ctx.fillRect(0, GROUND, W, 3);

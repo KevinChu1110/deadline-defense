@@ -746,7 +746,8 @@ body.is-dragging-job .specialist-card {
 #hunt-overlay,
 #char-select-overlay,
 #hunt-picker-overlay,
-#keybind-overlay {
+#keybind-overlay,
+#customize-overlay {
   position: fixed;
   z-index: 90;
 }
