@@ -753,6 +753,7 @@ body.is-dragging-job .specialist-card {
 #help-overlay,
 #action-raid-overlay,
 #hunt-overlay,
+#town-overlay,
 #char-select-overlay,
 #hunt-picker-overlay,
 #keybind-overlay,
@@ -6748,7 +6749,9 @@ body.mode-bc .wave-cta {
   max-width: 360px;
 }
 
-#action-raid-canvas {
+#action-raid-canvas,
+#hunt-canvas,
+#town-canvas {
   width: 100%;
   height: auto;
   display: block;

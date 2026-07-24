@@ -68,6 +68,7 @@ import {
 import * as artaleHub from "./artale-hub.js";
 import { createActionRaid } from "./game/action-raid.js";
 import { createHunt, keyLabel, DEFAULT_KEYBINDS } from "./game/hunt.js";
+import { createTown } from "./game/town.js";
 import { createAvatar as _mkAvatar, drawAvatar as _drawAvatar } from "./game/avatar.js";
 import { loadAppearance, saveAppearance, defaultAppearance, AVATAR_CATALOG, appearanceItems } from "./data/avatar-items.js";
 import { equipToAppearance } from "./data/avatar-map.js";
@@ -4244,4 +4245,30 @@ if (location.search.includes("dev")) {
   window.__devTitle = () => { window.__devChars(); openTitleScreen(); };
   window.__devHunt = async () => { window.__devChars(); try { await openHunt("dev"); } catch (e) { console.error(e); } };
   window.__devRaid = async () => { window.__devChars(); try { await launchActionRaid("zakum"); } catch (e) { console.error(e); } };
+  window.__devTown = async () => { window.__devChars(); try { await openTown(); } catch (e) { console.error(e); } };
 }
+
+// 可探索城鎮 Hub
+let townSession = null;
+function stopTown() { if (townSession) { townSession.stop(); townSession = null; } }
+async function openTown() {
+  const town = await (await fetch("/town/fm/town.json")).json();
+  const activeChar = (hubState.me?.characters || []).find((c) => c.isActive) || (hubState.me?.characters || [])[0];
+  let appearance;
+  try { appearance = equipToAppearance(await artaleHub.fetchEquip(), activeChar?.class); }
+  catch { appearance = loadAppearance(activeChar?.charId, activeChar?.class); }
+  const profile = { name: activeChar?.name || "冒險者", level: activeChar?.level || 1, maxHp: 600, maxMp: 300 };
+  stopTown();
+  hideAllOverlays();
+  const overlay = document.querySelector("#town-overlay");
+  setOverlayOpen(overlay, true);
+  townSession = createTown({
+    canvas: document.querySelector("#town-canvas"),
+    town, appearance, charClass: activeChar?.class, profile,
+    onPortal: (p) => { showToast(`傳送門 ${p.n} → ${p.tm}（P1 接副本）`); },
+    onExit: () => { stopTown(); setOverlayOpen(overlay, false); openTitleScreen(); },
+  });
+  townSession.start();
+  sfx.startBgm("menu");
+}
+document.querySelector("#btn-town-exit")?.addEventListener("click", () => withAudio(() => { stopTown(); setOverlayOpen(document.querySelector("#town-overlay"), false); openTitleScreen(); }));

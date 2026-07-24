@@ -502,6 +502,20 @@
             </div>
           </div>
 
+          <!-- 可探索城鎮 Hub（網頁版楓之谷主場景） -->
+          <div id="town-overlay" class="overlay action-raid-overlay" hidden>
+            <div class="action-raid-shell maple-panel maple-ornament">
+              <header class="action-raid-bar">
+                <div><p class="overlay-kicker">城鎮 · TOWN</p><h2 id="town-title">自由市場</h2></div>
+                <div class="action-raid-bar-actions">
+                  <span class="muted">←→ 移動 · Space 跳 · ↑ 進入傳送門 · Esc 離開</span>
+                  <button type="button" class="btn" id="btn-town-exit">離開</button>
+                </div>
+              </header>
+              <canvas id="town-canvas" width="960" height="540" aria-label="城鎮場景"></canvas>
+            </div>
+          </div>
+
           <!-- Discord import -->
           <div id="discord-import-overlay" class="overlay dialog-overlay" hidden>
             <div class="dialog-card maple-panel maple-ornament discord-import-card" role="dialog" aria-modal="true">
