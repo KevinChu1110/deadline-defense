@@ -22,6 +22,13 @@ const SAMPLE_MAP = {
   uiHover: "/audio/ui-msw/BtMouseOver.mp3",
   uiPluck: "/audio/ui-msw/MenuDown.mp3",
   error: "/audio/ui/error.ogg",
+  // 官方遊戲音效(Sound.wz)
+  mesoPick: "/audio/msw/pickup.mp3",
+  mapleJump: "/audio/msw/jump.mp3",
+  levelUp: "/audio/msw/levelup.mp3",
+  mobHit: "/audio/msw/mob_hit.mp3",
+  atkSword: "/audio/msw/atk_sword.mp3",
+  atkPunch: "/audio/msw/atk_punch.mp3",
   deploy: "/audio/sfx/deploy.ogg",
   sell: "/audio/sfx/sell.ogg",
   shoot: "/audio/sfx/shoot.ogg",
@@ -577,6 +584,8 @@ class SfxEngine {
     // UI 音效節流：讓「明確呼叫 + 全域委派」不會重複播放
     if (name === "uiClick" && !this._throttle("uiClick", 60)) return;
     if (name === "uiHover" && !this._throttle("uiHover", 50)) return;
+    if (name === "mobHit" && !this._throttle("mobHit", 40)) return;
+    if (name === "mesoPick" && !this._throttle("mesoPick", 45)) return;
 
     const sampleKey = this._resolveSampleKey(name, opts);
     const buf = sampleKey ? this._buffers.get(sampleKey) : null;

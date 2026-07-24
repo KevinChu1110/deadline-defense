@@ -12,6 +12,7 @@ import { spawnSkillFx, updateSkillFx, drawSkillFx, preloadSkillFx, hasSkillFx } 
 import { createAvatar, drawAvatar } from "./avatar.js";
 import { drawHud as drawOfficialHud } from "./hud.js";
 import { drawDmgNumber } from "./damage-num.js";
+import { sfx } from "../audio/sfx.js";
 
 const W = 960, H = 540, GROUND = 452, GRAVITY = 1400;
 
@@ -110,6 +111,7 @@ export function createHunt(opts) {
   const monsters = [];
   const projectiles = [];
   const floats = [];
+  const coins = []; // 楓幣掉落 {x,y,vx,vy,landed,t,amt}
   const fx = [];
   const buffs = []; // {kind, mag, until, name}
   let spawnT = 0;
@@ -158,10 +160,14 @@ export function createHunt(opts) {
     if (!m.alive) return;
     m.hp -= dmg; m.hitFlash = 0.1;
     floatDamage(m.x, m.y - m.def.radius * 2 - 6, dmg, crit ? "crit" : "normal");
+    sfx.play("mobHit"); // 官方受擊音(內部節流)
     if (m.hp <= 0) {
       m.alive = false; player.kills++;
       killLog[m.def.id] = (killLog[m.def.id] || 0) + 1;
       floatText(m.x, m.y - 30, "+經驗", "#fde68a");
+      // 楓幣掉落：弧線噴出
+      const n = 1 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < n; i++) coins.push({ x: m.x + rnd(-6, 6), y: m.y - m.def.radius, vx: rnd(-140, 140), vy: rnd(-320, -200), landed: false, t: 0, amt: 1 + Math.floor((m.def.level || 1) * rnd(0.5, 1.5)) });
     }
   }
   function hurtPlayer(dmg) {
@@ -180,6 +186,7 @@ export function createHunt(opts) {
     if (player.attackCd > 0) return;
     player.attackCd = (profile.attackCd || 0.5) / (buffMul("aspd") || 1);
     player.anim = "atk"; player.animT = 0.2;
+    sfx.play(profile.family === "pirate" ? "atkPunch" : "atkSword"); // 官方揮擊音
     const crit = Math.random() < 0.15;
     const dmg = playerAtkDmg() * (crit ? 1.5 : 1);
     if (profile.style === "ranged") {
@@ -262,7 +269,7 @@ export function createHunt(opts) {
     let move = 0;
     if (keys.has("ArrowLeft") || keys.has("KeyA")) move -= 1;
     if (keys.has("ArrowRight") || keys.has("KeyD")) move += 1;
-    if ((keys.has("ArrowUp") || keys.has(kb.jump)) && player.onGround) { player.vy = -(profile.jump || 560); player.onGround = false; }
+    if ((keys.has("ArrowUp") || keys.has(kb.jump)) && player.onGround) { player.vy = -(profile.jump || 560); player.onGround = false; sfx.play("mapleJump"); }
     if (keys.has(kb.attack)) doBasic();
     if (keys.has(kb.dash) || keys.has("ShiftLeft")) doDash(move);
     skills.forEach((s) => { if (keys.has(s.key)) useSkill(s); });
@@ -314,6 +321,19 @@ export function createHunt(opts) {
       for (const m of monsters) if (m.alive && Math.abs(m.x - p.x) < m.def.radius + 8 && Math.abs((m.y - m.def.radius) - p.y) < 40) { hurtMonster(m, p.dmg, p.crit); projectiles.splice(i, 1); break; }
     }
     for (let i = floats.length - 1; i >= 0; i--) { const f = floats[i]; f.t += dt; f.y -= 34 * dt; if (f.t >= f.life) floats.splice(i, 1); }
+    // 楓幣：弧線落地 → 短暫停 → 吸向玩家 → 拾取
+    for (let i = coins.length - 1; i >= 0; i--) {
+      const c = coins[i]; c.t += dt;
+      if (!c.landed) {
+        c.vy += 900 * dt; c.x += c.vx * dt; c.y += c.vy * dt;
+        if (c.y >= GROUND) { c.y = GROUND; c.landed = true; c.t = 0; c.vx = 0; }
+      } else if (c.t > 0.35) {
+        const dx = player.x - c.x, dy = (player.y - 24) - c.y, d = Math.hypot(dx, dy) || 1;
+        c.x += (dx / d) * 520 * dt; c.y += (dy / d) * 520 * dt;
+        if (d < 22) { player.meso = (player.meso || 0) + c.amt; floatText(player.x, player.y - player.h - 20, `+${c.amt}`, "#ffe14d"); sfx.play("mesoPick"); coins.splice(i, 1); continue; }
+      }
+      if (c.t > 8) coins.splice(i, 1); // 未撿超時消失
+    }
     for (let i = buffs.length - 1; i >= 0; i--) if (buffs[i].until <= performance.now()) buffs.splice(i, 1);
     updateSkillFx(fx, dt);
   }
@@ -382,6 +402,16 @@ export function createHunt(opts) {
       }
     }
     ctx.restore();
+
+    // 楓幣（金幣：金漸層+高光）
+    for (const c of coins) {
+      const bob = c.landed ? Math.sin(c.t * 8) * 1.5 : 0;
+      const cy = c.y - 6 + bob, r = 5;
+      const g = ctx.createRadialGradient(c.x - 1.5, cy - 1.5, 0.5, c.x, cy, r);
+      g.addColorStop(0, "#fff3b0"); g.addColorStop(0.5, "#ffd23c"); g.addColorStop(1, "#c8890f");
+      ctx.beginPath(); ctx.arc(c.x, cy, r, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill();
+      ctx.lineWidth = 1; ctx.strokeStyle = "#8a5a00"; ctx.stroke();
+    }
 
     for (const p of projectiles) { ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill(); }
     drawSkillFx(ctx, fx);
