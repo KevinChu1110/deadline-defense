@@ -478,10 +478,9 @@ function renderCharFigures() {
     btn.type = "button";
     btn.className = "cs-fig" + (_csSelected === c.charId ? " is-picked" : "");
     btn.dataset.charId = c.charId;
-    // 有存造型就用即時紙娃娃(反映換裝)，否則用預設立繪
+    // 每個角色都用真實紙娃娃(依職業/造型)，非通用臉
     const app = loadAppearance(c.charId, c.class);
-    const hasCustom = (() => { try { return !!localStorage.getItem(`deadline-defense-avatar-${c.charId}`); } catch { return false; } })();
-    const avatarSrc = hasCustom ? avatarUrl(app) : `/avatars/${c.class || "hero"}.png`;
+    const avatarSrc = avatarUrl(app);
     btn.innerHTML = `
       <div class="cs-fig-plate">
         <img class="cs-fig-img cs-fig-avatar" src="${escapeHtml(avatarSrc)}" alt="" draggable="false"
