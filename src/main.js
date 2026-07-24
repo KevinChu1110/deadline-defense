@@ -307,6 +307,8 @@ const els = {
 
 /** @type {ReturnType<typeof createActionRaid> | null} */
 let actionRaidSession = null;
+// 城鎮 Hub 狀態（提前宣告，openTitleScreen 於載入時即引用，避免 TDZ）
+let townSession = null, _townData = null, _townReturn = false;
 let lastRaidBossId = "zakum";
 
 /** Artale 主城狀態 */
@@ -2408,6 +2410,8 @@ function setCampaignPanelOpen(open) {
 
 /** 主選單（大背景 + 四顆按鈕） */
 function openTitleScreen() {
+  // 若在城鎮進的塔防結束(塔防走 openTitleScreen 出場)，攔截回城鎮
+  if (_townReturn) { _townReturn = false; stopTown(); void openTown(); return; }
   screen = "stage";
   closeCharacterChrome();
   closeCoach({ mark: false });
@@ -4248,7 +4252,6 @@ if (location.search.includes("dev")) {
 }
 
 // 可探索城鎮 Hub
-let townSession = null, _townData = null, _townReturn = false;
 function stopTown() { if (townSession) { townSession.stop(); townSession = null; } }
 /** 副本結束後：若從城鎮進來則回城鎮，否則回主城 */
 function afterActivity(fallback) { if (_townReturn) { _townReturn = false; void openTown(); } else fallback(); }
@@ -4278,7 +4281,7 @@ async function openTown() {
       _townReturn = true; stopTown(); setOverlayOpen(overlay, false);
       if (a.act === "hunt") void openHunt("dev");
       else if (a.act === "raid") void launchActionRaid("zakum");
-      else if (a.act === "tower") { _townReturn = false; openCampaignPanel(1); } // 塔防有自己流程,暫回主城
+      else if (a.act === "tower") openCampaignPanel(1); // 塔防結束走 openTitleScreen→攔截回城鎮
     },
     onNpc: (n) => openNpcDialog(n),
     onExit: () => { stopTown(); setOverlayOpen(overlay, false); openTitleScreen(); },
