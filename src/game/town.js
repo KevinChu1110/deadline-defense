@@ -11,12 +11,20 @@ const W = 960, H = 540;
 const GRAVITY = 2000, WALK = 230, JUMP = 620;
 
 export function createTown(opts) {
-  const { canvas, town, appearance, charClass, profile, onPortal, onExit } = opts;
+  const { canvas, town, appearance, charClass, profile, onAct, onExit } = opts;
+  const acts = opts.acts || []; // [{label, act, x, y, color}] 活動傳送門
   const ctx = canvas.getContext("2d");
   canvas.width = W; canvas.height = H;
 
   // 背景圖載入
   const backImgs = town.back.map((b) => { const im = new Image(); im.src = `/town/fm/${b.img}`; return { def: b, img: im }; });
+  // NPC 真 sprite（maplestory.io）
+  const npcImgCache = new Map();
+  function npcImg(id) {
+    if (npcImgCache.has(id)) return npcImgCache.get(id);
+    const im = new Image(); im.crossOrigin = "anonymous"; im.src = `https://maplestory.io/api/GMS/214/npc/${id}/render/stand`;
+    npcImgCache.set(id, im); return im;
+  }
   // 紙娃娃
   const avatar = appearance ? createAvatar(appearance) : null;
 
@@ -28,7 +36,7 @@ export function createTown(opts) {
 
   const keys = new Set();
   let running = true, raf = 0, last = performance.now(), lastDt = 0.016;
-  let nearPortal = null;
+  let nearPortal = null, upHeld = false;
 
   // ── foothold：取 px 下方最近可站的 y（水平/斜線；跳過垂直牆）──
   function footAt(px, fromY) {
@@ -81,16 +89,15 @@ export function createTown(opts) {
     camCX = Math.max(town.vr.left + W / 2, Math.min(town.vr.right - W / 2, camCX));
     camCY = Math.max(town.vr.top + H / 2, Math.min(town.vr.bottom - H / 2, camCY));
 
-    // 傳送門偵測（pt=1 是一般門）
+    // 活動傳送門偵測（掛機/神木/突襲）
     nearPortal = null;
-    for (const p of town.portals) {
-      if (p.t !== 1) continue;
-      if (Math.abs(p.x - player.x) < 30 && Math.abs(p.y - player.y) < 60) { nearPortal = p; break; }
+    for (const a of acts) {
+      if (Math.abs(a.x - player.x) < 55 && Math.abs(a.y - player.y) < 80) { nearPortal = a; break; }
     }
-    if (nearPortal && (keys.has("ArrowUp") || keys.has("KeyW"))) {
-      // P0：先只回報，P1 接副本
-      if (onPortal) onPortal(nearPortal);
-    }
+    // 邊緣觸發：按下↑瞬間才進場（避免連續觸發）
+    const up = keys.has("ArrowUp") || keys.has("KeyW");
+    if (nearPortal && up && !upHeld && onAct) onAct(nearPortal);
+    upHeld = up;
   }
 
   function worldToScreen(wx, wy) { return [wx - camCX + W / 2, wy - camCY + H / 2]; }
@@ -143,31 +150,47 @@ export function createTown(opts) {
       ctx.strokeStyle = "rgba(120,180,70,0.95)"; ctx.beginPath(); ctx.moveTo(ax, ay - 1); ctx.lineTo(bx, by - 1); ctx.stroke();
     }
 
-    // 傳送門（藍光環）
-    for (const p of town.portals) {
-      if (p.t !== 1) continue;
-      const [sx, sy] = worldToScreen(p.x, p.y);
-      if (sx < -40 || sx > W + 40) continue;
-      const t = (performance.now() / 400) % (Math.PI * 2);
+    // 活動傳送門（藍光環 + 招牌標籤）
+    const tt = performance.now() / 400;
+    for (const a of acts) {
+      const [sx, sy] = worldToScreen(a.x, a.y);
+      if (sx < -60 || sx > W + 60) continue;
       ctx.save();
-      ctx.globalAlpha = 0.6 + Math.sin(t) * 0.2;
-      ctx.strokeStyle = "#5cc8ff"; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.ellipse(sx, sy - 24, 18, 30, 0, 0, Math.PI * 2); ctx.stroke();
-      ctx.globalAlpha = 0.3; ctx.fillStyle = "#a8e6ff";
-      ctx.beginPath(); ctx.ellipse(sx, sy - 24, 14, 26, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 0.55 + Math.sin(tt + a.x) * 0.2;
+      ctx.strokeStyle = a.color || "#5cc8ff"; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.ellipse(sx, sy - 26, 20, 34, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.globalAlpha = 0.28; ctx.fillStyle = a.color || "#a8e6ff";
+      ctx.beginPath(); ctx.ellipse(sx, sy - 26, 16, 30, 0, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
+      // 招牌
+      ctx.font = "700 12px system-ui"; ctx.textAlign = "center";
+      const tw = ctx.measureText(a.label).width;
+      ctx.fillStyle = "rgba(50,32,16,0.85)"; ctx.fillRect(sx - tw / 2 - 8, sy - 82, tw + 16, 20);
+      ctx.fillStyle = a.color || "#ffe9a8"; ctx.fillRect(sx - tw / 2 - 8, sy - 82, tw + 16, 3);
+      ctx.fillStyle = "#fff4d8"; ctx.fillText(a.label, sx, sy - 68);
     }
 
-    // NPC（P0：位置標記 + 名牌佔位；P2 換真 sprite）
+    // NPC（真 sprite + 名牌）
     for (const n of town.life) {
       if (n.type !== "n" || n.hide) continue;
       const [sx, sy] = worldToScreen(n.x, n.y);
-      if (sx < -60 || sx > W + 60) continue;
+      if (sx < -80 || sx > W + 80) continue;
+      const im = npcImg(n.id);
       ctx.save();
-      ctx.fillStyle = "rgba(60,40,20,0.6)"; ctx.fillRect(sx - 18, sy - 40, 36, 40);
-      ctx.fillStyle = "#ffe9a8"; ctx.font = "9px system-ui"; ctx.textAlign = "center";
-      ctx.fillText("NPC", sx, sy - 44);
+      ctx.imageSmoothingEnabled = false;
+      if (im.complete && im.naturalWidth) {
+        const sc = Math.min(1.4, 72 / im.height);
+        const w = im.width * sc, h = im.height * sc;
+        if (n.f) { ctx.translate(sx, 0); ctx.scale(-1, 1); ctx.drawImage(im, -w / 2, sy - h, w, h); }
+        else ctx.drawImage(im, sx - w / 2, sy - h, w, h);
+      } else { ctx.fillStyle = "rgba(60,40,20,0.4)"; ctx.fillRect(sx - 14, sy - 40, 28, 40); }
       ctx.restore();
+      // 名牌（P1.5 換真名）
+      const nm = n.name || "NPC";
+      ctx.font = "700 10px system-ui"; ctx.textAlign = "center";
+      const tw = ctx.measureText(nm).width;
+      ctx.fillStyle = "rgba(255,235,150,0.9)"; ctx.fillRect(sx - tw / 2 - 4, sy + 2, tw + 8, 13);
+      ctx.fillStyle = "#5a3d10"; ctx.fillText(nm, sx, sy + 12);
     }
 
     // 玩家紙娃娃

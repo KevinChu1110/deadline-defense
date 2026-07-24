@@ -448,7 +448,7 @@ async function launchActionRaid(bossId = "zakum", opts = {}) {
     onExit: () => {
       stopActionRaid();
       setOverlayOpen(els.actionRaidOverlay, false);
-      openArtaleHub();
+      afterActivity(openArtaleHub);
     },
   });
   actionRaidSession.start();
@@ -551,7 +551,7 @@ async function csEnter() {
   hubState._charPicked = true;
   setOverlayOpen(els.charSelectOverlay, false);
   if (_csNext) { const fn = _csNext; _csNext = null; fn(); }
-  else openArtaleHub();
+  else void openTown();
 }
 
 // ── 造型工房（換裝/美髮/整形）──
@@ -696,7 +696,7 @@ async function openHunt(stageId) {
       void reportHuntSession(lastHuntMapId, huntStartedAt);
       stopHunt();
       setOverlayOpen(els.huntOverlay, false);
-      openArtaleHub();
+      afterActivity(openArtaleHub);
     },
   });
   huntSession.start();
@@ -3751,12 +3751,12 @@ els.btnRank?.addEventListener("click", () =>
     openRankOverlay(rankTab || "weekly");
   })
 );
-els.btnEnterHub?.addEventListener("click", () => withAudio(() => openArtaleHub()));
+els.btnEnterHub?.addEventListener("click", () => withAudio(() => { void openTown(); }));
 els.btnActionRaidExit?.addEventListener("click", () =>
   withAudio(() => {
     stopActionRaid();
     setOverlayOpen(els.actionRaidOverlay, false);
-    openArtaleHub();
+    afterActivity(openArtaleHub);
   })
 );
 els.btnHuntExit?.addEventListener("click", () =>
@@ -3764,7 +3764,7 @@ els.btnHuntExit?.addEventListener("click", () =>
     if (huntSession) void reportHuntSession(lastHuntMapId, huntStartedAt);
     stopHunt();
     setOverlayOpen(els.huntOverlay, false);
-    openArtaleHub();
+    afterActivity(openArtaleHub);
   })
 );
 els.btnCsEnter?.addEventListener("click", () => withAudio(() => { stopCsAvatarLoop(); csEnter(); }));
@@ -3783,7 +3783,7 @@ els.btnActionRaidHub?.addEventListener("click", () =>
   withAudio(() => {
     stopActionRaid();
     setOverlayOpen(els.actionRaidOverlay, false);
-    openArtaleHub();
+    afterActivity(openArtaleHub);
   })
 );
 els.btnActionRaidRetry?.addEventListener("click", () =>
@@ -4249,23 +4249,38 @@ if (location.search.includes("dev")) {
 }
 
 // 可探索城鎮 Hub
-let townSession = null;
+let townSession = null, _townData = null, _townReturn = false;
 function stopTown() { if (townSession) { townSession.stop(); townSession = null; } }
+/** 副本結束後：若從城鎮進來則回城鎮，否則回主城 */
+function afterActivity(fallback) { if (_townReturn) { _townReturn = false; void openTown(); } else fallback(); }
 async function openTown() {
-  const town = await (await fetch("/town/fm/town.json")).json();
+  if (!_townData) _townData = await (await fetch("/town/fm/town.json")).json();
+  const town = _townData;
   const activeChar = (hubState.me?.characters || []).find((c) => c.isActive) || (hubState.me?.characters || [])[0];
   let appearance;
   try { appearance = equipToAppearance(await artaleHub.fetchEquip(), activeChar?.class); }
   catch { appearance = loadAppearance(activeChar?.charId, activeChar?.class); }
   const profile = { name: activeChar?.name || "冒險者", level: activeChar?.level || 1, maxHp: 600, maxMp: 300 };
+  // 活動傳送門：放在出生點平台附近
+  const sp = town.portals.find((p) => p.n === "sp") || { x: 179, y: 30 };
+  const acts = [
+    { label: "🗡️ 掛機探險", act: "hunt", x: sp.x - 120, y: 30, color: "#7ed957" },
+    { label: "🛡️ 神木防衛戰", act: "tower", x: sp.x, y: 30, color: "#ffd23c" },
+    { label: "🐉 Boss 突襲", act: "raid", x: sp.x + 120, y: 30, color: "#ff6b6b" },
+  ];
   stopTown();
   hideAllOverlays();
   const overlay = document.querySelector("#town-overlay");
   setOverlayOpen(overlay, true);
   townSession = createTown({
     canvas: document.querySelector("#town-canvas"),
-    town, appearance, charClass: activeChar?.class, profile,
-    onPortal: (p) => { showToast(`傳送門 ${p.n} → ${p.tm}（P1 接副本）`); },
+    town, appearance, charClass: activeChar?.class, profile, acts,
+    onAct: (a) => {
+      _townReturn = true; stopTown(); setOverlayOpen(overlay, false);
+      if (a.act === "hunt") void openHunt("dev");
+      else if (a.act === "raid") void launchActionRaid("zakum");
+      else if (a.act === "tower") { _townReturn = false; openCampaignPanel(1); } // 塔防有自己流程,暫回主城
+    },
     onExit: () => { stopTown(); setOverlayOpen(overlay, false); openTitleScreen(); },
   });
   townSession.start();
