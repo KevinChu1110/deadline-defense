@@ -532,7 +532,7 @@ function startCsAvatarLoop() {
   const loop = (now) => {
     const dt = Math.min(0.05, (now - _csAvatarLast) / 1000); _csAvatarLast = now;
     ctx.clearRect(0, 0, 180, 240);
-    if (_csAvatar) _drawAvatar(ctx, _csAvatar, 90, 232, { anim: "stand1", dt, flip: 1, targetH: 210 });
+    if (_csAvatar) _drawAvatar(ctx, _csAvatar, 90, 232, { anim: "stand1", dt, flip: 1, targetH: 200, maxW: 150 });
     _csAvatarRaf = requestAnimationFrame(loop);
   };
   _csAvatarRaf = requestAnimationFrame(loop);
