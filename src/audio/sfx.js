@@ -62,6 +62,11 @@ const BGM_PLAYLISTS = {
     { src: "/audio/bgm/battle.mp3", volume: BGM_BATTLE_GAIN },
     { src: "/audio/bgm/battle_b.mp3", volume: BGM_BATTLE_GAIN * 0.95 },
   ],
+  // 自由市場城鎮：官方 BGM 就是 Bgm00/FloralLife(= hunt.mp3)，以它開頭最還原
+  town: [
+    { src: "/bgm/hunt.mp3", volume: BGM_MENU_GAIN * 0.95 },   // FloralLife 歡樂自由市場
+    { src: "/bgm/select.mp3", volume: BGM_MENU_GAIN * 0.85 },
+  ],
 };
 
 // Back-compat single-track map (first of playlist)

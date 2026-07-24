@@ -4289,7 +4289,7 @@ async function openTown() {
   // 進場前預載資產 + 進度條，避免物件逐張 pop-in
   await townSession.preload((p) => drawTownLoading(document.querySelector("#town-canvas"), p));
   townSession.start();
-  sfx.startBgm("menu");
+  sfx.startBgm("town"); // 自由市場官方 BGM(FloralLife)
 }
 // 城鎮載入進度條（畫在 town canvas 上）
 function drawTownLoading(canvas, pct) {
@@ -4312,9 +4312,30 @@ document.querySelector("#btn-town-exit")?.addEventListener("click", () => withAu
 
 // NPC 對話框（台詞 + 接真功能選項）
 const NPC_DATA = {
-  "9030000": { line: "冒險家你好！要看看你身上的裝備嗎？", opts: [{ t: "🎒 查看裝備", fn: () => { closeNpcDialog(); openEquip(); } }] },
-  "9030100": { line: "嘿嘿，想知道有哪些怪物、掉哪些寶？看看圖鑑吧！", opts: [{ t: "📖 怪物圖鑑", fn: () => { closeNpcDialog(); openDexOverlay(); } }] },
-  "9300011": { line: "呵呵呵～想看看誰最有錢最強嗎？去看排行榜！", opts: [{ t: "🏆 排行榜", fn: () => { closeNpcDialog(); openRankOverlay(); } }] },
+  // 富蘭德里 — 裝備/造型商人
+  "9030000": {
+    line: "冒險家你好！要打理一下你的裝備跟造型嗎？",
+    opts: [
+      { t: "🎒 查看裝備", fn: () => { closeNpcDialog(); openEquip(); } },
+      { t: "✨ 造型工房", fn: () => { closeNpcDialog(); openCustomize(); } },
+    ],
+  },
+  // 史庫魯基 — 學者/嚮導
+  "9030100": {
+    line: "嘿嘿，想研究怪物情報，還是先看看新手指南？",
+    opts: [
+      { t: "📖 怪物圖鑑", fn: () => { closeNpcDialog(); openDexOverlay(); } },
+      { t: "📘 遊戲指南", fn: () => { closeNpcDialog(); openGuideOverlay("play"); } },
+    ],
+  },
+  // 財神 — 財富/挑戰
+  "9300011": {
+    line: "呵呵呵～想看看誰最有錢最強？還是來挑戰本週試煉？",
+    opts: [
+      { t: "🏆 排行榜", fn: () => { closeNpcDialog(); openRankOverlay(); } },
+      { t: "🗓️ 每週挑戰", fn: () => { closeNpcDialog(); openWeeklyOverlay(); } },
+    ],
+  },
 };
 function closeNpcDialog() {
   setOverlayOpen(document.querySelector("#npc-dialog-overlay"), false);
@@ -4324,7 +4345,10 @@ function openNpcDialog(npc) {
   townSession?.pause();
   const data = NPC_DATA[String(npc.id)];
   const img = document.querySelector("#npc-dialog-img");
-  if (img) img.src = `https://maplestory.io/api/GMS/214/npc/${npc.id}/render/stand`;
+  if (img) {
+    img.onerror = () => { img.onerror = null; img.src = `https://maplestory.io/api/GMS/214/npc/${npc.id}/render/stand`; };
+    img.src = `/town/fm/npc/${npc.id}.gif`; // 已在地化,缺圖才 fallback 官方
+  }
   const nameEl = document.querySelector("#npc-dialog-name");
   if (nameEl) nameEl.textContent = npc.name || "NPC";
   const txtEl = document.querySelector("#npc-dialog-text");
