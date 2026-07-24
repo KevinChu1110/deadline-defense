@@ -4288,11 +4288,11 @@ async function openTown() {
 }
 document.querySelector("#btn-town-exit")?.addEventListener("click", () => withAudio(() => { stopTown(); setOverlayOpen(document.querySelector("#town-overlay"), false); openTitleScreen(); }));
 
-// NPC 對話框
-const NPC_LINES = {
-  "9030000": "冒險家你好！需要寄放物品嗎？倉庫隨時為你開著。",
-  "9030100": "嘿嘿，來看看我這邊有什麼好貨吧！",
-  "9300011": "呵呵呵～祝你在楓之谷發大財、掉寶連連！",
+// NPC 對話框（台詞 + 接真功能選項）
+const NPC_DATA = {
+  "9030000": { line: "冒險家你好！要看看你身上的裝備嗎？", opts: [{ t: "🎒 查看裝備", fn: () => { closeNpcDialog(); openEquip(); } }] },
+  "9030100": { line: "嘿嘿，想知道有哪些怪物、掉哪些寶？看看圖鑑吧！", opts: [{ t: "📖 怪物圖鑑", fn: () => { closeNpcDialog(); openDexOverlay(); } }] },
+  "9300011": { line: "呵呵呵～想看看誰最有錢最強嗎？去看排行榜！", opts: [{ t: "🏆 排行榜", fn: () => { closeNpcDialog(); openRankOverlay(); } }] },
 };
 function closeNpcDialog() {
   setOverlayOpen(document.querySelector("#npc-dialog-overlay"), false);
@@ -4300,15 +4300,22 @@ function closeNpcDialog() {
 }
 function openNpcDialog(npc) {
   townSession?.pause();
+  const data = NPC_DATA[String(npc.id)];
   const img = document.querySelector("#npc-dialog-img");
   if (img) img.src = `https://maplestory.io/api/GMS/214/npc/${npc.id}/render/stand`;
   const nameEl = document.querySelector("#npc-dialog-name");
   if (nameEl) nameEl.textContent = npc.name || "NPC";
   const txtEl = document.querySelector("#npc-dialog-text");
-  if (txtEl) txtEl.textContent = NPC_LINES[String(npc.id)] || `你好，我是「${npc.name || "這裡的居民"}」，歡迎來到自由市場！`;
+  if (txtEl) txtEl.textContent = data?.line || `你好，我是「${npc.name || "這裡的居民"}」，歡迎來到自由市場！`;
   const acts = document.querySelector("#npc-dialog-actions");
   if (acts) {
     acts.innerHTML = "";
+    for (const o of (data?.opts || [])) {
+      const btn = document.createElement("button");
+      btn.className = "btn primary"; btn.textContent = o.t;
+      btn.addEventListener("click", () => withAudio(o.fn));
+      acts.appendChild(btn);
+    }
     const close = document.createElement("button");
     close.className = "btn"; close.textContent = "結束對話";
     close.addEventListener("click", () => withAudio(closeNpcDialog));

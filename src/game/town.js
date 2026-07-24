@@ -18,11 +18,11 @@ export function createTown(opts) {
 
   // 背景圖載入
   const backImgs = town.back.map((b) => { const im = new Image(); im.src = `/town/fm/${b.img}`; return { def: b, img: im }; });
-  // 地圖物件(tile 平台 + obj 裝飾)圖快取
+  // 地圖物件(tile 平台 + obj 裝飾)圖快取（key 對應檔）
   const objImgCache = new Map();
-  function objImg(o) {
-    if (objImgCache.has(o.key)) return objImgCache.get(o.key);
-    const im = new Image(); im.src = `/town/fm/${o.kind}/${o.key}.png`; objImgCache.set(o.key, im); return im;
+  function objImgKey(kind, key) {
+    if (objImgCache.has(key)) return objImgCache.get(key);
+    const im = new Image(); im.src = `/town/fm/${kind}/${key}.png`; objImgCache.set(key, im); return im;
   }
   // NPC 真 sprite（maplestory.io）
   const npcImgCache = new Map();
@@ -41,6 +41,15 @@ export function createTown(opts) {
   let camCX = player.x, camCY = player.y - 80;
 
   const keys = new Set();
+  // 手機虛擬按鍵
+  const isTouch = (typeof window !== "undefined") && (("ontouchstart" in window) || (navigator.maxTouchPoints > 0) || window.matchMedia?.("(pointer: coarse)").matches);
+  const touch = new Set();
+  const touchBtns = [
+    { id: "left", x: 24, y: H - 118, w: 74, h: 74, label: "◀" },
+    { id: "right", x: 108, y: H - 118, w: 74, h: 74, label: "▶" },
+    { id: "up", x: W - 190, y: H - 118, w: 74, h: 74, label: "↑" },
+    { id: "jump", x: W - 100, y: H - 118, w: 74, h: 74, label: "⤴" },
+  ];
   let running = true, paused = false, raf = 0, last = performance.now(), lastDt = 0.016;
   let nearInteract = null, nearType = null, upHeld = false;
 
@@ -60,12 +69,12 @@ export function createTown(opts) {
 
   function update(dt) {
     if (paused) { player.vx = 0; return; } // 對話中暫停操作
-    // 輸入
-    const left = keys.has("ArrowLeft") || keys.has("KeyA");
-    const right = keys.has("ArrowRight") || keys.has("KeyD");
+    // 輸入（鍵盤 + 手機虛擬鍵）
+    const left = keys.has("ArrowLeft") || keys.has("KeyA") || touch.has("left");
+    const right = keys.has("ArrowRight") || keys.has("KeyD") || touch.has("right");
     player.vx = (right ? WALK : 0) - (left ? WALK : 0);
     if (right) player.face = 1; if (left) player.face = -1;
-    if ((keys.has("ArrowUp") || keys.has("Space") || keys.has("KeyW")) && player.onGround) {
+    if ((keys.has("Space") || keys.has("KeyW") || touch.has("jump")) && player.onGround) {
       player.vy = -JUMP; player.onGround = false; sfx.play("mapleJump");
     }
 
@@ -108,7 +117,7 @@ export function createTown(opts) {
       if (d < 55 && Math.abs(a.y - player.y) < 80 && d < bestD) { bestD = d; nearInteract = a; nearType = "act"; }
     }
     // 邊緣觸發：按下↑瞬間才互動
-    const up = keys.has("ArrowUp") || keys.has("KeyW");
+    const up = keys.has("ArrowUp") || touch.has("up");
     if (nearInteract && up && !upHeld) {
       if (nearType === "npc" && onNpc) onNpc(nearInteract);
       else if (nearType === "act" && onAct) onAct(nearInteract);
@@ -156,15 +165,23 @@ export function createTown(opts) {
     ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
     if (!window.__townNoBack) drawBack();
 
-    // 地圖真物件（tile 木製平台 + obj 蘑菇屋/招牌/梯子/自然），世界座標 + z 排序
+    // 地圖真物件（tile 平台 + obj 蘑菇屋/招牌/梯子/自然/動畫大魚旗子），世界座標 + z 排序
     ctx.imageSmoothingEnabled = false;
+    const tms = performance.now();
     for (const o of town.objects || []) {
-      const im = objImg(o);
+      let key = o.key, ow = o.ow, oh = o.oh;
+      if (o.frames) {
+        const tot = o._tot || (o._tot = o.frames.reduce((s, f) => s + f.delay, 0)) || 1;
+        let t = tms % tot, idx = 0;
+        for (let i = 0; i < o.frames.length; i++) { if (t < o.frames[i].delay) { idx = i; break; } t -= o.frames[i].delay; }
+        const fr = o.frames[idx]; key = fr.key; ow = fr.w; oh = fr.h;
+      }
+      const im = objImgKey(o.kind, key);
       if (!im.complete || !im.naturalWidth) continue;
       const [sx, sy] = worldToScreen(o.x, o.y);
-      if (sx - o.ox > W + 60 || sx - o.ox + o.ow < -60) continue; // 水平裁切
-      if (o.f) { ctx.save(); ctx.translate(sx, 0); ctx.scale(-1, 1); ctx.drawImage(im, -(o.ow - o.ox), sy - o.oy, o.ow, o.oh); ctx.restore(); }
-      else ctx.drawImage(im, sx - o.ox, sy - o.oy, o.ow, o.oh);
+      if (sx - o.ox > W + 60 || sx - o.ox + ow < -60) continue; // 水平裁切
+      if (o.f) { ctx.save(); ctx.translate(sx, 0); ctx.scale(-1, 1); ctx.drawImage(im, -(ow - o.ox), sy - o.oy, ow, oh); ctx.restore(); }
+      else ctx.drawImage(im, sx - o.ox, sy - o.oy, ow, oh);
     }
 
     // 活動傳送門（藍光環 + 招牌標籤）
@@ -251,6 +268,20 @@ export function createTown(opts) {
       level: profile?.level, hp: profile?.maxHp || 100, hpMax: profile?.maxHp || 100,
       mp: profile?.maxMp || 60, mpMax: profile?.maxMp || 60, expPct: 0, skills: [],
     });
+    // 手機虛擬按鍵
+    if (isTouch) {
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      for (const b of touchBtns) {
+        const on = touch.has(b.id);
+        ctx.globalAlpha = on ? 0.55 : 0.3;
+        ctx.fillStyle = "#1a1208"; ctx.beginPath(); ctx.roundRect(b.x, b.y, b.w, b.h, 14); ctx.fill();
+        ctx.globalAlpha = on ? 1 : 0.75;
+        ctx.strokeStyle = "#ffe9a8"; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = "#ffe9a8"; ctx.font = "26px system-ui"; ctx.fillText(b.label, b.x + b.w / 2, b.y + b.h / 2 + 2);
+      }
+      ctx.globalAlpha = 1;
+    }
+
     drawMinimap();
   }
 
@@ -300,10 +331,39 @@ export function createTown(opts) {
   }
   const kd = (e) => onKey(e, true), ku = (e) => onKey(e, false);
 
+  // 手機觸控：canvas 座標對應
+  const activePointers = new Map(); // pointerId → btnId
+  function canvasXY(e) {
+    const r = canvas.getBoundingClientRect();
+    return [(e.clientX - r.left) * (W / r.width), (e.clientY - r.top) * (H / r.height)];
+  }
+  function btnAt(cx, cy) {
+    for (const b of touchBtns) if (cx >= b.x && cx <= b.x + b.w && cy >= b.y && cy <= b.y + b.h) return b.id;
+    return null;
+  }
+  function refreshTouch() { touch.clear(); for (const id of activePointers.values()) if (id) touch.add(id); }
+  function pDown(e) {
+    if (paused || !isTouch) return;
+    const [cx, cy] = canvasXY(e); const id = btnAt(cx, cy);
+    if (id) { e.preventDefault(); activePointers.set(e.pointerId, id); refreshTouch(); }
+  }
+  function pMove(e) { if (!activePointers.has(e.pointerId)) return; const [cx, cy] = canvasXY(e); activePointers.set(e.pointerId, btnAt(cx, cy)); refreshTouch(); }
+  function pUp(e) { if (activePointers.delete(e.pointerId)) refreshTouch(); }
+
   return {
-    start() { window.addEventListener("keydown", kd); window.addEventListener("keyup", ku); last = performance.now(); raf = requestAnimationFrame(loop); },
-    stop() { running = false; cancelAnimationFrame(raf); window.removeEventListener("keydown", kd); window.removeEventListener("keyup", ku); },
-    pause() { paused = true; keys.clear(); upHeld = true; },
-    resume() { paused = false; upHeld = true; }, // upHeld=true 避免 resume 當幀立刻再觸發
+    start() {
+      window.addEventListener("keydown", kd); window.addEventListener("keyup", ku);
+      canvas.addEventListener("pointerdown", pDown); canvas.addEventListener("pointermove", pMove);
+      window.addEventListener("pointerup", pUp); window.addEventListener("pointercancel", pUp);
+      last = performance.now(); raf = requestAnimationFrame(loop);
+    },
+    stop() {
+      running = false; cancelAnimationFrame(raf);
+      window.removeEventListener("keydown", kd); window.removeEventListener("keyup", ku);
+      canvas.removeEventListener("pointerdown", pDown); canvas.removeEventListener("pointermove", pMove);
+      window.removeEventListener("pointerup", pUp); window.removeEventListener("pointercancel", pUp);
+    },
+    pause() { paused = true; keys.clear(); touch.clear(); activePointers.clear(); upHeld = true; },
+    resume() { paused = false; upHeld = true; },
   };
 }
