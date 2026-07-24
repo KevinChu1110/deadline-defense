@@ -344,17 +344,18 @@ export function createHunt(opts) {
     for (const m of monsters) {
       const gif = m.def.sprite ? getCachedMob(m.def.sprite) : null;
       const fr = gif ? sampleGifFrame(gif, m.animTime) : null;
-      // 血條
-      ctx.fillStyle = "#1a1208"; ctx.fillRect(m.x - 16, m.y - m.def.radius * 2 - 16, 32, 4);
-      ctx.fillStyle = "#f87171"; ctx.fillRect(m.x - 15, m.y - m.def.radius * 2 - 15, 30 * Math.max(0, m.hp / m.maxHp), 2);
+      let spriteTop = m.y - m.def.radius * 2;
       if (fr) {
         const sc = Math.min(1.4, (m.def.radius * 3.2) / fr.height);
         const w = fr.width * sc, h = fr.height * sc;
+        spriteTop = m.y - h;
         ctx.save(); if (m.hitFlash > 0) ctx.filter = "brightness(2)";
         if (m.face > 0) { ctx.translate(m.x, 0); ctx.scale(-1, 1); ctx.drawImage(fr, -w / 2, m.y - h, w, h); }
         else ctx.drawImage(fr, m.x - w / 2, m.y - h, w, h);
         ctx.restore();
       } else { ctx.fillStyle = m.def.color; ctx.beginPath(); ctx.arc(m.x, m.y - m.def.radius, m.def.radius, 0, Math.PI * 2); ctx.fill(); }
+      // 頭頂 HP + 腳下名條（楓之谷風），畫在 sprite 之上
+      drawMobBar(m, spriteTop);
     }
 
     // 玩家（紙娃娃動畫；載入中用靜態圖或色塊墊）
@@ -398,6 +399,34 @@ export function createHunt(opts) {
     }
 
     drawHud();
+  }
+
+  // 怪物頭頂 HP 條 + 腳下名條（楓之谷風）
+  function drawMobBar(m, spriteTop) {
+    const hpPct = Math.max(0, m.hp / m.maxHp);
+    const bw = Math.max(30, m.def.radius * 2.4);
+    const by = (spriteTop ?? m.y - m.def.radius * 2) - 8;
+    // HP 條：深框 + 綠漸層(低血轉紅)
+    ctx.save();
+    ctx.fillStyle = "#000"; ctx.fillRect(m.x - bw / 2 - 1, by - 1, bw + 2, 6);
+    ctx.fillStyle = "#3a2418"; ctx.fillRect(m.x - bw / 2, by, bw, 4);
+    if (hpPct > 0) {
+      const gd = ctx.createLinearGradient(0, by, 0, by + 4);
+      if (hpPct > 0.3) { gd.addColorStop(0, "#a8f06a"); gd.addColorStop(1, "#48b024"); }
+      else { gd.addColorStop(0, "#ff9a6a"); gd.addColorStop(1, "#d43a1a"); }
+      ctx.fillStyle = gd; ctx.fillRect(m.x - bw / 2, by, bw * hpPct, 4);
+    }
+    // 名條：怪物中文名，腳下(灰底白字)
+    const name = m.def.nameZh || m.def.name || "";
+    if (name) {
+      ctx.font = "700 11px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+      const tw = ctx.measureText(name).width;
+      const ny = m.y + 12;
+      ctx.fillStyle = "rgba(0,0,0,0.45)"; ctx.fillRect(m.x - tw / 2 - 4, ny - 11, tw + 8, 14);
+      ctx.lineWidth = 2.5; ctx.strokeStyle = "rgba(0,0,0,0.7)"; ctx.strokeText(name, m.x, ny);
+      ctx.fillStyle = "#fff"; ctx.fillText(name, m.x, ny);
+    }
+    ctx.restore();
   }
 
   function drawHud() {
