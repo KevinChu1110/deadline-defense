@@ -13,6 +13,7 @@ import { createAvatar, drawAvatar } from "./avatar.js";
 import { drawHud as drawOfficialHud } from "./hud.js";
 import { drawDmgNumber } from "./damage-num.js";
 import { sfx } from "../audio/sfx.js";
+import { drawLevelUp, LEVELUP_DURATION } from "./levelup-fx.js";
 
 const W = 960, H = 540, GROUND = 452, GRAVITY = 1400;
 
@@ -112,6 +113,7 @@ export function createHunt(opts) {
   const projectiles = [];
   const floats = [];
   const coins = []; // 楓幣掉落 {x,y,vx,vy,landed,t,amt}
+  let levelupT = -1; // >=0 表示升級光效播放中
   const fx = [];
   const buffs = []; // {kind, mag, until, name}
   let spawnT = 0;
@@ -165,6 +167,8 @@ export function createHunt(opts) {
       m.alive = false; player.kills++;
       killLog[m.def.id] = (killLog[m.def.id] || 0) + 1;
       floatText(m.x, m.y - 30, "+經驗", "#fde68a");
+      // 每 25 殺 = 升級慶祝(官方光效 + 升級音)
+      if (player.kills % 25 === 0) { levelupT = 0; sfx.play("levelUp"); }
       // 楓幣掉落：弧線噴出
       const n = 1 + Math.floor(Math.random() * 3);
       for (let i = 0; i < n; i++) coins.push({ x: m.x + rnd(-6, 6), y: m.y - m.def.radius, vx: rnd(-140, 140), vy: rnd(-320, -200), landed: false, t: 0, amt: 1 + Math.floor((m.def.level || 1) * rnd(0.5, 1.5)) });
@@ -335,6 +339,7 @@ export function createHunt(opts) {
       if (c.t > 8) coins.splice(i, 1); // 未撿超時消失
     }
     for (let i = buffs.length - 1; i >= 0; i--) if (buffs[i].until <= performance.now()) buffs.splice(i, 1);
+    if (levelupT >= 0) { levelupT += dt; if (levelupT > LEVELUP_DURATION) levelupT = -1; }
     updateSkillFx(fx, dt);
   }
 
@@ -402,6 +407,9 @@ export function createHunt(opts) {
       }
     }
     ctx.restore();
+
+    // 升級光效（官方 LevelUp，覆蓋玩家）
+    if (levelupT >= 0) drawLevelUp(ctx, player.x, player.y + 4, levelupT);
 
     // 楓幣（金幣：金漸層+高光）
     for (const c of coins) {
