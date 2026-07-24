@@ -466,6 +466,7 @@ async function openHunt(stageId) {
   const activeChar = (hubState.me?.characters || []).find((c) => c.isActive) || (hubState.me?.characters || [])[0];
   huntSession = createHunt({
     canvas: els.huntCanvas, profile, enemies, theme,
+    bgCode: stage.continent,
     charClass: activeChar?.class,
     keybinds: loadKeybinds(),
     onExit: () => {

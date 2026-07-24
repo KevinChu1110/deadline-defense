@@ -65,9 +65,13 @@ const DEFAULT_SKILL_KEYS = ["Digit1", "Digit2", "Digit3", "Digit4"];
 export const DEFAULT_KEYBINDS = { attack: "KeyJ", jump: "Space", dash: "KeyL", skills: [...DEFAULT_SKILL_KEYS] };
 
 export function createHunt(opts) {
-  const { canvas, profile, enemies, theme, keybinds, charClass, onExit } = opts;
+  const { canvas, profile, enemies, theme, keybinds, charClass, bgCode, onExit } = opts;
   const ctx = canvas.getContext("2d");
   canvas.width = W; canvas.height = H;
+
+  // 真實地圖背景（Map.wz 擷取）
+  let bgImg = null;
+  if (bgCode) { const im = new Image(); im.src = `/hunt-bg/${bgCode}.png`; im.onload = () => (bgImg = im); }
 
   const keys = new Set();
   let running = true, raf = 0, last = performance.now();
@@ -305,11 +309,19 @@ export function createHunt(opts) {
 
   // ── 繪製 ──
   function draw() {
-    // 背景（依主題）
+    // 天空漸層（背景底）
     const sky = theme?.sky || ["#1a2744", "#2d1f3d"];
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, sky[0]); g.addColorStop(1, sky[1]);
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    // 真實地圖背景（貼近地面，橫向平鋪填滿）
+    if (bgImg) {
+      const targetH = Math.min(H * 0.78, GROUND);
+      const sc = targetH / bgImg.height;
+      const dw = bgImg.width * sc, dh = targetH;
+      const yTop = GROUND - dh + 30; // 讓底緣壓在地面下一點
+      for (let x = 0; x < W; x += dw) ctx.drawImage(bgImg, x, yTop, dw, dh);
+    }
     ctx.fillStyle = theme?.ground?.[1] || "#3d2a18"; ctx.fillRect(0, GROUND, W, H - GROUND);
     ctx.fillStyle = "rgba(255,248,220,0.25)"; ctx.fillRect(0, GROUND, W, 3);
 
