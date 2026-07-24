@@ -68,6 +68,7 @@ import {
 import * as artaleHub from "./artale-hub.js";
 import { createActionRaid } from "./game/action-raid.js";
 import { createHunt, keyLabel, DEFAULT_KEYBINDS } from "./game/hunt.js";
+import { createAvatar as _mkAvatar, drawAvatar as _drawAvatar } from "./game/avatar.js";
 import { loadAppearance, saveAppearance, defaultAppearance, AVATAR_CATALOG, appearanceItems } from "./data/avatar-items.js";
 import { equipToAppearance } from "./data/avatar-map.js";
 import { getStageById } from "./data/stages.js";
@@ -278,6 +279,9 @@ const els = {
   btnCzCancel: document.querySelector("#btn-cz-cancel"),
   charSelectOverlay: document.querySelector("#char-select-overlay"),
   csFigures: document.querySelector("#cs-figures"),
+  csAvatarCanvas: document.querySelector("#cs-avatar-canvas"),
+  csName: document.querySelector("#cs-name"),
+  csStats: document.querySelector("#cs-stats"),
   btnCsEnter: document.querySelector("#btn-cs-enter"),
   btnCsBack: document.querySelector("#btn-cs-back"),
   huntPickerOverlay: document.querySelector("#hunt-picker-overlay"),
@@ -446,8 +450,9 @@ async function launchActionRaid(bossId = "zakum", opts = {}) {
 }
 
 // ── 楓之谷風角色選擇 ──
-let _csSelected = null;
-function openCharSelect() {
+let _csSelected = null, _csNext = null;
+function openCharSelect(nextAction) {
+  _csNext = nextAction || null;
   screen = "charselect";
   document.body.classList.add("home-open");
   hideAllOverlays();
@@ -481,13 +486,53 @@ function renderCharFigures() {
     btn.addEventListener("click", () => {
       _csSelected = c.charId;
       renderCharFigures();
+      showCharDetail(c);
       if (els.btnCsEnter) els.btnCsEnter.disabled = false;
       sfx.play("uiClick");
     });
     els.csFigures.appendChild(btn);
   });
   if (els.btnCsEnter) els.btnCsEnter.disabled = !_csSelected;
+  // 預設顯示已選/第一個角色詳情
+  const sel = chars.find((c) => c.charId === _csSelected) || chars[0];
+  if (sel) showCharDetail(sel);
 }
+
+// 角色詳情：素質面板 + 會動的紙娃娃
+let _csAvatar = null, _csAvatarRaf = 0, _csAvatarLast = 0;
+function showCharDetail(c) {
+  if (els.csName) els.csName.textContent = c.name || artaleHub.classLabel(c.class);
+  const st = c.levelStats || {};
+  const setTxt = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  setTxt("cs-st-job", artaleHub.classLabel(c.class));
+  setTxt("cs-st-lv", c.level ?? "—");
+  setTxt("cs-st-str", st.str ?? st.STR ?? "—");
+  setTxt("cs-st-dex", st.dex ?? st.DEX ?? "—");
+  setTxt("cs-st-int", st.int ?? st.INT ?? "—");
+  setTxt("cs-st-luk", st.luk ?? st.LUK ?? "—");
+  if (els.csStats) els.csStats.hidden = false;
+  // 會動的紙娃娃（自訂造型優先，否則職業預設）
+  _csAvatar = createAvatarObj(loadAppearance(c.charId, c.class));
+  startCsAvatarLoop();
+}
+function createAvatarObj(app) {
+  // 延遲 import 已在頂部；用 avatar.js
+  return _mkAvatar(app);
+}
+function startCsAvatarLoop() {
+  if (_csAvatarRaf) return;
+  const ctx = els.csAvatarCanvas?.getContext("2d");
+  if (!ctx) return;
+  _csAvatarLast = performance.now();
+  const loop = (now) => {
+    const dt = Math.min(0.05, (now - _csAvatarLast) / 1000); _csAvatarLast = now;
+    ctx.clearRect(0, 0, 180, 240);
+    if (_csAvatar) _drawAvatar(ctx, _csAvatar, 90, 232, { anim: "walk1", dt, flip: 1, targetH: 210 });
+    _csAvatarRaf = requestAnimationFrame(loop);
+  };
+  _csAvatarRaf = requestAnimationFrame(loop);
+}
+function stopCsAvatarLoop() { if (_csAvatarRaf) { cancelAnimationFrame(_csAvatarRaf); _csAvatarRaf = 0; } }
 async function csEnter() {
   if (!_csSelected) return;
   const cur = (hubState.me?.characters || []).find((c) => c.isActive);
@@ -499,7 +544,8 @@ async function csEnter() {
   }
   hubState._charPicked = true;
   setOverlayOpen(els.charSelectOverlay, false);
-  openArtaleHub();
+  if (_csNext) { const fn = _csNext; _csNext = null; fn(); }
+  else openArtaleHub();
 }
 
 // ── 造型工房（換裝/美髮/整形）──
@@ -2348,10 +2394,28 @@ function openTitleScreen() {
   let nextIdx = STAGES.findIndex((_, i) => isStageUnlocked(i, progress) && !progress.cleared[STAGES[i].id]);
   if (nextIdx < 0) nextIdx = Math.min(STAGES.length - 1, (progress.unlocked || 1) - 1);
   refreshHomeMeta(progress, nextIdx);
+  paintTitleAuth();
   setOverlayOpen(els.stageOverlay, true);
   void sfx.unlock();
   if (!sfx.muted) sfx.startBgm("menu");
   if (game) ui.onState(game.getPublicState());
+}
+
+/** 開場選單依登入狀態切換：未登入=Discord登入；已登入=三大遊戲內容 */
+function paintTitleAuth() {
+  const logged = !!hubState.me;
+  document.querySelectorAll(".title-auth-in").forEach((el) => { el.hidden = !logged; });
+  document.querySelectorAll(".title-auth-out").forEach((el) => { el.hidden = logged; });
+}
+/** 開場先探登入狀態(顯示正確選單) */
+async function bootAuthCheck() {
+  try {
+    await artaleHub.healthCheck();
+    const sess = await artaleHub.fetchSessionMe();
+    hubState.session = sess.session;
+    hubState.me = sess.me;
+  } catch { hubState.me = null; }
+  paintTitleAuth();
 }
 
 /** 開始遊戲 → 三階段精靈（存檔 → 模式 → 關卡/Boss） */
@@ -3670,9 +3734,9 @@ els.btnHuntExit?.addEventListener("click", () =>
     openArtaleHub();
   })
 );
-els.btnCsEnter?.addEventListener("click", () => withAudio(csEnter));
+els.btnCsEnter?.addEventListener("click", () => withAudio(() => { stopCsAvatarLoop(); csEnter(); }));
 els.btnCsCustomize?.addEventListener("click", () => withAudio(openCustomize));
-els.btnCsBack?.addEventListener("click", () => withAudio(() => { setOverlayOpen(els.charSelectOverlay, false); openTitleScreen(); }));
+els.btnCsBack?.addEventListener("click", () => withAudio(() => { stopCsAvatarLoop(); setOverlayOpen(els.charSelectOverlay, false); openTitleScreen(); }));
 els.btnCzSave?.addEventListener("click", () => withAudio(czSave));
 els.btnCzCancel?.addEventListener("click", () => withAudio(() => setOverlayOpen(els.customizeOverlay, false)));
 els.btnHuntPickerClose?.addEventListener("click", () => withAudio(() => { setOverlayOpen(els.huntPickerOverlay, false); openArtaleHub(); }));
@@ -3701,6 +3765,19 @@ els.btnStartGame?.addEventListener("click", () =>
     openCampaignPanel(1);
   })
 );
+// 未登入：Discord 登入
+document.querySelector("#btn-maple-login")?.addEventListener("click", () => withAudio(() => artaleHub.startDiscordOAuth()));
+// 已登入模式：掛機探險 / Boss 突襲
+document.querySelector("#btn-mode-hunt")?.addEventListener("click", () => withAudio(() => {
+  if (!hubState.me) return artaleHub.startDiscordOAuth();
+  if ((hubState.me.characters || []).length) openCharSelect(openHuntPicker);
+  else openHuntPicker();
+}));
+document.querySelector("#btn-mode-raid")?.addEventListener("click", () => withAudio(() => {
+  if (!hubState.me) return artaleHub.startDiscordOAuth();
+  hubState.tab = "combat";
+  openArtaleHub();
+}));
 els.btnCampaignBack?.addEventListener("click", () =>
   withAudio(() => {
     handleCampaignBack();
@@ -4099,3 +4176,4 @@ renderSpecialistCards(game.getPublicState());
 ui.onState(game.getPublicState());
 game.start();
 openTitleScreen();
+void bootAuthCheck();

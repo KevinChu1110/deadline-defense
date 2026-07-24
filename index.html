@@ -174,15 +174,27 @@
                      設為 primary 首選；「進入主城」需 Discord 登入，新手點進去是死路，
                      所以降為次要並標註需登入。 -->
                 <nav class="title-menu-btns" aria-label="主選單">
-                  <button type="button" id="btn-start-game" class="btn title-btn title-btn-primary">
+                  <!-- 未登入：Discord 登入為主 -->
+                  <button type="button" id="btn-maple-login" class="btn title-btn title-btn-primary title-auth-out" hidden>
                     <span class="btn-shine" aria-hidden="true"></span>
+                    🍁 用 Discord 登入
+                  </button>
+                  <!-- 已登入：三大遊戲內容 -->
+                  <button type="button" id="btn-mode-hunt" class="btn title-btn title-btn-primary title-auth-in" hidden>
+                    <span class="btn-shine" aria-hidden="true"></span>
+                    🗡️ 掛機探險
+                  </button>
+                  <button type="button" id="btn-start-game" class="btn title-btn title-btn-hub">
                     🛡️ 神木防衛戰
+                  </button>
+                  <button type="button" id="btn-mode-raid" class="btn title-btn title-btn-hub title-auth-in" hidden>
+                    🐉 Boss 突襲
+                  </button>
+                  <button type="button" id="btn-enter-hub" class="btn title-btn title-btn-weekly title-auth-in" hidden>
+                    🏛️ 進入主城
                   </button>
                   <button type="button" id="btn-weekly" class="btn title-btn title-btn-weekly">
                     ⚔️ 每週挑戰
-                  </button>
-                  <button type="button" id="btn-enter-hub" class="btn title-btn title-btn-hub">
-                    🏛️ 進入主城 <small class="title-btn-note">需 Discord 登入</small>
                   </button>
                   <button type="button" id="btn-continue" class="btn title-btn title-btn-continue" hidden>
                     ↻ 繼續防衛戰
@@ -350,6 +362,22 @@
             <div class="maple-book-frame" aria-hidden="true"></div>
             <div class="cs-inner">
               <div class="cs-title">選擇角色</div>
+              <div class="cs-main">
+                <div class="cs-stage">
+                  <canvas id="cs-avatar-canvas" class="cs-avatar-canvas" width="180" height="240" aria-label="角色預覽"></canvas>
+                  <div id="cs-name" class="cs-stage-name"></div>
+                </div>
+                <div id="cs-stats" class="cs-stats" hidden>
+                  <div class="cs-stats-row"><span>JOB</span><b id="cs-st-job">—</b></div>
+                  <div class="cs-stats-row"><span>LV.</span><b id="cs-st-lv">—</b></div>
+                  <div class="cs-stats-grid">
+                    <div><span>STR</span><b id="cs-st-str">—</b></div>
+                    <div><span>DEX</span><b id="cs-st-dex">—</b></div>
+                    <div><span>INT</span><b id="cs-st-int">—</b></div>
+                    <div><span>LUK</span><b id="cs-st-luk">—</b></div>
+                  </div>
+                </div>
+              </div>
               <div id="cs-figures" class="cs-figures"></div>
               <div class="cs-signboard">
                 <button type="button" id="btn-cs-enter" class="cs-sign-btn" disabled>進入遊戲</button>

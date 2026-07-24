@@ -1014,6 +1014,55 @@ body.is-dragging-job .specialist-card {
   color: #7a1f1f;
   text-shadow: 0 2px 0 rgba(255, 255, 255, 0.6);
 }
+.cs-main {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+}
+.cs-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.cs-avatar-canvas { image-rendering: pixelated; }
+.cs-stage-name {
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: #fff8e0;
+  background: rgba(60, 40, 20, 0.7);
+  padding: 2px 12px;
+  border-radius: 10px;
+}
+.cs-stats {
+  background: rgba(255, 250, 235, 0.92);
+  border: 2px solid rgba(120, 80, 40, 0.5);
+  border-radius: 12px;
+  padding: 12px 16px;
+  min-width: 160px;
+  box-shadow: 0 4px 14px rgba(60, 40, 20, 0.3);
+}
+.cs-stats-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+.cs-stats-row span, .cs-stats-grid span { color: #7c5a2e; font-weight: 700; }
+.cs-stats-row b, .cs-stats-grid b { color: #3a2412; }
+.cs-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 14px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(120, 80, 40, 0.3);
+  font-size: 0.82rem;
+}
+.cs-stats-grid > div { display: flex; justify-content: space-between; }
+
 .cs-figures {
   display: flex;
   flex-wrap: wrap;

@@ -46,9 +46,9 @@ const SAMPLE_MAP = {
  */
 const BGM_PLAYLISTS = {
   menu: [
-    { src: "/audio/bgm/menu.mp3", volume: BGM_MENU_GAIN },
-    { src: "/audio/bgm/menu_b.mp3", volume: BGM_MENU_GAIN * 0.95 },
-    { src: "/audio/bgm/field.mp3", volume: BGM_MENU_GAIN * 0.9 },
+    { src: "/bgm/login.mp3", volume: BGM_MENU_GAIN },   // 楓之谷登入主題(WZ BgmUI/Title)
+    { src: "/bgm/hunt.mp3", volume: BGM_MENU_GAIN * 0.9 }, // FloralLife 歡樂野外
+    { src: "/bgm/select.mp3", volume: BGM_MENU_GAIN * 0.9 }, // 頻道選擇
   ],
   battle: [
     { src: "/audio/bgm/battle.mp3", volume: BGM_BATTLE_GAIN },
