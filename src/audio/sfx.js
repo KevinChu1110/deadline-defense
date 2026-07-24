@@ -13,13 +13,14 @@ const BGM_BATTLE_GAIN = 0.55;
 const SFX_GAIN = 0.9;
 
 const SAMPLE_MAP = {
-  uiClick: "/audio/ui/click.ogg",
-  uiSelect: "/audio/ui/select.ogg",
-  uiOk: "/audio/ui/ok.ogg",
-  uiConfirm: "/audio/ui/confirm.ogg",
-  uiToggle: "/audio/ui/toggle.ogg",
-  uiHover: "/audio/ui/hover.ogg",
-  uiPluck: "/audio/ui/pluck.ogg",
+  // 官方楓之谷 UI 音效(Sound.wz UI.img)
+  uiClick: "/audio/ui-msw/BtMouseClick.mp3",
+  uiSelect: "/audio/ui-msw/WorldSelect.mp3",
+  uiOk: "/audio/ui-msw/DlgNotice.mp3",
+  uiConfirm: "/audio/ui-msw/MenuUp.mp3",
+  uiToggle: "/audio/ui-msw/Tab.mp3",
+  uiHover: "/audio/ui-msw/BtMouseOver.mp3",
+  uiPluck: "/audio/ui-msw/MenuDown.mp3",
   error: "/audio/ui/error.ogg",
   deploy: "/audio/sfx/deploy.ogg",
   sell: "/audio/sfx/sell.ogg",
@@ -573,6 +574,9 @@ class SfxEngine {
 
     if (name === "shoot" && !this._throttle("shoot", 45)) return;
     if (name === "hit" && !this._throttle("hit", 35)) return;
+    // UI 音效節流：讓「明確呼叫 + 全域委派」不會重複播放
+    if (name === "uiClick" && !this._throttle("uiClick", 60)) return;
+    if (name === "uiHover" && !this._throttle("uiHover", 50)) return;
 
     const sampleKey = this._resolveSampleKey(name, opts);
     const buf = sampleKey ? this._buffers.get(sampleKey) : null;

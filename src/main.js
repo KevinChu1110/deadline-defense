@@ -4185,6 +4185,21 @@ game.start();
 openTitleScreen();
 void bootAuthCheck();
 
+// 全域官方 UI 音效：任何可點元素 click→BtMouseClick、hover→BtMouseOver
+// (sfx 內對 uiClick/uiHover 有節流，與各處明確呼叫不會重複播放)
+(() => {
+  const CLICKABLE = "button, a, [role=\"button\"], .cs-fig, .title-btn, .title-icon-btn, .cs-sign-btn";
+  document.addEventListener("click", (e) => {
+    const el = e.target?.closest?.(CLICKABLE);
+    if (el && !el.disabled) sfx.play("uiClick");
+  }, true);
+  document.addEventListener("pointerover", (e) => {
+    if (e.pointerType && e.pointerType !== "mouse") return; // 手機不觸發 hover 音
+    const el = e.target?.closest?.(CLICKABLE);
+    if (el && !el.disabled) sfx.play("uiHover");
+  }, true);
+})();
+
 // DEV：截圖驗證登入態畫面（?devcs / ?devhunt），僅測試用
 if (location.search.includes("dev")) {
   window.__devChars = () => {
