@@ -72,6 +72,9 @@ export function createHunt(opts) {
   // 真實地圖背景（Map.wz 擷取）
   let bgImg = null;
   if (bgCode) { const im = new Image(); im.src = `/hunt-bg/${bgCode}.png`; im.onload = () => (bgImg = im); }
+  // 玩家紙娃娃立繪
+  let avatarImg = null;
+  if (charClass) { const a = new Image(); a.src = `/avatars/${charClass}.png`; a.onload = () => (avatarImg = a); }
 
   const keys = new Set();
   let running = true, raf = 0, last = performance.now();
@@ -342,14 +345,26 @@ export function createHunt(opts) {
       } else { ctx.fillStyle = m.def.color; ctx.beginPath(); ctx.arc(m.x, m.y - m.def.radius, m.def.radius, 0, Math.PI * 2); ctx.fill(); }
     }
 
-    // 玩家
+    // 玩家（紙娃娃立繪；還沒載入用色塊墊）
     ctx.save();
     if (player.invuln > 0 && Math.floor(player.invuln * 20) % 2 === 0) ctx.globalAlpha = 0.4;
-    const body = { mage: "#60a5fa", thief: "#a78bfa", archer: "#4ade80", pirate: "#fbbf24" }[profile.family] || "#f87171";
-    ctx.fillStyle = "#2a1f14"; ctx.fillRect(player.x - player.w / 2 - 1, player.y - player.h - 1, player.w + 2, player.h + 2);
-    ctx.fillStyle = body; ctx.fillRect(player.x - player.w / 2, player.y - player.h, player.w, player.h);
-    ctx.fillStyle = "#f0c8a0"; ctx.fillRect(player.x - 9, player.y - player.h - 15, 18, 15);
-    ctx.fillStyle = "#1a1a1a"; ctx.fillRect(player.x + player.face * 4 - 2, player.y - player.h - 9, 4, 4);
+    if (avatarImg) {
+      ctx.imageSmoothingEnabled = false;
+      const sc = (player.h + 24) / avatarImg.height;
+      const w = avatarImg.width * sc, h = avatarImg.height * sc;
+      const bob = player.onGround ? Math.sin(performance.now() / 200) * 1 : 0;
+      if (player.face < 0) {
+        ctx.translate(player.x, 0); ctx.scale(-1, 1);
+        ctx.drawImage(avatarImg, -w / 2, player.y - h + 6 + bob, w, h);
+      } else {
+        ctx.drawImage(avatarImg, player.x - w / 2, player.y - h + 6 + bob, w, h);
+      }
+    } else {
+      const body = { mage: "#60a5fa", thief: "#a78bfa", archer: "#4ade80", pirate: "#fbbf24" }[profile.family] || "#f87171";
+      ctx.fillStyle = "#2a1f14"; ctx.fillRect(player.x - player.w / 2 - 1, player.y - player.h - 1, player.w + 2, player.h + 2);
+      ctx.fillStyle = body; ctx.fillRect(player.x - player.w / 2, player.y - player.h, player.w, player.h);
+      ctx.fillStyle = "#f0c8a0"; ctx.fillRect(player.x - 9, player.y - player.h - 15, 18, 15);
+    }
     ctx.restore();
 
     for (const p of projectiles) { ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill(); }

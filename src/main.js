@@ -459,11 +459,11 @@ function renderCharFigures() {
     btn.type = "button";
     btn.className = "cs-fig" + (_csSelected === c.charId ? " is-picked" : "");
     btn.dataset.charId = c.charId;
-    const portrait = `/portraits/${c.class || "hero"}.png`;
+    const avatar = `/avatars/${c.class || "hero"}.png`;
     btn.innerHTML = `
       <div class="cs-fig-plate">
-        <img class="cs-fig-img" src="${escapeHtml(portrait)}" alt="" draggable="false"
-             onerror="this.src='/portraits/hero.png'" />
+        <img class="cs-fig-img cs-fig-avatar" src="${escapeHtml(avatar)}" alt="" draggable="false"
+             onerror="this.onerror=null;this.src='/avatars/hero.png'" />
       </div>
       <div class="cs-fig-name">${escapeHtml(c.name || artaleHub.classLabel(c.class))}</div>
       <div class="cs-fig-meta">${escapeHtml(artaleHub.classLabel(c.class))} · Lv.${c.level ?? "?"}</div>`;

@@ -1022,6 +1022,11 @@ body.is-dragging-job .specialist-card {
   object-fit: contain;
   image-rendering: auto;
 }
+.cs-fig-avatar {
+  image-rendering: pixelated;
+  transform: scale(1.5);
+  transform-origin: center 60%;
+}
 .cs-fig-name {
   font-weight: 800;
   font-size: 0.86rem;
