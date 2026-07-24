@@ -77,6 +77,10 @@ export function createHunt(opts) {
   // 真實地圖背景（Map.wz 擷取）
   let bgImg = null;
   if (bgCode) { const im = new Image(); im.src = `/hunt-bg/${bgCode}.png`; im.onload = () => (bgImg = im); }
+  // 視差飄雲層（官方雲朵）
+  const cloudFar = new Image(); cloudFar.src = "/hunt-bg/cloud_far.png";
+  const cloudNear = new Image(); cloudNear.src = "/hunt-bg/cloud_near.png";
+  let bgT = 0; // 背景動畫時間累加
   // 玩家紙娃娃：動畫版(appearance) + 靜態墊底
   const avatar = appearance ? createAvatar(appearance) : null;
   let avatarImg = null;
@@ -341,6 +345,7 @@ export function createHunt(opts) {
     }
     for (let i = buffs.length - 1; i >= 0; i--) if (buffs[i].until <= performance.now()) buffs.splice(i, 1);
     if (levelupT >= 0) { levelupT += dt; if (levelupT > LEVELUP_DURATION) levelupT = -1; }
+    bgT += dt;
     updateSkillFx(fx, dt);
   }
 
@@ -351,17 +356,41 @@ export function createHunt(opts) {
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, sky[0]); g.addColorStop(1, sky[1]);
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    // 玩家位移驅動的視差量（-1~1）
+    const parX = (player.x - W / 2) / (W / 2);
     // 真實地圖背景（貼近地面，橫向平鋪填滿）。平滑取樣把 WZ 抖動色偏averaging掉
     if (bgImg) {
       const targetH = Math.min(H * 0.78, GROUND);
       const sc = targetH / bgImg.height;
       const dw = bgImg.width * sc, dh = targetH;
       const yTop = GROUND - dh + 30;
+      const shift = -parX * 22; // 中景隨玩家反向微移
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
       ctx.globalAlpha = 0.96;
-      for (let x = 0; x < W; x += dw) ctx.drawImage(bgImg, x, yTop, dw, dh);
+      for (let x = -dw + (shift % dw); x < W + dw; x += dw) ctx.drawImage(bgImg, x, yTop, dw, dh);
       ctx.globalAlpha = 1;
+    }
+    // 遠景飄雲層（畫在 bg 之上、clip 在天空區，半透明兩層營造縱深）
+    if (cloudFar.complete && cloudFar.naturalWidth) {
+      ctx.save();
+      ctx.beginPath(); ctx.rect(0, 0, W, H * 0.34); ctx.clip();
+      ctx.imageSmoothingEnabled = true;
+      const layers = [
+        { img: cloudFar, spd: 6, alpha: 0.28, y: 10, sc: 0.7 },
+        { img: cloudNear, spd: 15, alpha: 0.42, y: 40, sc: 0.85 },
+      ];
+      for (const L of layers) {
+        if (!L.img.complete || !L.img.naturalWidth) continue;
+        const iw = L.img.width * L.sc, ih = L.img.height * L.sc, gap = 260;
+        const period = iw + gap;
+        let off = (bgT * L.spd + parX * 26 * (L.spd / 15)) % period;
+        if (off < 0) off += period;
+        ctx.globalAlpha = L.alpha;
+        for (let x = -off; x < W + iw; x += period) ctx.drawImage(L.img, x, L.y, iw, ih);
+      }
+      ctx.globalAlpha = 1;
+      ctx.restore();
     }
     ctx.fillStyle = theme?.ground?.[1] || "#3d2a18"; ctx.fillRect(0, GROUND, W, H - GROUND);
     ctx.fillStyle = "rgba(255,248,220,0.25)"; ctx.fillRect(0, GROUND, W, 3);
