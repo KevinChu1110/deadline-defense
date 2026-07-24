@@ -2401,9 +2401,13 @@ function openTitleScreen() {
   if (game) ui.onState(game.getPublicState());
 }
 
-/** 開場選單依登入狀態切換：未登入=Discord登入；已登入=三大遊戲內容 */
+/** 開場依登入狀態切換：未登入=官方登入頁；已登入=模式選擇選單 */
 function paintTitleAuth() {
   const logged = !!hubState.me;
+  const login = document.getElementById("title-login");
+  const menu = document.getElementById("title-menu");
+  if (login) login.hidden = logged;
+  if (menu) menu.hidden = !logged;
   document.querySelectorAll(".title-auth-in").forEach((el) => { el.hidden = !logged; });
   document.querySelectorAll(".title-auth-out").forEach((el) => { el.hidden = logged; });
 }
@@ -3765,7 +3769,10 @@ els.btnStartGame?.addEventListener("click", () =>
     openCampaignPanel(1);
   })
 );
-// 未登入：Discord 登入
+// 官方登入頁
+document.querySelector("#btn-login-discord")?.addEventListener("click", () => withAudio(() => artaleHub.startDiscordOAuth()));
+document.querySelector("#btn-login-guest")?.addEventListener("click", () => withAudio(() => openCampaignPanel(1)));
+// 未登入：Discord 登入(選單內備用)
 document.querySelector("#btn-maple-login")?.addEventListener("click", () => withAudio(() => artaleHub.startDiscordOAuth()));
 // 已登入模式：掛機探險 / Boss 突襲
 document.querySelector("#btn-mode-hunt")?.addEventListener("click", () => withAudio(() => {
