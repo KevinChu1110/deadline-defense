@@ -18,6 +18,12 @@ export function createTown(opts) {
 
   // 背景圖載入
   const backImgs = town.back.map((b) => { const im = new Image(); im.src = `/town/fm/${b.img}`; return { def: b, img: im }; });
+  // 地圖物件(tile 平台 + obj 裝飾)圖快取
+  const objImgCache = new Map();
+  function objImg(o) {
+    if (objImgCache.has(o.key)) return objImgCache.get(o.key);
+    const im = new Image(); im.src = `/town/fm/${o.kind}/${o.key}.png`; objImgCache.set(o.key, im); return im;
+  }
   // NPC 真 sprite（maplestory.io）
   const npcImgCache = new Map();
   function npcImg(id) {
@@ -150,14 +156,15 @@ export function createTown(opts) {
     ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
     if (!window.__townNoBack) drawBack();
 
-    // foothold 平台（P0 可視化，之後換真 tile 美術）
-    ctx.strokeStyle = "rgba(90,60,30,0.9)"; ctx.lineWidth = 5; ctx.lineCap = "round";
-    for (const f of town.foothold) {
-      if (f.x1 === f.x2) continue;
-      const [ax, ay] = worldToScreen(f.x1, f.y1), [bx, by] = worldToScreen(f.x2, f.y2);
-      if ((ax < -20 && bx < -20) || (ax > W + 20 && bx > W + 20)) continue;
-      ctx.strokeStyle = "rgba(70,45,20,0.85)"; ctx.beginPath(); ctx.moveTo(ax, ay + 2); ctx.lineTo(bx, by + 2); ctx.stroke();
-      ctx.strokeStyle = "rgba(120,180,70,0.95)"; ctx.beginPath(); ctx.moveTo(ax, ay - 1); ctx.lineTo(bx, by - 1); ctx.stroke();
+    // 地圖真物件（tile 木製平台 + obj 蘑菇屋/招牌/梯子/自然），世界座標 + z 排序
+    ctx.imageSmoothingEnabled = false;
+    for (const o of town.objects || []) {
+      const im = objImg(o);
+      if (!im.complete || !im.naturalWidth) continue;
+      const [sx, sy] = worldToScreen(o.x, o.y);
+      if (sx - o.ox > W + 60 || sx - o.ox + o.ow < -60) continue; // 水平裁切
+      if (o.f) { ctx.save(); ctx.translate(sx, 0); ctx.scale(-1, 1); ctx.drawImage(im, -(o.ow - o.ox), sy - o.oy, o.ow, o.oh); ctx.restore(); }
+      else ctx.drawImage(im, sx - o.ox, sy - o.oy, o.ow, o.oh);
     }
 
     // 活動傳送門（藍光環 + 招牌標籤）
