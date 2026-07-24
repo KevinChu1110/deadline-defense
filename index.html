@@ -163,16 +163,29 @@
                 <div class="showcase-glow boss-glow"></div>
               </aside>
 
-              <!-- 官方登入頁：Artale logo + 木牌 Discord 登入（未登入時） -->
+              <!-- 官方登入頁：完整還原官方木牌(obj_Title_signboard) + 官方按鈕素材 -->
               <div class="title-login" id="title-login" hidden>
                 <div class="tl-logo">
                   <span class="tl-artale">Artale</span>
                   <span class="tl-leaf" aria-hidden="true">🍁</span>
                 </div>
-                <!-- 官方「登入」木牌(zh-login)，直接用素材本身 → Discord 綁定登入 -->
-                <button type="button" id="btn-login-discord" class="tl-wood-login" aria-label="登入（Discord 綁定）"></button>
-                <p class="tl-copyright">MapleStory 楓之谷 · Artale 二創<br />
-                  <a href="#" id="btn-login-guest" class="tl-guest-link">免登入試玩 →</a></p>
+                <!-- 官方木牌底板(帳號/密碼 標籤已烤在板上) -->
+                <div class="tl-board">
+                  <div class="tl-field tl-field-id" aria-hidden="true"><span class="tl-caret"></span></div>
+                  <div class="tl-field tl-field-pw" aria-hidden="true"></div>
+                  <!-- 登入 → Discord 綁定 -->
+                  <button type="button" id="btn-login-discord" class="tl-b tl-b-login" aria-label="登入（Discord 綁定）"></button>
+                  <!-- 中排：記憶帳號/查詢帳號/查詢密碼/小鍵盤（裝飾，Discord 免帳密） -->
+                  <button type="button" class="tl-b tl-b-emailsave tl-deco" tabindex="-1" aria-label="記憶帳號"></button>
+                  <button type="button" class="tl-b tl-b-emaillost tl-deco" tabindex="-1" aria-label="查詢帳號"></button>
+                  <button type="button" class="tl-b tl-b-pwlost tl-deco" tabindex="-1" aria-label="查詢密碼"></button>
+                  <button type="button" class="tl-b tl-b-softkb tl-deco" tabindex="-1" aria-label="小鍵盤"></button>
+                  <!-- 下排：加入會員(免登入試玩)/官方網站/結束 -->
+                  <button type="button" id="btn-login-guest" class="tl-b tl-b-join" aria-label="加入會員（免登入試玩）"></button>
+                  <button type="button" class="tl-b tl-b-homepage tl-deco" tabindex="-1" aria-label="官方網站"></button>
+                  <button type="button" class="tl-b tl-b-quit tl-deco" tabindex="-1" aria-label="結束"></button>
+                </div>
+                <p class="tl-copyright">COPYRIGHT © NEXON · 楓之谷 · Artale 二創</p>
               </div>
 
               <div class="title-menu" id="title-menu">

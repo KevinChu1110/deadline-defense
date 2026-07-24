@@ -1104,27 +1104,54 @@ body.is-dragging-job .specialist-card {
   box-shadow: 0 4px 0 #4a2c0e, 0 6px 12px rgba(0, 0, 0, 0.3);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
-/* 官方「登入」木牌(zh-login 95x48)，直接用素材本身，無外框 */
-.tl-wood-login {
-  appearance: none;
-  border: none;
-  cursor: pointer;
+/* 官方登入木牌(obj_Title_signboard 368x236) + 官方按鈕素材完整還原 */
+.tl-board {
+  position: relative;
   align-self: center;
-  background: url("/ui/zh-login.png") center / contain no-repeat;
+  width: min(88%, calc(var(--book-w) * 0.56), 440px);
+  aspect-ratio: 368 / 236;
+  background: url("/ui/zh-signboard.png") center / 100% 100% no-repeat;
   image-rendering: pixelated;
-  width: clamp(160px, calc(var(--book-w) * 0.3), 260px);
-  aspect-ratio: 95 / 48;
-  filter: drop-shadow(0 5px 9px rgba(0, 0, 0, 0.45));
-  transition: transform 0.1s ease, filter 0.1s ease;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.45));
 }
-.tl-wood-login:hover { filter: brightness(1.08) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5)); transform: translateY(-1px); }
-.tl-wood-login:active { transform: translateY(2px); }
-.tl-guest-link {
-  color: rgba(60, 40, 20, 0.75);
-  text-decoration: underline;
-  font-weight: 700;
+/* 帳號/密碼 凹槽(裝飾，實際走 Discord 綁定) */
+.tl-field {
+  position: absolute;
+  left: 29.3%;
+  width: 44%;
+  height: 7.4%;
 }
-.tl-guest-link:hover { color: #7a1f1f; }
+.tl-field-id { top: 10.6%; }
+.tl-field-pw { top: 22%; }
+.tl-caret {
+  position: absolute; left: 3%; top: 15%; width: 1.5px; height: 70%;
+  background: #3a2a12; animation: tl-blink 1s step-end infinite;
+}
+@keyframes tl-blink { 50% { opacity: 0; } }
+/* 官方按鈕(各自圖) */
+.tl-b {
+  position: absolute;
+  appearance: none; border: none; padding: 0; margin: 0;
+  cursor: pointer;
+  background: center / contain no-repeat;
+  image-rendering: pixelated;
+  transition: filter 0.1s ease, transform 0.1s ease;
+}
+.tl-b:not(.tl-deco):hover { filter: brightness(1.09); transform: translateY(-1px); }
+.tl-b:not(.tl-deco):active { transform: translateY(1px); }
+.tl-deco { cursor: default; }
+.tl-deco:hover { filter: brightness(1.04); }
+/* 登入(右上大鈕) */
+.tl-b-login    { left: 72.5%; top: 8%;  width: 26%;  height: 24%; background-image: url("/ui/zh-login.png"); }
+/* 中排小鈕(記憶帳號/查詢帳號/查詢密碼/小鍵盤) */
+.tl-b-emailsave{ left: 14%;   top: 40%; width: 20%;  height: 10%; background-image: url("/ui/zh-emailsave.png"); }
+.tl-b-emaillost{ left: 35.5%; top: 40%; width: 20%;  height: 10%; background-image: url("/ui/zh-emaillost.png"); }
+.tl-b-pwlost   { left: 57%;   top: 40%; width: 20%;  height: 10%; background-image: url("/ui/zh-pwlost.png"); }
+.tl-b-softkb   { left: 78.5%; top: 40%; width: 16%;  height: 10%; background-image: url("/ui/zh-softkb.png"); }
+/* 下排(加入會員/官方網站/結束) */
+.tl-b-join     { left: 12.5%; top: 55.5%; width: 26%; height: 21%; background-image: url("/ui/zh-join.png"); }
+.tl-b-homepage { left: 39%;   top: 55.5%; width: 26%; height: 21%; background-image: url("/ui/zh-homepage.png"); }
+.tl-b-quit     { left: 66%;   top: 55.5%; width: 24%; height: 21%; background-image: url("/ui/zh-quit.png"); }
 .tl-sign-btn:hover { filter: brightness(1.08); }
 .tl-sign-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #4a2c0e; }
 .tl-sign-ico { margin-right: 4px; }
