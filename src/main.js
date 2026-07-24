@@ -268,6 +268,10 @@ const els = {
   huntCanvas: document.querySelector("#hunt-canvas"),
   huntTitle: document.querySelector("#hunt-title"),
   btnHuntExit: document.querySelector("#btn-hunt-exit"),
+  charSelectOverlay: document.querySelector("#char-select-overlay"),
+  csFigures: document.querySelector("#cs-figures"),
+  btnCsEnter: document.querySelector("#btn-cs-enter"),
+  btnCsBack: document.querySelector("#btn-cs-back"),
   huntPickerOverlay: document.querySelector("#hunt-picker-overlay"),
   huntContinentTabs: document.querySelector("#hunt-continent-tabs"),
   huntMapList: document.querySelector("#hunt-map-list"),
@@ -431,6 +435,60 @@ async function launchActionRaid(bossId = "zakum", opts = {}) {
   });
   actionRaidSession.start();
   sfx.play("uiClick");
+}
+
+// ── 楓之谷風角色選擇 ──
+let _csSelected = null;
+function openCharSelect() {
+  screen = "charselect";
+  document.body.classList.add("home-open");
+  hideAllOverlays();
+  if (els.titleScreen) els.titleScreen.style.visibility = "hidden";
+  _csSelected = null;
+  renderCharFigures();
+  setOverlayOpen(els.charSelectOverlay, true);
+}
+function renderCharFigures() {
+  if (!els.csFigures) return;
+  const chars = hubState.me?.characters || [];
+  els.csFigures.innerHTML = "";
+  chars.forEach((c) => {
+    const active = c.isActive;
+    if (active && !_csSelected) _csSelected = c.charId;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "cs-fig" + (_csSelected === c.charId ? " is-picked" : "");
+    btn.dataset.charId = c.charId;
+    const portrait = `/portraits/${c.class || "hero"}.png`;
+    btn.innerHTML = `
+      <div class="cs-fig-plate">
+        <img class="cs-fig-img" src="${escapeHtml(portrait)}" alt="" draggable="false"
+             onerror="this.src='/portraits/hero.png'" />
+      </div>
+      <div class="cs-fig-name">${escapeHtml(c.name || artaleHub.classLabel(c.class))}</div>
+      <div class="cs-fig-meta">${escapeHtml(artaleHub.classLabel(c.class))} · Lv.${c.level ?? "?"}</div>`;
+    btn.addEventListener("click", () => {
+      _csSelected = c.charId;
+      renderCharFigures();
+      if (els.btnCsEnter) els.btnCsEnter.disabled = false;
+      sfx.play("uiClick");
+    });
+    els.csFigures.appendChild(btn);
+  });
+  if (els.btnCsEnter) els.btnCsEnter.disabled = !_csSelected;
+}
+async function csEnter() {
+  if (!_csSelected) return;
+  const cur = (hubState.me?.characters || []).find((c) => c.isActive);
+  if (!cur || cur.charId !== _csSelected) {
+    try {
+      await artaleHub.selectChar(hubState.session?.discordId, _csSelected);
+      (hubState.me.characters || []).forEach((c) => (c.isActive = c.charId === _csSelected));
+    } catch { /* 切換失敗仍進場 */ }
+  }
+  hubState._charPicked = true;
+  setOverlayOpen(els.charSelectOverlay, false);
+  openArtaleHub();
 }
 
 let huntSession = null;
@@ -690,6 +748,12 @@ async function openArtaleHub() {
     hubState.error = artaleHub.isRemoteApi()
       ? `連不上 API（ngrok）。請確認 sit-kevin 上 artale-web-api / ngrok 有在跑。${msg ? " · " + msg : ""}`
       : "API 未啟動。本機請執行：npm run dev:api";
+  }
+  // 登入且有角色 → 先進楓之谷風角色選擇（一次 session 一次）
+  if (hubState.me?.characters?.length && !hubState._charPicked) {
+    setOverlayOpen(els.artaleHubOverlay, false);
+    openCharSelect();
+    return;
   }
   paintHub();
   sfx.play("uiClick");
@@ -3516,6 +3580,8 @@ els.btnHuntExit?.addEventListener("click", () =>
     openArtaleHub();
   })
 );
+els.btnCsEnter?.addEventListener("click", () => withAudio(csEnter));
+els.btnCsBack?.addEventListener("click", () => withAudio(() => { setOverlayOpen(els.charSelectOverlay, false); openTitleScreen(); }));
 els.btnHuntPickerClose?.addEventListener("click", () => withAudio(() => { setOverlayOpen(els.huntPickerOverlay, false); openArtaleHub(); }));
 els.btnHuntKeys?.addEventListener("click", () => withAudio(openKeybinds));
 els.btnKeybindReset?.addEventListener("click", () => withAudio(() => { _kbDraft = { ...DEFAULT_KEYBINDS, skills: [...DEFAULT_KEYBINDS.skills] }; renderKeybinds(); }));
