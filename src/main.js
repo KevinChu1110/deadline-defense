@@ -462,8 +462,11 @@ async function openHunt(stageId) {
   if (els.huntTitle) els.huntTitle.textContent = `${stage.continentZh || ""} · ${stage.name}`;
   lastHuntMapId = stage.id;
   huntStartedAt = Date.now();
+  // 用玩家「目前選的角色」職業挑真實技能
+  const activeChar = (hubState.me?.characters || []).find((c) => c.isActive) || (hubState.me?.characters || [])[0];
   huntSession = createHunt({
     canvas: els.huntCanvas, profile, enemies, theme,
+    charClass: activeChar?.class,
     keybinds: loadKeybinds(),
     onExit: () => {
       void reportHuntSession(lastHuntMapId, huntStartedAt);

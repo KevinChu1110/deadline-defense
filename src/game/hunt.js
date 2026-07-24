@@ -7,23 +7,56 @@
  */
 import { ENEMIES } from "../data/enemies.js";
 import { getCachedMob, sampleGifFrame, loadMobGif } from "./assets.js";
-import { SKILLS } from "../data/skills-generated.js";
-import { spawnSkillFx, updateSkillFx, drawSkillFx, preloadSkillFx } from "./skill-fx.js";
+import { SKILLS, JOB_SKILLS } from "../data/skills-generated.js";
+import { spawnSkillFx, updateSkillFx, drawSkillFx, preloadSkillFx, hasSkillFx } from "./skill-fx.js";
 
 const W = 960, H = 540, GROUND = 452, GRAVITY = 1400;
 
-/** 依玩家 family + 已解出真動畫，挑 4 個技能組技能列（優先有真特效的攻擊/buff） */
-function pickLoadout(family) {
-  const all = Object.values(SKILLS).filter((s) => s.family === family && s.active && s.maxLv > 1);
-  const attacks = all.filter((s) => s.kind === "attack");
-  const buffs = all.filter((s) => s.kind === "buff" && s.duration && s.duration.some((d) => d > 0));
-  const heals = all.filter((s) => s.kind === "heal");
+// Discord 職業 slug → skills.json 4轉職業碼（英雄團/皇家取最高階）
+const CLASS_JOBCODE = {
+  beginner: "0", noblesse: "0",
+  hero: "130", paladin: "131", dark_knight: "132",
+  mage: "230", fire_mage: "231", ice_mage: "232",
+  bowmaster: "330", marksman: "331",
+  night_envoy: "430", shadow_bandit: "431",
+  buccaneer: "530", gunslinger: "531",
+  soul_swordsman: "612", flame_wizard: "622", wind_breaker: "632", night_walker: "642", thunder_breaker: "652",
+  aran: "713", evan: "723", mercedes: "733", luminous: "743", phantom: "753",
+};
+
+/** 該職業「整條進化線」的職業碼（冒險家 100→11b→12b→13b；皇家/英雄同前兩碼各階） */
+function jobChain(code) {
+  if (!code) return [];
+  if (code[0] === "6" || code[0] === "7") {
+    const pre = code.slice(0, 2);
+    return Object.keys(JOB_SKILLS).filter((k) => k.startsWith(pre));
+  }
+  const fam = code[0], b = code.slice(-1);
+  return [`${fam}00`, `${fam}1${b}`, `${fam}2${b}`, `${fam}3${b}`].filter((k) => JOB_SKILLS[k]);
+}
+
+/**
+ * 依角色「真實職業」挑技能列；沒 slug 才退回 family。優先有 WZ 真動畫的技能。
+ */
+function pickLoadout(family, classSlug) {
+  let pool = [];
+  const code = classSlug && CLASS_JOBCODE[classSlug];
+  if (code) {
+    const ids = jobChain(code).flatMap((k) => JOB_SKILLS[k] || []);
+    pool = ids.map((id) => SKILLS[id]).filter(Boolean);
+  }
+  if (pool.length < 4) pool = pool.concat(Object.values(SKILLS).filter((s) => s.family === family));
+  const active = pool.filter((s) => s.active && s.maxLv > 1);
+  const byFx = (a, b) => (hasSkillFx(b.id) ? 1 : 0) - (hasSkillFx(a.id) ? 1 : 0);
+  const attacks = active.filter((s) => s.kind === "attack").sort(byFx);
+  const buffs = active.filter((s) => s.kind === "buff" && s.duration && s.duration.some((d) => d > 0)).sort(byFx);
+  const heals = active.filter((s) => s.kind === "heal").sort(byFx);
   const out = [];
-  if (attacks[0]) out.push(attacks[0]);
-  if (attacks[1]) out.push(attacks[1]);
-  if (buffs[0]) out.push(buffs[0]);
-  if (family === "mage" && heals[0]) out.push(heals[0]);
-  else if (attacks[2]) out.push(attacks[2]);
+  const seen = new Set();
+  const add = (s) => { if (s && !seen.has(s.id)) { seen.add(s.id); out.push(s); } };
+  add(attacks[0]); add(attacks[1]);
+  add(buffs[0]);
+  if (family === "mage" && heals[0]) add(heals[0]); else add(attacks[2]);
   return out.slice(0, 4);
 }
 
@@ -32,7 +65,7 @@ const DEFAULT_SKILL_KEYS = ["Digit1", "Digit2", "Digit3", "Digit4"];
 export const DEFAULT_KEYBINDS = { attack: "KeyJ", jump: "Space", dash: "KeyL", skills: [...DEFAULT_SKILL_KEYS] };
 
 export function createHunt(opts) {
-  const { canvas, profile, enemies, theme, keybinds, onExit } = opts;
+  const { canvas, profile, enemies, theme, keybinds, charClass, onExit } = opts;
   const ctx = canvas.getContext("2d");
   canvas.width = W; canvas.height = H;
 
@@ -53,8 +86,8 @@ export function createHunt(opts) {
     ? { ...DEFAULT_KEYBINDS, skills: keybinds }
     : { ...DEFAULT_KEYBINDS, ...(keybinds || {}), skills: (keybinds && keybinds.skills) || DEFAULT_SKILL_KEYS };
 
-  // 技能列
-  const loadout = pickLoadout(profile.family || "warrior");
+  // 技能列（依真實職業）
+  const loadout = pickLoadout(profile.family || "warrior", charClass);
   preloadSkillFx(loadout.map((s) => s.id));
   const skills = loadout.map((def, i) => ({
     def, key: kb.skills[i] || DEFAULT_SKILL_KEYS[i], cd: 0,

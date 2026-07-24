@@ -22,6 +22,11 @@ export function preloadSkillFx(ids) {
   for (const id of ids) if (manifest[id]?.fx) getSheet(id);
 }
 
+/** 該技能有無 WZ 真實特效動畫（挑技能時優先） */
+export function hasSkillFx(id) {
+  return !!manifest[id]?.fx;
+}
+
 const ELEM_COLOR = {
   physical: "#fde68a", fire: "#fb7185", ice: "#7dd3fc",
   thunder: "#c4b5fd", poison: "#a3e635", holy: "#fef08a", dark: "#c084fc",
