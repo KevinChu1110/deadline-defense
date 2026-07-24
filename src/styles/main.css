@@ -884,6 +884,69 @@ body.is-dragging-job .specialist-card {
   }
 }
 
+/* ══════ 楓之谷書本框登入頁 ══════ */
+.title-screen.maple-book-mode {
+  background: radial-gradient(ellipse at center, #2a2018, #0d0a07);
+}
+/* 書本尺寸(4:3)，全場景共用 */
+.maple-book-mode {
+  --book-w: min(94vw, 125vh);
+  --book-h: calc(var(--book-w) * 0.75);
+}
+.maple-book-mode .title-screen-bg {
+  inset: auto;
+  left: 50%;
+  top: 50%;
+  width: var(--book-w);
+  height: var(--book-h);
+  transform: translate(-50%, -50%);
+  background:
+    url("/hunt-bg/maple.png") center bottom / cover no-repeat,
+    linear-gradient(180deg, #a9dcf0 0%, #cfeeda 60%, #e6d9a8 100%);
+  border-radius: 8px;
+  animation: none;
+  filter: none;
+  /* 只露書本內頁(避開羊皮紙邊框) */
+  clip-path: inset(6.5% 8% 9% 8% round 4px);
+  z-index: 1;
+}
+.maple-book-frame {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--book-w);
+  height: var(--book-h);
+  transform: translate(-50%, -50%);
+  background: url("/ui/book-frame.png") center / 100% 100% no-repeat;
+  pointer-events: none;
+  z-index: 4;
+}
+/* 書本模式下：側邊角色秀、暗角都收掉，聚焦書本 */
+.maple-book-mode .title-showcase,
+.maple-book-mode .title-screen-vignette,
+.maple-book-mode .title-float-leaves {
+  display: none;
+}
+/* Artale 招牌 + 選單置中於書本內頁 */
+.maple-book-mode .title-menu {
+  position: relative;
+  z-index: 6;
+  width: min(72%, 460px);
+  background: rgba(255, 250, 235, 0.72);
+  box-shadow: 0 6px 24px rgba(60, 40, 20, 0.3);
+  border: 2px solid rgba(120, 80, 40, 0.4);
+  border-radius: 14px;
+  padding: 16px 18px;
+  backdrop-filter: blur(2px);
+}
+.maple-book-mode .title-menu-shine { display: none; }
+.maple-book-mode .home-hero-badge { display: none; }
+.maple-book-mode .title-main {
+  font-family: "Georgia", "Songti TC", serif;
+  color: #7a1f1f;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.5);
+}
+
 .title-screen-vignette {
   position: absolute;
   inset: 0;
