@@ -70,6 +70,9 @@ import { createActionRaid } from "./game/action-raid.js";
 import { createHunt, keyLabel, DEFAULT_KEYBINDS } from "./game/hunt.js";
 import { createTown } from "./game/town.js";
 import { WORLD, REGION_COLOR, HOME_MAP, AVAILABLE_MAPS, padMapId } from "./data/world.js";
+import { createQuestSystem } from "./game/quest.js";
+import MI_QUESTS from "./data/quests/maple-island.json";
+import MI_DIALOGS from "./data/dialogs/maple-island.json";
 import { createAvatar as _mkAvatar, drawAvatar as _drawAvatar } from "./game/avatar.js";
 import { loadAppearance, saveAppearance, defaultAppearance, AVATAR_CATALOG, appearanceItems } from "./data/avatar-items.js";
 import { equipToAppearance } from "./data/avatar-map.js";
@@ -4325,6 +4328,30 @@ async function loadAppearanceForActive() {
   return { activeChar, appearance };
 }
 
+// ── 楓之島世界進度 + 任務系統（char.web，伺服器權威）──
+let _worldState = null;      // { level, flags, quests }
+let questSys = null;
+async function ensureWorldState() {
+  if (questSys) return _worldState;
+  try { _worldState = await artaleHub.fetchWorldState(); } catch { _worldState = { level: 1, flags: {}, quests: {} }; }
+  questSys = createQuestSystem({
+    quests: MI_QUESTS, dialogs: MI_DIALOGS,
+    getState: () => _worldState,
+    emit: async (kind, args) => {
+      if (kind !== "quest.event") return { ok: false };
+      try {
+        const res = await artaleHub.questEvent(args);
+        if (res?.state) _worldState = res.state;
+        return { ok: true, rewards: res?.rewards, state: res?.state };
+      } catch (e) { return { ok: false, error: e?.message || "任務操作失敗" }; }
+    },
+  });
+  return _worldState;
+}
+function checkpointWorld(mapId) {
+  artaleHub.worldCheckpoint({ mapId }).catch(() => {}); // 換圖即存(位置粗略)
+}
+
 // ── 通用世界地圖引擎：載入任意 mapId(城鎮級解包資料)，複用 town 引擎 ──
 const _worldCache = {};
 let _mapEnterAt = 0;
@@ -4350,6 +4377,8 @@ function warpPortal(mapId, portal) {
   void openWorldMap(tid, portal.tn || null);
 }
 async function openWorldMap(mapId, entryPortal = null) {
+  void ensureWorldState(); // 背景載入世界進度(不阻塞進場)
+  checkpointWorld(mapId);   // 換圖存檔點
   if (!_worldCache[mapId]) _worldCache[mapId] = await (await fetch(`/world/${mapId}/map.json`)).json();
   const m = _worldCache[mapId];
   const name = WORLD[mapId]?.name || m.name || mapId;
@@ -4430,7 +4459,6 @@ function closeNpcDialog() {
 }
 function openNpcDialog(npc) {
   townSession?.pause();
-  const data = NPC_DATA[String(npc.id)];
   const img = document.querySelector("#npc-dialog-img");
   if (img) {
     img.onerror = () => { img.onerror = null; img.src = `https://maplestory.io/api/GMS/214/npc/${npc.id}/render/stand`; };
@@ -4438,22 +4466,52 @@ function openNpcDialog(npc) {
   }
   const nameEl = document.querySelector("#npc-dialog-name");
   if (nameEl) nameEl.textContent = npc.name || "NPC";
-  const txtEl = document.querySelector("#npc-dialog-text");
-  if (txtEl) txtEl.textContent = data?.line || `你好，我是「${npc.name || "這裡的居民"}」，歡迎來到自由市場！`;
-  const acts = document.querySelector("#npc-dialog-actions");
-  if (acts) {
-    acts.innerHTML = "";
-    for (const o of (data?.opts || [])) {
-      const btn = document.createElement("button");
-      btn.className = "btn primary"; btn.textContent = o.t;
-      btn.addEventListener("click", () => withAudio(o.fn));
-      acts.appendChild(btn);
-    }
-    const close = document.createElement("button");
-    close.className = "btn"; close.textContent = "結束對話";
-    close.addEventListener("click", () => withAudio(closeNpcDialog));
-    acts.appendChild(close);
-  }
   setOverlayOpen(document.querySelector("#npc-dialog-overlay"), true);
   sfx.play("uiSelect");
+  // 資料驅動任務對話優先；否則走舊 NPC_DATA
+  if (questSys && MI_DIALOGS[String(npc.id)]) renderQuestDialog(npc, "start");
+  else renderLegacyDialog(npc);
+}
+// 資料驅動任務對話（節點圖 + 條件過濾選項 + accept/complete）
+function renderQuestDialog(npc, nodeKey) {
+  const node = questSys.dialogNode(String(npc.id), nodeKey) || { text: "…", opts: [] };
+  const txtEl = document.querySelector("#npc-dialog-text");
+  if (txtEl) txtEl.textContent = node.text;
+  const acts = document.querySelector("#npc-dialog-actions");
+  if (!acts) return;
+  acts.innerHTML = "";
+  for (const o of node.opts) {
+    const btn = document.createElement("button");
+    btn.className = "btn primary"; btn.textContent = o.t;
+    btn.addEventListener("click", () => withAudio(async () => {
+      const r = await questSys.runAction(o.act);
+      if (r.close) return closeNpcDialog();
+      if (r.toast) showToast(r.toast);
+      if (r.openJob) { showToast("轉職功能即將開放（Phase C）"); }
+      renderQuestDialog(npc, r.node || "start"); // 重繪(狀態可能已變)
+    }));
+    acts.appendChild(btn);
+  }
+  const close = document.createElement("button");
+  close.className = "btn"; close.textContent = "結束對話";
+  close.addEventListener("click", () => withAudio(closeNpcDialog));
+  acts.appendChild(close);
+}
+function renderLegacyDialog(npc) {
+  const data = NPC_DATA[String(npc.id)];
+  const txtEl = document.querySelector("#npc-dialog-text");
+  if (txtEl) txtEl.textContent = data?.line || `你好，我是「${npc.name || "這裡的居民"}」，歡迎光臨！`;
+  const acts = document.querySelector("#npc-dialog-actions");
+  if (!acts) return;
+  acts.innerHTML = "";
+  for (const o of (data?.opts || [])) {
+    const btn = document.createElement("button");
+    btn.className = "btn primary"; btn.textContent = o.t;
+    btn.addEventListener("click", () => withAudio(o.fn));
+    acts.appendChild(btn);
+  }
+  const close = document.createElement("button");
+  close.className = "btn"; close.textContent = "結束對話";
+  close.addEventListener("click", () => withAudio(closeNpcDialog));
+  acts.appendChild(close);
 }

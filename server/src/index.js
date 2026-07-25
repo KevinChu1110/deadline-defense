@@ -29,6 +29,9 @@ import {
   startActionRaid,
   completeActionRaid,
   reportHunt,
+  getWorldState,
+  worldCheckpoint,
+  questEvent,
 } from "./store.js";
 import * as auth from "./auth.js";
 
@@ -441,6 +444,33 @@ const server = http.createServer(async (req, res) => {
       if (!discordId) return json(res, 401, { error: "請先登入" }, req);
       const out = await reportHunt(discordId, body);
       return json(res, 200, out, req);
+    }
+
+    if (req.method === "GET" && pathname === "/api/world/state") {
+      const sess = sessionFromReq(req);
+      const discordId = sess?.discordId;
+      if (!discordId) return json(res, 401, { error: "請先登入" }, req);
+      return json(res, 200, await getWorldState(discordId), req);
+    }
+
+    if (req.method === "POST" && pathname === "/api/world/checkpoint") {
+      const sess = sessionFromReq(req);
+      const body = await readBody(req);
+      const discordId = sess?.discordId;
+      if (!discordId) return json(res, 401, { error: "請先登入" }, req);
+      return json(res, 200, await worldCheckpoint(discordId, body), req);
+    }
+
+    if (req.method === "POST" && pathname === "/api/quest/event") {
+      const sess = sessionFromReq(req);
+      const body = await readBody(req);
+      const discordId = sess?.discordId;
+      if (!discordId) return json(res, 401, { error: "請先登入" }, req);
+      try {
+        return json(res, 200, await questEvent(discordId, body), req);
+      } catch (e) {
+        return json(res, 400, { error: e?.message || "任務操作失敗" }, req);
+      }
     }
 
     // 靜態前端（production dist）

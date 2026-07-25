@@ -1,8 +1,8 @@
 {
   "q_mi_shells": {
     "name": "收集蝸牛殼",
-    "npcStart": "2100",
-    "npcEnd": "2100",
+    "npcStart": "0002100",
+    "npcEnd": "0002100",
     "req": { "level": 1 },
     "objectives": [
       { "type": "kill", "mobId": "0100101", "count": 5 }
@@ -12,8 +12,8 @@
   },
   "q_mi_train": {
     "name": "訓練的開始",
-    "npcStart": "2100",
-    "npcEnd": "2100",
+    "npcStart": "0002100",
+    "npcEnd": "0002100",
     "req": { "level": 3, "quest": "q_mi_shells" },
     "objectives": [
       { "type": "kill", "mobId": "0130101", "count": 8 },
@@ -24,8 +24,8 @@
   },
   "q_mi_depart": {
     "name": "全新的開始",
-    "npcStart": "2100",
-    "npcEnd": "2101",
+    "npcStart": "0002100",
+    "npcEnd": "0002101",
     "req": { "flag": "job1" },
     "objectives": [],
     "rewards": { "flags": ["can_depart"] }

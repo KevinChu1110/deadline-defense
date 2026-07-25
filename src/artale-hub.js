@@ -196,6 +196,17 @@ export async function reportHunt(payload) {
   });
 }
 
+// ── 楓之島世界進度（char.web，伺服器權威）──
+export async function fetchWorldState() {
+  return api("/api/world/state");
+}
+export async function worldCheckpoint(payload) {
+  return api("/api/world/checkpoint", { method: "POST", body: JSON.stringify(payload || {}) });
+}
+export async function questEvent(payload) {
+  return api("/api/quest/event", { method: "POST", body: JSON.stringify(payload || {}) });
+}
+
 const CLASS_ZH = {
   beginner: "初心者",
   gunslinger: "槍神／槍手",

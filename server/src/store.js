@@ -360,6 +360,22 @@ export async function reportHunt(discordId, payload = {}) {
   return { ok: true, expGained: out?.expGained || 0, meso: out?.meso || 0, kills: out?.kills || 0, drops: out?.drops || [] };
 }
 
+/** 讀網頁世界進度(char.web) */
+export async function getWorldState(discordId) {
+  const out = await botOp(discordId, "world.state", {});
+  return out || { level: 1, flags: {}, quests: {} };
+}
+/** 存檔點(位置) */
+export async function worldCheckpoint(discordId, payload = {}) {
+  await botOp(discordId, "world.checkpoint", { mapId: payload.mapId, x: payload.x, y: payload.y });
+  return { ok: true };
+}
+/** 任務事件(accept/complete) → bot 權威驗證+發獎 */
+export async function questEvent(discordId, payload = {}) {
+  const out = await botOp(discordId, "quest.event", { qid: payload.qid, event: payload.event });
+  return { ok: true, rewards: out?.rewards || null, state: out?.state || null };
+}
+
 export function getActionBossList() {
   return listBosses();
 }
