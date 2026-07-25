@@ -206,6 +206,9 @@ export async function worldCheckpoint(payload) {
 export async function questEvent(payload) {
   return api("/api/quest/event", { method: "POST", body: JSON.stringify(payload || {}) });
 }
+export async function jobAdvance(payload) {
+  return api("/api/job/advance", { method: "POST", body: JSON.stringify(payload || {}) });
+}
 
 const CLASS_ZH = {
   beginner: "初心者",

@@ -4397,7 +4397,16 @@ async function openWorldMap(mapId, entryPortal = null) {
     town: m, appearance, charClass: activeChar?.class, profile,
     assetBase: `/world/${mapId}`, acts: buildTravelActs(mapId, sp), entryPortal,
     onAct: (a) => {
-      if (a.act?.startsWith("travel:")) { reportCombatKills(mapId); const tid = a.act.slice(7); if (tid === HOME_MAP) { void openTown(); } else { void openWorldMap(tid); } }
+      if (a.act?.startsWith("travel:")) {
+        const tid = a.act.slice(7);
+        // 出島閘門：南港→弓箭手村 需先完成一轉
+        if (mapId === "000060000" && tid === "100000000" && !_worldState?.flags?.job1) {
+          showToast("需先在楓之島完成一轉，才能搭船前往維多利亞島");
+          return;
+        }
+        reportCombatKills(mapId);
+        if (tid === HOME_MAP) { void openTown(); } else { void openWorldMap(tid); }
+      }
     },
     onNpc: (n) => openNpcDialog(n),
     onPortal: (p) => warpPortal(mapId, p),
@@ -4486,8 +4495,8 @@ function renderQuestDialog(npc, nodeKey) {
     btn.addEventListener("click", () => withAudio(async () => {
       const r = await questSys.runAction(o.act);
       if (r.close) return closeNpcDialog();
+      if (r.openJob) return renderJobChoice(npc);
       if (r.toast) showToast(r.toast);
-      if (r.openJob) { showToast("轉職功能即將開放（Phase C）"); }
       renderQuestDialog(npc, r.node || "start"); // 重繪(狀態可能已變)
     }));
     acts.appendChild(btn);
@@ -4496,6 +4505,38 @@ function renderQuestDialog(npc, nodeKey) {
   close.className = "btn"; close.textContent = "結束對話";
   close.addEventListener("click", () => withAudio(closeNpcDialog));
   acts.appendChild(close);
+}
+// 一轉職業選擇（在 NPC 對話框內渲染 5 職業）
+const JOB1_CHOICES = [
+  { job: "warrior", t: "⚔️ 劍士", d: "高血高防的近戰肉盾" },
+  { job: "mage", t: "🔮 法師", d: "遠程魔法與範圍傷害" },
+  { job: "archer", t: "🏹 弓箭手", d: "遠程物理高爆發" },
+  { job: "thief", t: "🗝️ 盜賊", d: "敏捷暴擊近/遠皆可" },
+  { job: "pirate", t: "🚢 海盜", d: "拳/槍雙修的萬能戰士" },
+];
+function renderJobChoice(npc) {
+  const txtEl = document.querySelector("#npc-dialog-text");
+  if (txtEl) txtEl.textContent = "選擇你的職業吧！轉職後將無法更改。";
+  const acts = document.querySelector("#npc-dialog-actions");
+  if (!acts) return;
+  acts.innerHTML = "";
+  for (const c of JOB1_CHOICES) {
+    const btn = document.createElement("button");
+    btn.className = "btn primary"; btn.textContent = `${c.t}　${c.d}`;
+    btn.addEventListener("click", () => withAudio(async () => {
+      try {
+        const res = await artaleHub.jobAdvance({ job: c.job });
+        if (_worldState) { _worldState.flags = _worldState.flags || {}; _worldState.flags.job1 = true; }
+        showToast(`轉職成功：${c.t}！可以搭船離開楓之島了`);
+        closeNpcDialog();
+      } catch (e) { showToast(e?.message || "轉職失敗"); }
+    }));
+    acts.appendChild(btn);
+  }
+  const back = document.createElement("button");
+  back.className = "btn"; back.textContent = "再想想";
+  back.addEventListener("click", () => withAudio(() => renderQuestDialog(npc, "start")));
+  acts.appendChild(back);
 }
 function renderLegacyDialog(npc) {
   const data = NPC_DATA[String(npc.id)];

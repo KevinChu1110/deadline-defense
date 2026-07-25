@@ -375,6 +375,11 @@ export async function questEvent(discordId, payload = {}) {
   const out = await botOp(discordId, "quest.event", { qid: payload.qid, event: payload.event });
   return { ok: true, rewards: out?.rewards || null, state: out?.state || null };
 }
+/** 一轉 → bot 權威 doAdvance */
+export async function jobAdvance(discordId, payload = {}) {
+  const out = await botOp(discordId, "job.advance", { job: payload.job });
+  return { ok: true, class: out?.class, jobCode: out?.jobCode, job: out?.job };
+}
 
 export function getActionBossList() {
   return listBosses();

@@ -17,7 +17,7 @@
     "req": { "level": 3, "quest": "q_mi_shells" },
     "objectives": [
       { "type": "kill", "mobId": "0130101", "count": 8 },
-      { "type": "level", "count": 8 }
+      { "type": "level", "count": 10 }
     ],
     "rewards": { "exp": 200, "meso": 300, "flags": ["ready_job1"] },
     "next": "q_mi_depart"

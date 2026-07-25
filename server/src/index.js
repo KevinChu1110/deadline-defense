@@ -32,6 +32,7 @@ import {
   getWorldState,
   worldCheckpoint,
   questEvent,
+  jobAdvance,
 } from "./store.js";
 import * as auth from "./auth.js";
 
@@ -470,6 +471,18 @@ const server = http.createServer(async (req, res) => {
         return json(res, 200, await questEvent(discordId, body), req);
       } catch (e) {
         return json(res, 400, { error: e?.message || "任務操作失敗" }, req);
+      }
+    }
+
+    if (req.method === "POST" && pathname === "/api/job/advance") {
+      const sess = sessionFromReq(req);
+      const body = await readBody(req);
+      const discordId = sess?.discordId;
+      if (!discordId) return json(res, 401, { error: "請先登入" }, req);
+      try {
+        return json(res, 200, await jobAdvance(discordId, body), req);
+      } catch (e) {
+        return json(res, 400, { error: e?.message || "轉職失敗" }, req);
       }
     }
 
