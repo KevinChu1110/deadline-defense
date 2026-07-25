@@ -47,8 +47,12 @@ export function createTown(opts) {
 
   // ── 戰鬥層：野外圖(life 有怪)才啟用 ──
   const hasMobs = (town.life || []).some((l) => l.type === "m");
-  if (hasMobs) { player.hp = profile?.maxHp || 300; player.maxHp = profile?.maxHp || 300; player.invuln = 0; player.exp = 0; player.atkCd = 0; player.attackT = 0; }
-  const combat = hasMobs ? createMapCombat({ town, footAt, player, profile, onKill: (m) => { player.exp += m.st.exp || 0; } }) : null;
+  if (hasMobs) {
+    player.hp = profile?.maxHp || 300; player.maxHp = profile?.maxHp || 300; player.invuln = 0;
+    player.exp = 0; player.level = profile?.level || 1; player.atk = profile?.atk || 45; player.coins = 0;
+    player.atkCd = 0; player.attackT = 0;
+  }
+  const combat = hasMobs ? createMapCombat({ town, footAt, player, profile }) : null;
   let attackHeld = false;
 
   const keys = new Set();
@@ -286,8 +290,8 @@ export function createTown(opts) {
 
     // 前景層 obj(最上層草叢/裝飾)：畫在實體之後 → 玩家可走到其後方
     for (const o of frontObjs) drawObject(o);
-    // 傷害跳字(疊最上)
-    if (combat) combat.drawFloats(ctx, worldToScreen);
+    // 楓幣掉落 + 傷害/EXP 跳字(疊最上)
+    if (combat) { combat.drawCoins(ctx, worldToScreen); combat.drawFloats(ctx, worldToScreen); }
 
     // 互動提示
     if (nearInteract) {
@@ -313,10 +317,19 @@ export function createTown(opts) {
 
     // 官方底部 HUD
     drawOfficialHud(ctx, W, H, {
-      level: profile?.level,
+      level: combat ? player.level : profile?.level,
       hp: combat ? Math.max(0, Math.round(player.hp)) : (profile?.maxHp || 100), hpMax: player.maxHp || profile?.maxHp || 100,
-      mp: profile?.maxMp || 60, mpMax: profile?.maxMp || 60, expPct: 0, skills: [],
+      mp: profile?.maxMp || 60, mpMax: profile?.maxMp || 60, expPct: combat ? combat.expPct() : 0, skills: [],
     });
+    // 楓幣計數(戰鬥圖,右上)
+    if (combat) {
+      ctx.textAlign = "right"; ctx.font = "700 14px system-ui";
+      const txt = `🪙 ${player.coins}`;
+      const tw = ctx.measureText(txt).width;
+      ctx.fillStyle = "rgba(20,16,8,0.6)"; ctx.fillRect(W - tw - 22, 12, tw + 14, 24);
+      ctx.fillStyle = "#ffe14d"; ctx.fillText(txt, W - 12, 29);
+      ctx.textAlign = "left";
+    }
     // 手機虛擬按鍵
     if (isTouch) {
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
