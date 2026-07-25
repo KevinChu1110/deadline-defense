@@ -4264,7 +4264,7 @@ async function openTown() {
   let appearance;
   try { appearance = equipToAppearance(await artaleHub.fetchEquip(), activeChar?.class); }
   catch { appearance = loadAppearance(activeChar?.charId, activeChar?.class); }
-  const profile = { name: activeChar?.name || "冒險者", level: activeChar?.level || 1, maxHp: 600, maxMp: 300 };
+  const profile = { name: activeChar?.name || "冒險者", level: activeChar?.level || 1, maxHp: 600, maxMp: 300, atk: 45 + (activeChar?.level || 1) * 5 };
   // 活動傳送門 + 通往弓箭手村的世界旅行門：放在出生點平台附近
   const sp = town.portals.find((p) => p.n === "sp") || { x: 179, y: 30 };
   const acts = [
@@ -4333,7 +4333,7 @@ async function openWorldMap(mapId) {
   const name = WORLD[mapId]?.name || m.name || mapId;
   m.name = name;
   const { activeChar, appearance } = await loadAppearanceForActive();
-  const profile = { name: activeChar?.name || "冒險者", level: activeChar?.level || 1, maxHp: 600, maxMp: 300 };
+  const profile = { name: activeChar?.name || "冒險者", level: activeChar?.level || 1, maxHp: 600, maxMp: 300, atk: 45 + (activeChar?.level || 1) * 5 };
   const sp = m.portals.find((p) => p.n === "sp") || m.portals[0] || { x: 0, y: 0 };
   stopTown();
   hideAllOverlays();

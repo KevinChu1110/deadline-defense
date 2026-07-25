@@ -5,6 +5,7 @@
  */
 import { createAvatar, drawAvatar } from "./avatar.js";
 import { drawHud as drawOfficialHud } from "./hud.js";
+import { createMapCombat } from "./map-combat.js";
 import { sfx } from "../audio/sfx.js";
 
 const W = 960, H = 540;
@@ -44,6 +45,12 @@ export function createTown(opts) {
   // camera 世界中心
   let camCX = player.x, camCY = player.y - 80;
 
+  // ── 戰鬥層：野外圖(life 有怪)才啟用 ──
+  const hasMobs = (town.life || []).some((l) => l.type === "m");
+  if (hasMobs) { player.hp = profile?.maxHp || 300; player.maxHp = profile?.maxHp || 300; player.invuln = 0; player.exp = 0; player.atkCd = 0; player.attackT = 0; }
+  const combat = hasMobs ? createMapCombat({ town, footAt, player, profile, onKill: (m) => { player.exp += m.st.exp || 0; } }) : null;
+  let attackHeld = false;
+
   const keys = new Set();
   // 手機虛擬按鍵
   const isTouch = (typeof window !== "undefined") && (("ontouchstart" in window) || (navigator.maxTouchPoints > 0) || window.matchMedia?.("(pointer: coarse)").matches);
@@ -53,6 +60,7 @@ export function createTown(opts) {
     { id: "right", x: 108, y: H - 118, w: 74, h: 74, label: "▶" },
     { id: "up", x: W - 190, y: H - 118, w: 74, h: 74, label: "↑" },
     { id: "jump", x: W - 100, y: H - 118, w: 74, h: 74, label: "⤴" },
+    ...(hasMobs ? [{ id: "attack", x: W - 100, y: H - 200, w: 74, h: 74, label: "⚔" }] : []),
   ];
   let running = true, paused = false, raf = 0, last = performance.now(), lastDt = 0.016;
   let nearInteract = null, nearType = null, upHeld = false;
@@ -101,6 +109,19 @@ export function createTown(opts) {
 
     // 動作
     if (player.animT > 0 && (player.animT -= dt) <= 0) player.anim = "idle";
+
+    // ── 戰鬥：攻擊 / 怪 AI / 受傷死亡 ──
+    if (combat) {
+      if (player.atkCd > 0) player.atkCd -= dt;
+      if (player.attackT > 0) player.attackT -= dt;
+      const atkDown = keys.has("KeyJ") || keys.has("KeyZ") || touch.has("attack");
+      let attackPressed = false;
+      if (atkDown && !attackHeld && player.atkCd <= 0) { attackPressed = true; player.atkCd = 0.42; player.attackT = 0.3; }
+      attackHeld = atkDown;
+      if (player.invuln > 0) player.invuln -= dt;
+      combat.update(dt, attackPressed);
+      if (player.hp <= 0) { player.hp = player.maxHp; player.x = sp.x; player.y = sp.y; player.vy = 0; player.invuln = 1.5; } // 死亡→回出生點
+    }
 
     // camera 平滑跟隨 + 夾限
     const tx = player.x, ty = player.y - 80;
@@ -241,8 +262,10 @@ export function createTown(opts) {
       const [psx, psy] = worldToScreen(player.x, player.y);
       const moving = Math.abs(player.vx) > 10 && player.onGround;
       let anim = "stand1";
-      if (!player.onGround) anim = "jump"; else if (moving) anim = "walk1";
+      if (player.attackT > 0) anim = "swingO1"; else if (!player.onGround) anim = "jump"; else if (moving) anim = "walk1";
+      if (player.invuln > 0 && Math.floor(player.invuln * 20) % 2) ctx.globalAlpha = 0.5; // 受傷閃爍
       const drawn = avatar && drawAvatar(ctx, avatar, psx, psy + 4, { anim, dt: lastDt, flip: player.face, targetH: 74, maxW: 70 });
+      ctx.globalAlpha = 1;
       if (!drawn) { ctx.fillStyle = "#f87171"; ctx.fillRect(psx - 10, psy - 44, 20, 44); }
       // 名牌
       ctx.fillStyle = "rgba(0,0,0,0.5)"; const nm = profile?.name || "冒險者";
@@ -256,12 +279,15 @@ export function createTown(opts) {
       if (n.type !== "n" || n.hide) continue;
       entities.push({ y: worldToScreen(n.x, n.y)[1], draw: () => drawNpc(n) });
     }
+    if (combat) for (const m of combat.aliveMobs()) entities.push({ y: worldToScreen(m.x, m.y)[1], draw: () => combat.drawMob(ctx, m, worldToScreen, W) });
     entities.push({ y: worldToScreen(player.x, player.y)[1], draw: drawPlayerDoll });
     entities.sort((a, b) => a.y - b.y); // 腳底越高(遠)越先畫
     for (const e of entities) e.draw();
 
     // 前景層 obj(最上層草叢/裝飾)：畫在實體之後 → 玩家可走到其後方
     for (const o of frontObjs) drawObject(o);
+    // 傷害跳字(疊最上)
+    if (combat) combat.drawFloats(ctx, worldToScreen);
 
     // 互動提示
     if (nearInteract) {
@@ -287,7 +313,8 @@ export function createTown(opts) {
 
     // 官方底部 HUD
     drawOfficialHud(ctx, W, H, {
-      level: profile?.level, hp: profile?.maxHp || 100, hpMax: profile?.maxHp || 100,
+      level: profile?.level,
+      hp: combat ? Math.max(0, Math.round(player.hp)) : (profile?.maxHp || 100), hpMax: player.maxHp || profile?.maxHp || 100,
       mp: profile?.maxMp || 60, mpMax: profile?.maxMp || 60, expPct: 0, skills: [],
     });
     // 手機虛擬按鍵
@@ -349,7 +376,7 @@ export function createTown(opts) {
     if (paused) { keys.clear(); return; } // 對話中不吃操作(Esc 也不離開)
     if (down && e.code === "Escape") { if (onExit) onExit(); return; }
     if (down) keys.add(e.code); else keys.delete(e.code);
-    if (["ArrowLeft", "ArrowRight", "ArrowUp", "Space", "KeyA", "KeyD", "KeyW"].includes(e.code)) e.preventDefault();
+    if (["ArrowLeft", "ArrowRight", "ArrowUp", "Space", "KeyA", "KeyD", "KeyW", "KeyJ", "KeyZ"].includes(e.code)) e.preventDefault();
   }
   const kd = (e) => onKey(e, true), ku = (e) => onKey(e, false);
 
