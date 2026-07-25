@@ -317,7 +317,7 @@ export function createTown(opts) {
 
     // 互動提示
     if (nearInteract) {
-      const txt = nearType === "npc" ? "↑ 對話" : nearType === "portal" ? "↑ 前往" : "↑ 進入";
+      const txt = nearType === "npc" ? "↑/點 對話" : nearType === "portal" ? "↑/點 前往" : "↑/點 進入";
       const [sx, sy] = worldToScreen(nearInteract.x, nearInteract.y);
       ctx.fillStyle = "#fff"; ctx.font = "bold 13px system-ui"; ctx.textAlign = "center";
       ctx.strokeStyle = "rgba(0,0,0,0.6)"; ctx.lineWidth = 3;
@@ -470,6 +470,17 @@ export function createTown(opts) {
   }
   function pMove(e) { if (!activePointers.has(e.pointerId)) return; const [cx, cy] = canvasXY(e); activePointers.set(e.pointerId, btnAt(cx, cy)); refreshTouch(); }
   function pUp(e) { if (activePointers.delete(e.pointerId)) refreshTouch(); }
+  // 點擊互動：點到 NPC / 活動門 / 傳送門就觸發(桌機滑鼠 + 手機點按,不用一定按↑)
+  function onClick(e) {
+    if (paused) return;
+    const [cx, cy] = canvasXY(e);
+    if (isTouch && btnAt(cx, cy)) return; // 別把搖桿點按當互動
+    const wx = cx - W / 2 + camCX, wy = cy - H / 2 + camCY;
+    const near = (ox, oy, rx, ry) => Math.abs(wx - ox) < rx && (wy - oy) < 20 && (oy - wy) < ry;
+    for (const n of town.life) { if (n.type !== "n" || n.hide) continue; if (near(n.x, n.y, 42, 90) && onNpc) return onNpc(n); }
+    for (const a of acts) { if (near(a.x, a.y, 48, 100) && onAct) return onAct(a); }
+    for (const p of warpPortals) { if (near(p.x, p.y, 42, 80) && onPortal) return onPortal(p); }
+  }
 
   // ── 資產預載入：進場前把 tile/obj/背景/NPC 圖 decode 完，消除逐張 pop-in ──
   // 用 Set 去重（多物件共用同張圖），每張圖只算一次；4 秒硬上限保證絕不卡住進場。
@@ -506,6 +517,7 @@ export function createTown(opts) {
       window.addEventListener("keydown", kd); window.addEventListener("keyup", ku);
       canvas.addEventListener("pointerdown", pDown); canvas.addEventListener("pointermove", pMove);
       window.addEventListener("pointerup", pUp); window.addEventListener("pointercancel", pUp);
+      canvas.addEventListener("click", onClick);
       last = performance.now(); raf = requestAnimationFrame(loop);
     },
     stop() {
@@ -513,6 +525,7 @@ export function createTown(opts) {
       window.removeEventListener("keydown", kd); window.removeEventListener("keyup", ku);
       canvas.removeEventListener("pointerdown", pDown); canvas.removeEventListener("pointermove", pMove);
       window.removeEventListener("pointerup", pUp); window.removeEventListener("pointercancel", pUp);
+      canvas.removeEventListener("click", onClick);
     },
     pause() { paused = true; keys.clear(); touch.clear(); activePointers.clear(); upHeld = true; },
     resume() { paused = false; upHeld = true; },

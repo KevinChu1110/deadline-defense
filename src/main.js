@@ -3812,16 +3812,10 @@ document.querySelector("#btn-login-discord")?.addEventListener("click", () => wi
 document.querySelector("#btn-login-guest")?.addEventListener("click", (e) => { e.preventDefault(); withAudio(() => openCampaignPanel(1)); });
 // 未登入：Discord 登入(選單內備用)
 document.querySelector("#btn-maple-login")?.addEventListener("click", () => withAudio(() => artaleHub.startDiscordOAuth()));
-// 已登入模式：掛機探險 / Boss 突襲
+// 已登入：進入遊戲 = 進主城(自由市場)
 document.querySelector("#btn-mode-hunt")?.addEventListener("click", () => withAudio(() => {
   if (!hubState.me) return artaleHub.startDiscordOAuth();
-  if ((hubState.me.characters || []).length) openCharSelect(openHuntPicker);
-  else openHuntPicker();
-}));
-document.querySelector("#btn-mode-raid")?.addEventListener("click", () => withAudio(() => {
-  if (!hubState.me) return artaleHub.startDiscordOAuth();
-  hubState.tab = "combat";
-  openArtaleHub();
+  void openTown();
 }));
 els.btnCampaignBack?.addEventListener("click", () =>
   withAudio(() => {
@@ -4263,11 +4257,8 @@ function afterActivity(fallback) { if (_townReturn) { _townReturn = false; void 
 async function openTown() {
   if (!_townData) _townData = await (await fetch("/town/fm/town.json")).json();
   const town = _townData;
-  const activeChar = (hubState.me?.characters || []).find((c) => c.isActive) || (hubState.me?.characters || [])[0];
-  let appearance;
-  try { appearance = equipToAppearance(await artaleHub.fetchEquip(), activeChar?.class); }
-  catch { appearance = loadAppearance(activeChar?.charId, activeChar?.class); }
-  const profile = { name: activeChar?.name || "冒險者", level: activeChar?.level || 1, maxHp: 600, maxMp: 300, atk: 45 + (activeChar?.level || 1) * 5 };
+  const { activeChar, appearance, cp } = await loadAppearanceForActive();
+  const profile = buildTownProfile(activeChar, cp);
   // 活動傳送門 + 通往弓箭手村的世界旅行門：放在出生點平台附近
   const sp = town.portals.find((p) => p.n === "sp") || { x: 179, y: 30 };
   const acts = [
@@ -4325,7 +4316,26 @@ async function loadAppearanceForActive() {
   let appearance;
   try { appearance = equipToAppearance(await artaleHub.fetchEquip(), activeChar?.class); }
   catch { appearance = loadAppearance(activeChar?.charId, activeChar?.class); }
-  return { activeChar, appearance };
+  // 真實戰鬥數值(HP/攻擊/武器類別) — 失敗給保守預設
+  let cp = null;
+  try { cp = await artaleHub.fetchCombatProfile(); } catch { /* 未登入/離線 */ }
+  // 用真實職系補武器(未識別職業預設會沒武器);紙娃娃至少拿對武器
+  const FAMILY_WEAPON = { warrior: 1302000, mage: 1382000, archer: 1452000, thief: 1332000, pirate: 1482000 };
+  if (cp?.family && FAMILY_WEAPON[cp.family] && !appearance.weapon) appearance.weapon = FAMILY_WEAPON[cp.family];
+  return { activeChar, appearance, cp };
+}
+/** 依真實 combat profile 組 town profile(HP/MP/攻擊皆真值) */
+function buildTownProfile(activeChar, cp) {
+  const lv = cp?.level || activeChar?.level || 1;
+  const maxHp = cp?.maxHp || (120 + lv * 28);
+  return {
+    name: activeChar?.name || cp?.name || "冒險者",
+    level: lv,
+    maxHp,
+    maxMp: Math.round(maxHp * 0.5),
+    atk: cp?.atk || (45 + lv * 5),
+    basicMin: cp?.basicMin, basicMax: cp?.basicMax,
+  };
 }
 
 // ── 楓之島世界進度 + 任務系統（char.web，伺服器權威）──
@@ -4383,8 +4393,8 @@ async function openWorldMap(mapId, entryPortal = null) {
   const m = _worldCache[mapId];
   const name = WORLD[mapId]?.name || m.name || mapId;
   m.name = name;
-  const { activeChar, appearance } = await loadAppearanceForActive();
-  const profile = { name: activeChar?.name || "冒險者", level: activeChar?.level || 1, maxHp: 600, maxMp: 300, atk: 45 + (activeChar?.level || 1) * 5 };
+  const { activeChar, appearance, cp } = await loadAppearanceForActive();
+  const profile = buildTownProfile(activeChar, cp);
   const sp = m.portals.find((p) => p.n === "sp") || m.portals[0] || { x: 0, y: 0 };
   stopTown();
   hideAllOverlays();
