@@ -53,7 +53,7 @@ export function createTown(opts) {
     player.atkCd = 0; player.attackT = 0;
   }
   const combat = hasMobs ? createMapCombat({ town, footAt, player, profile }) : null;
-  let attackHeld = false;
+  let attackHeld = false, bagOpen = false;
 
   const keys = new Set();
   // 手機虛擬按鍵
@@ -64,7 +64,7 @@ export function createTown(opts) {
     { id: "right", x: 108, y: H - 118, w: 74, h: 74, label: "▶" },
     { id: "up", x: W - 190, y: H - 118, w: 74, h: 74, label: "↑" },
     { id: "jump", x: W - 100, y: H - 118, w: 74, h: 74, label: "⤴" },
-    ...(hasMobs ? [{ id: "attack", x: W - 100, y: H - 200, w: 74, h: 74, label: "⚔" }] : []),
+    ...(hasMobs ? [{ id: "attack", x: W - 100, y: H - 200, w: 74, h: 74, label: "⚔" }, { id: "bag", x: W - 184, y: H - 200, w: 62, h: 62, label: "🎒" }] : []),
   ];
   let running = true, paused = false, raf = 0, last = performance.now(), lastDt = 0.016;
   let nearInteract = null, nearType = null, upHeld = false;
@@ -290,8 +290,8 @@ export function createTown(opts) {
 
     // 前景層 obj(最上層草叢/裝飾)：畫在實體之後 → 玩家可走到其後方
     for (const o of frontObjs) drawObject(o);
-    // 楓幣掉落 + 傷害/EXP 跳字(疊最上)
-    if (combat) { combat.drawCoins(ctx, worldToScreen); combat.drawFloats(ctx, worldToScreen); }
+    // 楓幣/道具掉落 + 傷害/EXP 跳字(疊最上)
+    if (combat) { combat.drawItems(ctx, worldToScreen); combat.drawCoins(ctx, worldToScreen); combat.drawFloats(ctx, worldToScreen); }
 
     // 互動提示
     if (nearInteract) {
@@ -321,15 +321,17 @@ export function createTown(opts) {
       hp: combat ? Math.max(0, Math.round(player.hp)) : (profile?.maxHp || 100), hpMax: player.maxHp || profile?.maxHp || 100,
       mp: profile?.maxMp || 60, mpMax: profile?.maxMp || 60, expPct: combat ? combat.expPct() : 0, skills: [],
     });
-    // 楓幣 + 擊殺計數(戰鬥圖,右上)
+    // 楓幣 + 擊殺 + 戰利品計數(戰鬥圖,右上)
     if (combat) {
       ctx.textAlign = "right"; ctx.font = "700 14px system-ui";
-      const txt = `⚔️ ${combat.totalKills()}   🪙 ${player.coins}`;
+      const txt = `⚔️ ${combat.totalKills()}   🪙 ${player.coins}   🎒 ${combat.lootCount()}`;
       const tw = ctx.measureText(txt).width;
       ctx.fillStyle = "rgba(20,16,8,0.6)"; ctx.fillRect(W - tw - 22, 12, tw + 14, 24);
       ctx.fillStyle = "#ffe14d"; ctx.fillText(txt, W - 12, 29);
       ctx.textAlign = "left";
     }
+    // 戰利品袋面板(B 開)
+    if (combat && bagOpen) drawBag();
     // 手機虛擬按鍵
     if (isTouch) {
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
@@ -345,6 +347,39 @@ export function createTown(opts) {
     }
 
     drawMinimap();
+  }
+
+  // ── 戰利品袋面板（B 開）：本回合撿到的道具圖示+名稱+數量 ──
+  function drawBag() {
+    const loot = combat.getLoot();
+    const pw = 300, rowH = 34, headH = 40, ph = Math.min(H - 80, headH + Math.max(1, loot.length) * rowH + 14);
+    const px = (W - pw) / 2, py = (H - ph) / 2;
+    ctx.save();
+    ctx.fillStyle = "rgba(30,22,12,0.94)"; ctx.strokeStyle = "#ffe9a8"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 12); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#ffe9a8"; ctx.font = "700 16px system-ui"; ctx.textAlign = "left";
+    ctx.fillText("🎒 本回合戰利品", px + 16, py + 26);
+    ctx.font = "11px system-ui"; ctx.fillStyle = "rgba(255,233,168,0.7)"; ctx.textAlign = "right";
+    ctx.fillText("B 關閉", px + pw - 14, py + 24);
+    ctx.textAlign = "left";
+    if (!loot.length) {
+      ctx.fillStyle = "rgba(255,255,255,0.6)"; ctx.font = "13px system-ui";
+      ctx.fillText("還沒撿到東西，去打怪吧！", px + 20, py + headH + 20);
+    } else {
+      loot.forEach((l, i) => {
+        const ry = py + headH + i * rowH;
+        ctx.fillStyle = i % 2 ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.08)";
+        ctx.fillRect(px + 8, ry, pw - 16, rowH - 4);
+        const im = combat.itemImg(l.itemId);
+        if (im.complete && im.naturalWidth) { const s = 26, h = im.height * (s / im.width); ctx.drawImage(im, px + 16, ry + (rowH - 4 - h) / 2, s, h); }
+        ctx.fillStyle = "#fff"; ctx.font = "13px system-ui"; ctx.textAlign = "left";
+        ctx.fillText(l.name, px + 52, ry + 20);
+        ctx.fillStyle = "#ffe14d"; ctx.textAlign = "right"; ctx.font = "700 13px system-ui";
+        ctx.fillText("×" + l.count, px + pw - 18, ry + 20);
+        ctx.textAlign = "left";
+      });
+    }
+    ctx.restore();
   }
 
   // ── 小地圖（左上，foothold 折線 + 玩家/NPC/傳送門點）──
@@ -387,9 +422,10 @@ export function createTown(opts) {
   }
   function onKey(e, down) {
     if (paused) { keys.clear(); return; } // 對話中不吃操作(Esc 也不離開)
-    if (down && e.code === "Escape") { if (onExit) onExit(); return; }
+    if (down && e.code === "Escape") { if (combat && bagOpen) { bagOpen = false; return; } if (onExit) onExit(); return; }
+    if (down && e.code === "KeyB" && combat) { bagOpen = !bagOpen; e.preventDefault(); return; }
     if (down) keys.add(e.code); else keys.delete(e.code);
-    if (["ArrowLeft", "ArrowRight", "ArrowUp", "Space", "KeyA", "KeyD", "KeyW", "KeyJ", "KeyZ"].includes(e.code)) e.preventDefault();
+    if (["ArrowLeft", "ArrowRight", "ArrowUp", "Space", "KeyA", "KeyD", "KeyW", "KeyJ", "KeyZ", "KeyB"].includes(e.code)) e.preventDefault();
   }
   const kd = (e) => onKey(e, true), ku = (e) => onKey(e, false);
 
@@ -407,6 +443,7 @@ export function createTown(opts) {
   function pDown(e) {
     if (paused || !isTouch) return;
     const [cx, cy] = canvasXY(e); const id = btnAt(cx, cy);
+    if (id === "bag") { e.preventDefault(); bagOpen = !bagOpen; return; } // 切換,非長按
     if (id) { e.preventDefault(); activePointers.set(e.pointerId, id); refreshTouch(); }
   }
   function pMove(e) { if (!activePointers.has(e.pointerId)) return; const [cx, cy] = canvasXY(e); activePointers.set(e.pointerId, btnAt(cx, cy)); refreshTouch(); }

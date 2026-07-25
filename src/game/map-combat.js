@@ -7,9 +7,25 @@
 import { sfx } from "../audio/sfx.js";
 
 const MOB_API = "https://maplestory.io/api/GMS/214/mob";
+const ITEM_ICON = (id) => `https://maplestory.io/api/GMS/214/item/${id}/icon`;
 const statCache = new Map();   // id -> {maxHp, exp, pad, name}
 const spriteCache = new Map(); // id/stance -> Image
+const itemIconCache = new Map();
 const GRAV = 2000;
+
+// 掉落表：mob id → [{id 道具, name 中文, rate 機率}]（場內即時掉落,本回合戰利品）
+const DROP_TABLE = {
+  "0100101": [{ id: 4000019, name: "綠蝸牛殼", rate: 0.55 }, { id: 1302000, name: "木劍", rate: 0.03 }],
+  "0130101": [{ id: 4000016, name: "藍蝸牛殼", rate: 0.55 }, { id: 2000000, name: "紅色藥水", rate: 0.1 }],
+  "0120100": [{ id: 4000016, name: "紅蝸牛殼", rate: 0.5 }, { id: 1040002, name: "白色汗衫", rate: 0.03 }],
+  "1210100": [{ id: 4000009, name: "蘑菇", rate: 0.5 }, { id: 1302000, name: "木劍", rate: 0.04 }],
+};
+const DEFAULT_DROP = [{ id: 4000019, name: "戰利品", rate: 0.35 }];
+function itemIcon(id) {
+  if (itemIconCache.has(id)) return itemIconCache.get(id);
+  const im = new Image(); im.crossOrigin = "anonymous"; im.src = ITEM_ICON(id);
+  itemIconCache.set(id, im); return im;
+}
 
 function mobStats(id) {
   if (statCache.has(id)) return statCache.get(id);
@@ -42,6 +58,8 @@ export function createMapCombat({ town, footAt, player, profile, onLevelUp }) {
   }
   const floats = []; // {x,y,t,life,text,color,size}
   const coins = [];  // {x,y,vx,vy,landed,t,amt}
+  const items = [];  // 場內掉落道具 {itemId,name,x,y,vx,vy,landed,t}
+  const loot = [];   // 本回合戰利品袋 [{itemId,name,count}]
   const killLog = {}; // mobId → count（離開地圖時回報 bot 權威結算經驗/掉落）
   const ATK_RANGE = 100;
 
@@ -53,6 +71,13 @@ export function createMapCombat({ town, footAt, player, profile, onLevelUp }) {
     // 楓幣掉落
     const n = 2 + Math.floor(Math.random() * 3);
     for (let i = 0; i < n; i++) coins.push({ x: m.x + (Math.random() * 16 - 8), y: m.y - 20, vx: (Math.random() * 280 - 140), vy: -(200 + Math.random() * 140), landed: false, t: 0, amt: 1 + Math.floor(Math.random() * 3) });
+    // 道具掉落(依掉落表)
+    for (const d of (DROP_TABLE[m.id] || DEFAULT_DROP)) {
+      if (Math.random() < d.rate) {
+        itemIcon(d.id); // 預載圖示
+        items.push({ itemId: d.id, name: d.name, x: m.x + (Math.random() * 20 - 10), y: m.y - 20, vx: (Math.random() * 220 - 110), vy: -(240 + Math.random() * 120), landed: false, t: 0 });
+      }
+    }
     // EXP(冒險模式 ×5 好推進)
     player.exp = (player.exp || 0) + (m.st.exp || 1) * 5;
     let need = expToLevel(player.level || 1);
@@ -122,6 +147,25 @@ export function createMapCombat({ town, footAt, player, profile, onLevelUp }) {
       }
       if (c.t > 10) coins.splice(i, 1);
     }
+    // 道具：彈跳→落地→吸附→撿取入戰利品袋
+    for (let i = items.length - 1; i >= 0; i--) {
+      const it = items[i]; it.t += dt;
+      if (!it.landed) {
+        it.vy += 900 * dt; it.x += it.vx * dt; it.y += it.vy * dt;
+        const g = footAt(it.x, it.y);
+        if (g !== null && it.y >= g) { it.y = g; it.landed = true; it.t = 0; it.vx = 0; }
+      } else if (it.t > 0.3) {
+        const dx = player.x - it.x, dy = (player.y - 24) - it.y, d = Math.hypot(dx, dy) || 1;
+        it.x += (dx / d) * 520 * dt; it.y += (dy / d) * 520 * dt;
+        if (d < 26) {
+          const slot = loot.find((l) => l.itemId === it.itemId);
+          if (slot) slot.count++; else loot.push({ itemId: it.itemId, name: it.name, count: 1 });
+          addFloat(player.x, player.y - 84, it.name, "#7ef0a0", 14, 0.9);
+          sfx.play("mesoPick"); items.splice(i, 1); continue;
+        }
+      }
+      if (it.t > 12) items.splice(i, 1);
+    }
     for (let i = floats.length - 1; i >= 0; i--) { const f = floats[i]; f.t += dt; f.y -= 42 * dt; if (f.t > f.life) floats.splice(i, 1); }
   }
 
@@ -163,6 +207,21 @@ export function createMapCombat({ town, footAt, player, profile, onLevelUp }) {
     }
   }
 
+  function drawItems(ctx, worldToScreen) {
+    for (const it of items) {
+      const [sx, sy] = worldToScreen(it.x, it.y);
+      const bob = it.landed ? Math.sin(it.t * 7) * 2 : 0;
+      const im = itemIcon(it.itemId);
+      // 光暈
+      ctx.save(); ctx.globalAlpha = 0.5; ctx.fillStyle = "#fff6c0";
+      ctx.beginPath(); ctx.ellipse(sx, sy - 2, 12, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      if (im.complete && im.naturalWidth) {
+        const s = Math.min(28, im.width * 1.1), h = im.height * (s / im.width);
+        ctx.drawImage(im, sx - s / 2, sy - h - 6 + bob, s, h);
+      } else { ctx.fillStyle = "#ffd23c"; ctx.fillRect(sx - 8, sy - 20 + bob, 16, 16); }
+    }
+  }
+
   function drawFloats(ctx, worldToScreen) {
     ctx.textAlign = "center";
     for (const f of floats) {
@@ -181,6 +240,9 @@ export function createMapCombat({ town, footAt, player, profile, onLevelUp }) {
 
   const getKills = () => ({ ...killLog });
   const totalKills = () => Object.values(killLog).reduce((s, n) => s + n, 0);
+  const getLoot = () => loot;
+  const lootCount = () => loot.reduce((s, l) => s + l.count, 0);
+  const itemImg = itemIcon; // 給 bag 面板畫圖示
 
-  return { mobs, update, aliveMobs, drawMob, drawCoins, drawFloats, expPct, getKills, totalKills };
+  return { mobs, update, aliveMobs, drawMob, drawCoins, drawItems, drawFloats, expPct, getKills, totalKills, getLoot, lootCount, itemImg };
 }
