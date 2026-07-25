@@ -1,0 +1,29 @@
+{
+  "2100": {
+    "start": {
+      "text": "冒險家，歡迎來到楓之島！這裡的蝸牛很適合練功喔。",
+      "opts": [
+        { "t": "這座島是…？", "act": "goto:about", "if": "" },
+        { "t": "（接受）收集蝸牛殼", "act": "quest.accept:q_mi_shells", "if": "quest.q_mi_shells==available" },
+        { "t": "（回報）我打完蝸牛了", "act": "quest.complete:q_mi_shells", "if": "quest.q_mi_shells==ready" },
+        { "t": "（接受）訓練的開始", "act": "quest.accept:q_mi_train", "if": "quest.q_mi_train==available" },
+        { "t": "（回報）訓練完成", "act": "quest.complete:q_mi_train", "if": "quest.q_mi_train==ready" },
+        { "t": "我想轉職", "act": "openJob", "if": "flag.ready_job1==true" },
+        { "t": "再見", "act": "close", "if": "" }
+      ]
+    },
+    "about": {
+      "text": "楓之島是所有冒險家啟程的地方。練到 8 級、選好職業，就能搭船去弓箭手村囉！",
+      "opts": [ { "t": "了解了", "act": "goto:start", "if": "" } ]
+    }
+  },
+  "2101": {
+    "start": {
+      "text": "要搭船離開楓之島嗎？前方就是通往維多利亞島的碼頭。",
+      "opts": [
+        { "t": "（回報）準備出發", "act": "quest.complete:q_mi_depart", "if": "quest.q_mi_depart==ready" },
+        { "t": "還沒，我再逛逛", "act": "close", "if": "" }
+      ]
+    }
+  }
+}
