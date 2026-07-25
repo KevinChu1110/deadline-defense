@@ -69,6 +69,7 @@ import * as artaleHub from "./artale-hub.js";
 import { createActionRaid } from "./game/action-raid.js";
 import { createHunt, keyLabel, DEFAULT_KEYBINDS } from "./game/hunt.js";
 import { createTown } from "./game/town.js";
+import { WORLD, REGION_COLOR, HOME_MAP } from "./data/world.js";
 import { createAvatar as _mkAvatar, drawAvatar as _drawAvatar } from "./game/avatar.js";
 import { loadAppearance, saveAppearance, defaultAppearance, AVATAR_CATALOG, appearanceItems } from "./data/avatar-items.js";
 import { equipToAppearance } from "./data/avatar-map.js";
@@ -4249,6 +4250,7 @@ if (location.search.includes("dev")) {
   window.__devHunt = async () => { window.__devChars(); try { await openHunt("dev"); } catch (e) { console.error(e); } };
   window.__devRaid = async () => { window.__devChars(); try { await launchActionRaid("zakum"); } catch (e) { console.error(e); } };
   window.__devTown = async () => { window.__devChars(); try { await openTown(); } catch (e) { console.error(e); } };
+  window.__devMap = async (id) => { window.__devChars(); try { await openWorldMap(id || "100000000"); } catch (e) { console.error(e); } };
 }
 
 // 可探索城鎮 Hub
@@ -4263,21 +4265,24 @@ async function openTown() {
   try { appearance = equipToAppearance(await artaleHub.fetchEquip(), activeChar?.class); }
   catch { appearance = loadAppearance(activeChar?.charId, activeChar?.class); }
   const profile = { name: activeChar?.name || "冒險者", level: activeChar?.level || 1, maxHp: 600, maxMp: 300 };
-  // 活動傳送門：放在出生點平台附近
+  // 活動傳送門 + 通往弓箭手村的世界旅行門：放在出生點平台附近
   const sp = town.portals.find((p) => p.n === "sp") || { x: 179, y: 30 };
   const acts = [
     { label: "🗡️ 掛機探險", act: "hunt", x: sp.x - 120, y: 30, color: "#7ed957" },
     { label: "🛡️ 神木防衛戰", act: "tower", x: sp.x, y: 30, color: "#ffd23c" },
     { label: "🐉 Boss 突襲", act: "raid", x: sp.x + 120, y: 30, color: "#ff6b6b" },
+    ...buildTravelActs(HOME_MAP, { x: sp.x + 240, y: 30 }),
   ];
   stopTown();
   hideAllOverlays();
+  setTownTitle(WORLD[HOME_MAP]?.name || "自由市場");
   const overlay = document.querySelector("#town-overlay");
   setOverlayOpen(overlay, true);
   townSession = createTown({
     canvas: document.querySelector("#town-canvas"),
     town, appearance, charClass: activeChar?.class, profile, acts,
     onAct: (a) => {
+      if (a.act?.startsWith("travel:")) { const tid = a.act.slice(7); void openWorldMap(tid); return; }
       _townReturn = true; stopTown(); setOverlayOpen(overlay, false);
       if (a.act === "hunt") void openHunt("dev");
       else if (a.act === "raid") void launchActionRaid("zakum");
@@ -4290,6 +4295,64 @@ async function openTown() {
   await townSession.preload((p) => drawTownLoading(document.querySelector("#town-canvas"), p));
   townSession.start();
   sfx.startBgm("town"); // 自由市場官方 BGM(FloralLife)
+}
+
+// ── 世界地圖標題列 + 旅行傳送門 ──
+function setTownTitle(name) {
+  const el = document.querySelector("#town-title");
+  if (el) el.textContent = name || "城鎮";
+}
+/** 依世界連結圖，把「→ 目的地」旅行傳送門排在出生點平台上 */
+function buildTravelActs(mapId, sp) {
+  const links = WORLD[mapId]?.links || [];
+  const n = links.length;
+  return links.map((tid, i) => {
+    const info = WORLD[tid] || {};
+    return {
+      label: `→ ${info.name || tid}`,
+      act: "travel:" + tid,
+      x: sp.x + (i - (n - 1) / 2) * 95,
+      y: sp.y,
+      color: REGION_COLOR[info.region] || "#5cc8ff",
+    };
+  });
+}
+async function loadAppearanceForActive() {
+  const activeChar = (hubState.me?.characters || []).find((c) => c.isActive) || (hubState.me?.characters || [])[0];
+  let appearance;
+  try { appearance = equipToAppearance(await artaleHub.fetchEquip(), activeChar?.class); }
+  catch { appearance = loadAppearance(activeChar?.charId, activeChar?.class); }
+  return { activeChar, appearance };
+}
+
+// ── 通用世界地圖引擎：載入任意 mapId(城鎮級解包資料)，複用 town 引擎 ──
+const _worldCache = {};
+async function openWorldMap(mapId) {
+  if (!_worldCache[mapId]) _worldCache[mapId] = await (await fetch(`/world/${mapId}/map.json`)).json();
+  const m = _worldCache[mapId];
+  const name = WORLD[mapId]?.name || m.name || mapId;
+  m.name = name;
+  const { activeChar, appearance } = await loadAppearanceForActive();
+  const profile = { name: activeChar?.name || "冒險者", level: activeChar?.level || 1, maxHp: 600, maxMp: 300 };
+  const sp = m.portals.find((p) => p.n === "sp") || m.portals[0] || { x: 0, y: 0 };
+  stopTown();
+  hideAllOverlays();
+  setTownTitle(name);
+  const overlay = document.querySelector("#town-overlay");
+  setOverlayOpen(overlay, true);
+  townSession = createTown({
+    canvas: document.querySelector("#town-canvas"),
+    town: m, appearance, charClass: activeChar?.class, profile,
+    assetBase: `/world/${mapId}`, acts: buildTravelActs(mapId, sp),
+    onAct: (a) => {
+      if (a.act?.startsWith("travel:")) { const tid = a.act.slice(7); if (tid === HOME_MAP) { void openTown(); } else { void openWorldMap(tid); } }
+    },
+    onNpc: (n) => openNpcDialog(n),
+    onExit: () => { stopTown(); setOverlayOpen(overlay, false); openTitleScreen(); },
+  });
+  await townSession.preload((p) => drawTownLoading(document.querySelector("#town-canvas"), p));
+  townSession.start();
+  sfx.startBgm("town");
 }
 // 城鎮載入進度條（畫在 town canvas 上）
 function drawTownLoading(canvas, pct) {

@@ -11,18 +11,19 @@ const W = 960, H = 540;
 const GRAVITY = 2000, WALK = 230, JUMP = 620;
 
 export function createTown(opts) {
-  const { canvas, town, appearance, charClass, profile, onAct, onNpc, onExit } = opts;
+  const { canvas, town, appearance, charClass, profile, onAct, onNpc, onExit, onPortal } = opts;
   const acts = opts.acts || []; // [{label, act, x, y, color}] 活動傳送門
+  const base = opts.assetBase || "/town/fm"; // 資產根目錄(城鎮=/town/fm;世界地圖=/world/<id>)
   const ctx = canvas.getContext("2d");
   canvas.width = W; canvas.height = H;
 
   // 背景圖載入
-  const backImgs = town.back.map((b) => { const im = new Image(); im.src = `/town/fm/${b.img}`; return { def: b, img: im }; });
+  const backImgs = town.back.map((b) => { const im = new Image(); im.src = `${base}/${b.img}`; return { def: b, img: im }; });
   // 地圖物件(tile 平台 + obj 裝飾)圖快取（key 對應檔）
   const objImgCache = new Map();
   function objImgKey(kind, key) {
     if (objImgCache.has(key)) return objImgCache.get(key);
-    const im = new Image(); im.src = `/town/fm/${kind}/${key}.png`; objImgCache.set(key, im); return im;
+    const im = new Image(); im.src = `${base}/${kind}/${key}.png`; objImgCache.set(key, im); return im;
   }
   // NPC 真 sprite（已在地化到 /town/fm/npc/*.gif，避免每次進城打外部 maplestory.io）
   const npcImgCache = new Map();
