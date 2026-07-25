@@ -4336,8 +4336,8 @@ function reportCombatKills(mapId) {
   const durationSec = _mapEnterAt ? Math.max(1, Math.round((Date.now() - _mapEnterAt) / 1000)) : 0;
   artaleHub.reportHunt({ mapId, kills, durationSec })
     .then((res) => {
-      const exp = res?.expGained || 0, drops = res?.drops?.length || 0;
-      if (exp || drops) showToast(`⚔️ 狩獵結算：擊殺 ${total}｜+${exp} 經驗${drops ? ` · 掉落 ${drops} 件(已入背包，可到富蘭德里穿戴)` : ""}`);
+      const exp = res?.expGained || 0, meso = res?.meso || 0, drops = res?.drops?.length || 0;
+      if (exp || meso || drops) showToast(`⚔️ 狩獵結算：擊殺 ${total}｜+${exp} 經驗 · +${meso} 楓幣${drops ? ` · 掉落 ${drops} 件` : ""}`);
     })
     .catch(() => { /* bot 端未部署 hunt.report 時靜默略過 */ });
 }

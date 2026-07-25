@@ -28,6 +28,7 @@ import {
   getCombatProfile,
   startActionRaid,
   completeActionRaid,
+  reportHunt,
 } from "./store.js";
 import * as auth from "./auth.js";
 
@@ -430,6 +431,15 @@ const server = http.createServer(async (req, res) => {
       const discordId = sess?.discordId;
       if (!discordId) return json(res, 401, { error: "請先登入" }, req);
       const out = await completeActionRaid(discordId, body);
+      return json(res, 200, out, req);
+    }
+
+    if (req.method === "POST" && pathname === "/api/combat/hunt/report") {
+      const sess = sessionFromReq(req);
+      const body = await readBody(req);
+      const discordId = sess?.discordId;
+      if (!discordId) return json(res, 401, { error: "請先登入" }, req);
+      const out = await reportHunt(discordId, body);
       return json(res, 200, out, req);
     }
 

@@ -349,6 +349,17 @@ export async function completeActionRaid(discordId, payload = {}) {
   return { ok: true, stats: out?.stats, rewardNote: "M3 v1 無掉落；M4 接獎勵／排行" };
 }
 
+/** 網頁世界狩獵結算：由 bot 權威計算經驗/楓幣(伺服器授權 + 三重上限) */
+export async function reportHunt(discordId, payload = {}) {
+  const kills = payload && typeof payload.kills === "object" ? payload.kills : {};
+  const out = await botOp(discordId, "hunt.report", {
+    mapId: payload.mapId,
+    kills,
+    durationSec: payload.durationSec,
+  });
+  return { ok: true, expGained: out?.expGained || 0, meso: out?.meso || 0, kills: out?.kills || 0, drops: out?.drops || [] };
+}
+
 export function getActionBossList() {
   return listBosses();
 }
