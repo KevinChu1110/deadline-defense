@@ -69,7 +69,7 @@ import * as artaleHub from "./artale-hub.js";
 import { createActionRaid } from "./game/action-raid.js";
 import { createHunt, keyLabel, DEFAULT_KEYBINDS } from "./game/hunt.js";
 import { createTown } from "./game/town.js";
-import { WORLD, REGION_COLOR, HOME_MAP } from "./data/world.js";
+import { WORLD, REGION_COLOR, HOME_MAP, AVAILABLE_MAPS, padMapId } from "./data/world.js";
 import { createAvatar as _mkAvatar, drawAvatar as _drawAvatar } from "./game/avatar.js";
 import { loadAppearance, saveAppearance, defaultAppearance, AVATAR_CATALOG, appearanceItems } from "./data/avatar-items.js";
 import { equipToAppearance } from "./data/avatar-map.js";
@@ -4250,7 +4250,7 @@ if (location.search.includes("dev")) {
   window.__devHunt = async () => { window.__devChars(); try { await openHunt("dev"); } catch (e) { console.error(e); } };
   window.__devRaid = async () => { window.__devChars(); try { await launchActionRaid("zakum"); } catch (e) { console.error(e); } };
   window.__devTown = async () => { window.__devChars(); try { await openTown(); } catch (e) { console.error(e); } };
-  window.__devMap = async (id) => { window.__devChars(); try { await openWorldMap(id || "100000000"); } catch (e) { console.error(e); } };
+  window.__devMap = async (id, entry) => { window.__devChars(); try { await openWorldMap(id || "100000000", entry || null); } catch (e) { console.error(e); } };
 }
 
 // 可探索城鎮 Hub
@@ -4341,7 +4341,15 @@ function reportCombatKills(mapId) {
     })
     .catch(() => { /* bot 端未部署 hunt.report 時靜默略過 */ });
 }
-async function openWorldMap(mapId) {
+/** 走真實傳送門 → warp 下一張圖(在目標圖的入口 portal 出生) */
+function warpPortal(mapId, portal) {
+  const tid = padMapId(portal.tm);
+  if (!AVAILABLE_MAPS.has(tid)) { showToast("這個地方還沒開放～"); return; }
+  reportCombatKills(mapId);
+  if (tid === HOME_MAP) { void openTown(); return; }
+  void openWorldMap(tid, portal.tn || null);
+}
+async function openWorldMap(mapId, entryPortal = null) {
   if (!_worldCache[mapId]) _worldCache[mapId] = await (await fetch(`/world/${mapId}/map.json`)).json();
   const m = _worldCache[mapId];
   const name = WORLD[mapId]?.name || m.name || mapId;
@@ -4358,11 +4366,12 @@ async function openWorldMap(mapId) {
   townSession = createTown({
     canvas: document.querySelector("#town-canvas"),
     town: m, appearance, charClass: activeChar?.class, profile,
-    assetBase: `/world/${mapId}`, acts: buildTravelActs(mapId, sp),
+    assetBase: `/world/${mapId}`, acts: buildTravelActs(mapId, sp), entryPortal,
     onAct: (a) => {
       if (a.act?.startsWith("travel:")) { reportCombatKills(mapId); const tid = a.act.slice(7); if (tid === HOME_MAP) { void openTown(); } else { void openWorldMap(tid); } }
     },
     onNpc: (n) => openNpcDialog(n),
+    onPortal: (p) => warpPortal(mapId, p),
     onExit: () => { reportCombatKills(mapId); stopTown(); setOverlayOpen(overlay, false); openTitleScreen(); },
   });
   await townSession.preload((p) => drawTownLoading(document.querySelector("#town-canvas"), p));

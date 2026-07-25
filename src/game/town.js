@@ -39,8 +39,11 @@ export function createTown(opts) {
   // 紙娃娃
   const avatar = appearance ? createAvatar(appearance) : null;
 
-  // 出生點：portal pn==="sp" 或第一個
-  const sp = town.portals.find((p) => p.n === "sp") || town.portals[0] || { x: 0, y: 0 };
+  // 出生點：指定入口 portal(跨圖 warp 用) > "sp" > 第一個
+  const entry = opts.entryPortal ? town.portals.find((p) => p.n === opts.entryPortal) : null;
+  const sp = entry || town.portals.find((p) => p.n === "sp") || town.portals[0] || { x: 0, y: 0 };
+  // 可 warp 的真實地圖門(pt=2 且有目標圖)
+  const warpPortals = (town.portals || []).filter((p) => p.t === 2 && p.tm && p.tm !== 999999999);
   const player = { x: sp.x, y: sp.y, vx: 0, vy: 0, w: 34, h: 54, face: 1, onGround: false, anim: "idle", animT: 0 };
   // camera 世界中心
   let camCX = player.x, camCY = player.y - 80;
@@ -145,11 +148,16 @@ export function createTown(opts) {
       const d = Math.abs(a.x - player.x);
       if (d < 55 && Math.abs(a.y - player.y) < 80 && d < bestD) { bestD = d; nearInteract = a; nearType = "act"; }
     }
+    for (const p of warpPortals) {
+      const d = Math.abs(p.x - player.x);
+      if (d < 45 && Math.abs(p.y - player.y) < 70 && d < bestD) { bestD = d; nearInteract = p; nearType = "portal"; }
+    }
     // 邊緣觸發：按下↑瞬間才互動
     const up = keys.has("ArrowUp") || touch.has("up");
     if (nearInteract && up && !upHeld) {
       if (nearType === "npc" && onNpc) onNpc(nearInteract);
       else if (nearType === "act" && onAct) onAct(nearInteract);
+      else if (nearType === "portal" && onPortal) onPortal(nearInteract);
     }
     upHeld = up;
   }
@@ -241,6 +249,20 @@ export function createTown(opts) {
       ctx.fillStyle = "#fff4d8"; ctx.fillText(a.label, sx, sy - 68);
     }
 
+    // 真實地圖傳送門（經典藍色光柱）
+    for (const p of warpPortals) {
+      const [sx, sy] = worldToScreen(p.x, p.y);
+      if (sx < -50 || sx > W + 50) continue;
+      const puls = 0.5 + Math.sin(tt * 1.6 + p.x) * 0.25;
+      ctx.save();
+      const grad = ctx.createLinearGradient(sx, sy - 60, sx, sy);
+      grad.addColorStop(0, `rgba(150,220,255,0)`); grad.addColorStop(1, `rgba(120,200,255,${0.45 * puls})`);
+      ctx.fillStyle = grad; ctx.fillRect(sx - 16, sy - 60, 32, 60);
+      ctx.globalAlpha = puls; ctx.strokeStyle = "#bfe8ff"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(sx, sy - 8, 16, 7, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+    }
+
     // ── 實體(NPC + 玩家)：依「腳底螢幕 y」景深排序,越靠下(近鏡頭)越後畫→蓋住較遠的 ──
     const drawNpc = (n) => {
       const [sx, sy] = worldToScreen(n.x, n.y);
@@ -295,7 +317,7 @@ export function createTown(opts) {
 
     // 互動提示
     if (nearInteract) {
-      const txt = nearType === "npc" ? "↑ 對話" : "↑ 進入";
+      const txt = nearType === "npc" ? "↑ 對話" : nearType === "portal" ? "↑ 前往" : "↑ 進入";
       const [sx, sy] = worldToScreen(nearInteract.x, nearInteract.y);
       ctx.fillStyle = "#fff"; ctx.font = "bold 13px system-ui"; ctx.textAlign = "center";
       ctx.strokeStyle = "rgba(0,0,0,0.6)"; ctx.lineWidth = 3;
