@@ -4327,6 +4327,20 @@ async function loadAppearanceForActive() {
 
 // ── 通用世界地圖引擎：載入任意 mapId(城鎮級解包資料)，複用 town 引擎 ──
 const _worldCache = {};
+let _mapEnterAt = 0;
+/** 離開戰鬥圖時：把擊殺回報給 bot 權威結算經驗/掉落(不直接寫玩家資料;失敗靜默) */
+function reportCombatKills(mapId) {
+  const kills = townSession?.getCombatKills?.();
+  if (!kills || !Object.keys(kills).length) return;
+  const total = Object.values(kills).reduce((a, b) => a + b, 0);
+  const durationSec = _mapEnterAt ? Math.max(1, Math.round((Date.now() - _mapEnterAt) / 1000)) : 0;
+  artaleHub.reportHunt({ mapId, kills, durationSec })
+    .then((res) => {
+      const exp = res?.expGained || 0, drops = res?.drops?.length || 0;
+      if (exp || drops) showToast(`⚔️ 狩獵結算：擊殺 ${total}｜+${exp} 經驗${drops ? ` · 掉落 ${drops} 件(已入背包，可到富蘭德里穿戴)` : ""}`);
+    })
+    .catch(() => { /* bot 端未部署 hunt.report 時靜默略過 */ });
+}
 async function openWorldMap(mapId) {
   if (!_worldCache[mapId]) _worldCache[mapId] = await (await fetch(`/world/${mapId}/map.json`)).json();
   const m = _worldCache[mapId];
@@ -4338,6 +4352,7 @@ async function openWorldMap(mapId) {
   stopTown();
   hideAllOverlays();
   setTownTitle(name);
+  _mapEnterAt = Date.now();
   const overlay = document.querySelector("#town-overlay");
   setOverlayOpen(overlay, true);
   townSession = createTown({
@@ -4345,10 +4360,10 @@ async function openWorldMap(mapId) {
     town: m, appearance, charClass: activeChar?.class, profile,
     assetBase: `/world/${mapId}`, acts: buildTravelActs(mapId, sp),
     onAct: (a) => {
-      if (a.act?.startsWith("travel:")) { const tid = a.act.slice(7); if (tid === HOME_MAP) { void openTown(); } else { void openWorldMap(tid); } }
+      if (a.act?.startsWith("travel:")) { reportCombatKills(mapId); const tid = a.act.slice(7); if (tid === HOME_MAP) { void openTown(); } else { void openWorldMap(tid); } }
     },
     onNpc: (n) => openNpcDialog(n),
-    onExit: () => { stopTown(); setOverlayOpen(overlay, false); openTitleScreen(); },
+    onExit: () => { reportCombatKills(mapId); stopTown(); setOverlayOpen(overlay, false); openTitleScreen(); },
   });
   await townSession.preload((p) => drawTownLoading(document.querySelector("#town-canvas"), p));
   townSession.start();

@@ -42,12 +42,14 @@ export function createMapCombat({ town, footAt, player, profile, onLevelUp }) {
   }
   const floats = []; // {x,y,t,life,text,color,size}
   const coins = [];  // {x,y,vx,vy,landed,t,amt}
+  const killLog = {}; // mobId → count（離開地圖時回報 bot 權威結算經驗/掉落）
   const ATK_RANGE = 100;
 
   function addFloat(x, y, text, color, size, life = 0.8) { floats.push({ x, y, t: 0, life, text, color, size }); }
 
   function killMob(m) {
     m.dying = true; m.dieT = 0; m.hp = 0;
+    killLog[m.id] = (killLog[m.id] || 0) + 1;
     // 楓幣掉落
     const n = 2 + Math.floor(Math.random() * 3);
     for (let i = 0; i < n; i++) coins.push({ x: m.x + (Math.random() * 16 - 8), y: m.y - 20, vx: (Math.random() * 280 - 140), vy: -(200 + Math.random() * 140), landed: false, t: 0, amt: 1 + Math.floor(Math.random() * 3) });
@@ -177,5 +179,8 @@ export function createMapCombat({ town, footAt, player, profile, onLevelUp }) {
   // EXP 進度(0~1)給 HUD
   function expPct() { return Math.max(0, Math.min(1, (player.exp || 0) / expToLevel(player.level || 1))); }
 
-  return { mobs, update, aliveMobs, drawMob, drawCoins, drawFloats, expPct };
+  const getKills = () => ({ ...killLog });
+  const totalKills = () => Object.values(killLog).reduce((s, n) => s + n, 0);
+
+  return { mobs, update, aliveMobs, drawMob, drawCoins, drawFloats, expPct, getKills, totalKills };
 }

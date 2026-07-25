@@ -321,10 +321,10 @@ export function createTown(opts) {
       hp: combat ? Math.max(0, Math.round(player.hp)) : (profile?.maxHp || 100), hpMax: player.maxHp || profile?.maxHp || 100,
       mp: profile?.maxMp || 60, mpMax: profile?.maxMp || 60, expPct: combat ? combat.expPct() : 0, skills: [],
     });
-    // 楓幣計數(戰鬥圖,右上)
+    // 楓幣 + 擊殺計數(戰鬥圖,右上)
     if (combat) {
       ctx.textAlign = "right"; ctx.font = "700 14px system-ui";
-      const txt = `🪙 ${player.coins}`;
+      const txt = `⚔️ ${combat.totalKills()}   🪙 ${player.coins}`;
       const tw = ctx.measureText(txt).width;
       ctx.fillStyle = "rgba(20,16,8,0.6)"; ctx.fillRect(W - tw - 22, 12, tw + 14, 24);
       ctx.fillStyle = "#ffe14d"; ctx.fillText(txt, W - 12, 29);
@@ -441,6 +441,8 @@ export function createTown(opts) {
 
   return {
     preload,
+    // 戰鬥圖的擊殺記錄(給 main.js 回報 bot 權威結算)
+    getCombatKills: () => (combat ? combat.getKills() : null),
     start() {
       window.addEventListener("keydown", kd); window.addEventListener("keyup", ku);
       canvas.addEventListener("pointerdown", pDown); canvas.addEventListener("pointermove", pMove);
