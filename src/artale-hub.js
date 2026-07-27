@@ -191,6 +191,28 @@ export async function craftPotential(toKey, times = 1) {
   });
 }
 
+export async function fetchScroll() {
+  return api("/api/scroll");
+}
+
+export async function applyScroll(itemId, kind) {
+  return api("/api/scroll/apply", {
+    method: "POST",
+    body: JSON.stringify({ itemId, kind }),
+  });
+}
+
+export async function fetchGacha() {
+  return api("/api/gacha");
+}
+
+export async function pullGacha(n = 1) {
+  return api("/api/gacha/pull", {
+    method: "POST",
+    body: JSON.stringify({ n }),
+  });
+}
+
 export async function fetchCombatProfile() {
   return api("/api/combat/profile");
 }
@@ -375,6 +397,12 @@ export function renderHubShell(els, state) {
     oauthOk = null,
     error = "",
     equipFilter = "all",
+    scroll = null,
+    scrollPick = null,
+    scrollFlash = "",
+    gacha = null,
+    gachaFlash = "",
+    gachaResults = null,
   } = state;
 
   const dev = showDevTools();
@@ -469,8 +497,10 @@ export function renderHubShell(els, state) {
         ${tabBtn("home", "總覽", tab)}
         ${tabBtn("chars", "角色", tab)}
         ${tabBtn("equip", "裝備", tab)}
+        ${tabBtn("scroll", "衝卷", tab)}
         ${tabBtn("star", "星力", tab)}
         ${tabBtn("pot", "潛能", tab)}
+        ${tabBtn("gacha", "轉蛋", tab)}
         ${tabBtn("combat", "突襲／無止境", tab)}
       </nav>
       ${error ? `<p class="hub-error" style="margin:8px 0">${escapeHtml(error)}</p>` : ""}
@@ -486,6 +516,12 @@ export function renderHubShell(els, state) {
           starFlash,
           potFlash,
           safeguard,
+          scroll,
+          scrollPick,
+          scrollFlash,
+          gacha,
+          gachaFlash,
+          gachaResults,
         })}
       </div>
     </div>
@@ -635,8 +671,10 @@ function renderMapleEquip(equip, me, active, equipFilter) {
           <p class="muted ms-inv-hint">點背包物品穿上 · 點紙娃娃槽位卸下 · <span class="ms-inv-req over">紅字</span>＝等級不足不能裝備</p>
           <div class="ms-forge-bar">
             <span class="ms-forge-q">想讓裝備更強？</span>
+            <button type="button" class="btn chip-preset" data-hub-goto="scroll">📜 衝卷</button>
             <button type="button" class="btn chip-preset" data-hub-goto="star">⭐ 衝星力</button>
             <button type="button" class="btn chip-preset" data-hub-goto="pot">🔮 洗潛能</button>
+            <button type="button" class="btn chip-preset" data-hub-goto="gacha">🎰 轉蛋</button>
           </div>
           <div class="ms-inv-scroll">${invHtml}</div>
         </div>
@@ -918,6 +956,101 @@ function renderPotential(pot, me, active, potPick, potPanel, potFlash) {
     </div>`;
 }
 
+function renderScrollBench(sc, me, active, scrollPick, scrollFlash) {
+  if (!sc) return `<p class="muted center-hint">載入衝卷台中…</p>`;
+  const gear = sc.gear || [];
+  const scrolls = sc.scrolls || [];
+  const pickId = scrollPick || null;
+  const gearHtml = gear.length
+    ? gear.map((g) => {
+        const on = pickId && g.itemId === pickId;
+        const full = (g.slotsLeft || 0) <= 0;
+        return `
+        <div class="sc-gear ${on ? "is-on" : ""} ${full ? "is-full" : ""}"
+          data-sc-gear="${escapeHtml(g.itemId)}"
+          data-drop-gear="1"
+          draggable="false">
+          <strong>${escapeHtml(g.name)}${g.equipped ? " ·穿" : ""}</strong>
+          <small>Lv.${g.level || "?"} · ${escapeHtml(slotZh(g) || g.slot || "")}
+            · 欄 ${g.slotsUsed || 0}/${g.maxSlots || 0}
+            ${g.totalAd ? ` · 攻${g.totalAd}` : ""}${g.totalAp ? ` · 魔${g.totalAp}` : ""}
+          </small>
+        </div>`;
+      }).join("")
+    : `<p class="muted">沒有可衝卷的裝備（需為卷軸系統涵蓋的武器／防具／飾品）</p>`;
+  const scrollHtml = scrolls.length
+    ? scrolls.map((s) => `
+        <div class="sc-scroll" draggable="true"
+          data-sc-kind="${escapeHtml(s.kind)}"
+          data-sc-name="${escapeHtml(s.name)}"
+          title="拖到左側裝備上，或先點裝備再點卷軸">
+          <strong>📜 ${escapeHtml(s.name)}</strong>
+          <small>×${s.count}${s.ratePct != null ? ` · ${s.ratePct}%` : ""}${s.statsLabel ? ` · ${escapeHtml(s.statsLabel)}` : ""}${s.boom ? " · 詛咒" : ""}</small>
+        </div>`).join("")
+    : `<p class="muted">背包沒有卷軸 — 去打怪掉落或轉蛋拿</p>`;
+  const flash = scrollFlash
+    ? `<div class="sc-flash ${/成功|✨/.test(scrollFlash) ? "ok" : /爆|💥/.test(scrollFlash) ? "boom" : "info"}">${escapeHtml(scrollFlash)}</div>`
+    : "";
+  return `
+    <div class="ms-equip-window sc-window">
+      <div class="ms-equip-titlebar">
+        <span>SCROLL</span>
+        <strong>${escapeHtml(sc.charName || active?.name || me.username)} · 衝卷
+          · 💰 ${(sc.coins ?? me.coins ?? 0).toLocaleString()}</strong>
+      </div>
+      ${flash}
+      <p class="muted sc-hint">${escapeHtml(sc.note || "拖曳卷軸到裝備上")}</p>
+      <div class="sc-body">
+        <div class="sc-col">
+          <div class="sc-col-head">可衝裝備 ${pickId ? "· 已選" : "· 點選或拖卷過來"}</div>
+          <div class="sc-list" id="sc-gear-list">${gearHtml}</div>
+        </div>
+        <div class="sc-col">
+          <div class="sc-col-head">卷軸（可拖曳）</div>
+          <div class="sc-list" id="sc-scroll-list">${scrollHtml}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderGacha(gc, me, active, gachaFlash, gachaResults) {
+  if (!gc) return `<p class="muted center-hint">載入轉蛋機中…</p>`;
+  const cost = gc.cost || 3_000_000;
+  const results = gachaResults || [];
+  const resHtml = results.length
+    ? `<div class="gc-results">${results.map((r) =>
+        `<div class="gc-result tier-${escapeHtml(r.tierKey || "scroll")}">${escapeHtml(r.name)}</div>`
+      ).join("")}</div>`
+    : "";
+  const hist = (gc.history || []).slice(0, 12);
+  const histHtml = hist.length
+    ? hist.map((h) => `<div class="gc-hist">· ${escapeHtml(h.name || "？")}</div>`).join("")
+    : `<p class="muted">尚無抽取紀錄</p>`;
+  const flash = gachaFlash
+    ? `<div class="sc-flash ok">${escapeHtml(gachaFlash)}</div>`
+    : "";
+  return `
+    <div class="ms-equip-window gc-window">
+      <div class="ms-equip-titlebar">
+        <span>GACHA</span>
+        <strong>🎰 轉蛋機 · 💰 ${(gc.coins ?? me.coins ?? 0).toLocaleString()}</strong>
+      </div>
+      ${flash}
+      <p class="muted sc-hint">${escapeHtml(gc.note || "")}</p>
+      <div class="gc-actions">
+        <button type="button" class="btn primary maple-primary" data-gacha-pull="1"
+          ${gc.canPull1 ? "" : "disabled"}>抽 1 次（${(cost / 10000).toLocaleString()}萬）</button>
+        <button type="button" class="btn primary maple-primary" data-gacha-pull="10"
+          ${gc.canPull10 ? "" : "disabled"}>連抽 10 次</button>
+      </div>
+      ${resHtml}
+      <div class="gc-hist-box">
+        <div class="sc-col-head">最近紀錄</div>
+        ${histHtml}
+      </div>
+    </div>`;
+}
+
 function renderTab(tab, me, active, ui = {}) {
   const {
     equip,
@@ -930,6 +1063,12 @@ function renderTab(tab, me, active, ui = {}) {
     starFlash,
     potFlash,
     safeguard,
+    scroll,
+    scrollPick,
+    scrollFlash,
+    gacha,
+    gachaFlash,
+    gachaResults,
   } = ui;
 
   if (tab === "chars") {
@@ -955,12 +1094,20 @@ function renderTab(tab, me, active, ui = {}) {
     return renderMapleEquip(equip, me, active, equipFilter);
   }
 
+  if (tab === "scroll") {
+    return renderScrollBench(scroll, me, active, scrollPick, scrollFlash);
+  }
+
   if (tab === "star") {
     return renderStarforce(starforce, me, active, starPick, starFlash, safeguard);
   }
 
   if (tab === "pot") {
     return renderPotential(potential, me, active, potPick, potPanel, potFlash);
+  }
+
+  if (tab === "gacha") {
+    return renderGacha(gacha, me, active, gachaFlash, gachaResults);
   }
 
   if (tab === "combat") {
@@ -1097,11 +1244,22 @@ export function bindHubEvents(els, ctx) {
   });
 
   const gotoTab = async (tab) => {
-    const next = { ...getState?.(), tab, starFlash: "", potFlash: "", error: "" };
+    const next = {
+      ...getState?.(),
+      tab,
+      starFlash: "",
+      potFlash: "",
+      scrollFlash: "",
+      gachaFlash: "",
+      gachaResults: null,
+      error: "",
+    };
     try {
       if (tab === "equip") next.equip = await fetchEquip();
       if (tab === "star") next.starforce = await fetchStarforce();
       if (tab === "pot") next.potential = await fetchPotential();
+      if (tab === "scroll") next.scroll = await fetchScroll();
+      if (tab === "gacha") next.gacha = await fetchGacha();
     } catch (e) {
       next.error = e.message;
     }
@@ -1185,6 +1343,117 @@ export function bindHubEvents(els, ctx) {
         tab: "equip",
         equipFilter: btn.getAttribute("data-eq-filter"),
       });
+    });
+  });
+
+  // ── 衝卷：點選裝備 ──
+  els.artaleHub?.querySelectorAll("[data-sc-gear]").forEach((el) => {
+    el.addEventListener("click", () => {
+      onState?.({
+        ...getState?.(),
+        tab: "scroll",
+        scrollPick: el.getAttribute("data-sc-gear"),
+        scrollFlash: "",
+      });
+    });
+    // drop target
+    el.addEventListener("dragover", (e) => { e.preventDefault(); el.classList.add("drag-over"); });
+    el.addEventListener("dragleave", () => el.classList.remove("drag-over"));
+    el.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      el.classList.remove("drag-over");
+      const kind = e.dataTransfer?.getData("text/scroll-kind") || e.dataTransfer?.getData("text/plain");
+      const itemId = el.getAttribute("data-sc-gear");
+      if (!kind || !itemId) return;
+      const st = getState?.() || {};
+      try {
+        const out = await applyScroll(itemId, kind);
+        const me = st.me && out.view?.coins != null
+          ? { ...st.me, coins: out.view.coins }
+          : st.me;
+        onState?.({
+          ...st,
+          me,
+          scroll: out.view || st.scroll,
+          scrollPick: itemId,
+          scrollFlash: out.flash || (out.ok ? "成功" : "失敗"),
+          tab: "scroll",
+          error: "",
+        });
+      } catch (err) {
+        onState?.({ ...st, tab: "scroll", error: err.message, scrollFlash: "" });
+      }
+    });
+  });
+
+  // ── 衝卷：拖曳卷軸 / 點卷軸套到已選裝備 ──
+  els.artaleHub?.querySelectorAll("[data-sc-kind]").forEach((el) => {
+    el.addEventListener("dragstart", (e) => {
+      const kind = el.getAttribute("data-sc-kind");
+      e.dataTransfer?.setData("text/scroll-kind", kind);
+      e.dataTransfer?.setData("text/plain", kind);
+      e.dataTransfer.effectAllowed = "copy";
+      el.classList.add("dragging");
+    });
+    el.addEventListener("dragend", () => el.classList.remove("dragging"));
+    el.addEventListener("click", async () => {
+      const st = getState?.() || {};
+      const itemId = st.scrollPick;
+      const kind = el.getAttribute("data-sc-kind");
+      if (!itemId) {
+        onState?.({ ...st, tab: "scroll", scrollFlash: "先點左側裝備，再點卷軸（或直接拖卷到裝備上）" });
+        return;
+      }
+      try {
+        const out = await applyScroll(itemId, kind);
+        const me = st.me && out.view?.coins != null
+          ? { ...st.me, coins: out.view.coins }
+          : st.me;
+        onState?.({
+          ...st,
+          me,
+          scroll: out.view || st.scroll,
+          scrollPick: itemId,
+          scrollFlash: out.flash || (out.ok ? "成功" : "失敗"),
+          tab: "scroll",
+          error: "",
+        });
+      } catch (err) {
+        onState?.({ ...st, tab: "scroll", error: err.message, scrollFlash: "" });
+      }
+    });
+  });
+
+  // ── 轉蛋 ──
+  els.artaleHub?.querySelectorAll("[data-gacha-pull]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (btn.disabled) return;
+      const n = Number(btn.getAttribute("data-gacha-pull") || 1);
+      const st = getState?.() || {};
+      btn.disabled = true;
+      const orig = btn.textContent;
+      btn.textContent = "抽取中…";
+      try {
+        const out = await pullGacha(n);
+        const me = st.me
+          ? { ...st.me, coins: out.balance ?? out.view?.coins ?? st.me.coins }
+          : st.me;
+        const names = (out.results || []).map((r) => r.name).join("、");
+        onState?.({
+          ...st,
+          me,
+          gacha: out.view || st.gacha,
+          gachaResults: out.results || [],
+          gachaFlash: `抽到 ${out.n || n} 件：${names}`,
+          tab: "gacha",
+          error: "",
+        });
+      } catch (err) {
+        onState?.({ ...st, tab: "gacha", error: err.message, gachaFlash: "" });
+      } finally {
+        btn.disabled = false;
+        btn.textContent = orig;
+      }
     });
   });
 

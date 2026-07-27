@@ -579,8 +579,11 @@ function avatarUrl(appearance, anim = "stand1", frame = 0) {
 }
 function itemIconUrl(id) { return `${MSIO}/GMS/214/item/${id}/icon`; }
 
-// 唯讀裝備視窗：真實裝備 → 官方物品圖示疊在官方框槽位
+// 城鎮 E/I：開「真」裝備介面（Hub 穿脫，bot 權威），不再只是紙娃娃預覽框
 async function openEquip() {
+  // 在城鎮中 → 疊 Hub 裝備頁；否則開輕量紙娃娃預覽（角色選單等）
+  const inTown = document.querySelector("#town-overlay")?.classList.contains("is-open");
+  if (inTown && hubState.me) return openTownHub("equip");
   const c = (hubState.me?.characters || []).find((x) => x.isActive) || (hubState.me?.characters || [])[0];
   let app;
   try { app = equipToAppearance(await artaleHub.fetchEquip(), c?.class); }
@@ -835,6 +838,40 @@ function renderHuntPicker() {
   });
 }
 
+/** 城鎮內開主城 Hub 分頁（裝備/衝卷/星力/轉蛋），關閉後回城鎮 */
+let _hubReturnTown = false;
+async function openTownHub(tab = "equip") {
+  if (!hubState.me) {
+    showToast("請先登入 Discord");
+    return;
+  }
+  _hubReturnTown = true;
+  townSession?.pause();
+  // 不清掉 town-overlay，只疊上 hub
+  setOverlayOpen(els.artaleHubOverlay, true);
+  hubState = {
+    ...hubState,
+    tab,
+    error: "",
+    scrollFlash: "",
+    gachaFlash: "",
+    gachaResults: null,
+    starFlash: "",
+    potFlash: "",
+  };
+  try {
+    if (tab === "equip") hubState.equip = await artaleHub.fetchEquip();
+    if (tab === "star") hubState.starforce = await artaleHub.fetchStarforce();
+    if (tab === "pot") hubState.potential = await artaleHub.fetchPotential();
+    if (tab === "scroll") hubState.scroll = await artaleHub.fetchScroll();
+    if (tab === "gacha") hubState.gacha = await artaleHub.fetchGacha();
+  } catch (e) {
+    hubState.error = e?.message || String(e);
+  }
+  paintHub();
+  sfx.play("uiClick");
+}
+
 function paintHub() {
   artaleHub.renderHubShell(els, hubState);
   artaleHub.bindHubEvents(els, {
@@ -845,6 +882,11 @@ function paintHub() {
     },
     onBackTitle: () => {
       setOverlayOpen(els.artaleHubOverlay, false);
+      if (_hubReturnTown) {
+        _hubReturnTown = false;
+        townSession?.resume();
+        return;
+      }
       openTitleScreen();
     },
     onOpenDefense: () => {
@@ -4306,6 +4348,7 @@ async function openTown() {
 }
 
 // 楓之谷標準視窗鍵:E裝備 I道具 K技能 W地圖 + S狀態 H/?快捷鍵 P商店 O設定
+// 鍛造：B 衝卷 · R 星力 · G 轉蛋（開 Hub 真系統）
 function openTownWindow(which) {
   if (which === "equip" || which === "item") return openEquip();
   if (which === "skill") return openSkillWindow();
@@ -4314,6 +4357,9 @@ function openTownWindow(which) {
   if (which === "hotkey" || which === "help") return openHotkeyWindow();
   if (which === "shop") return openShopWindow();
   if (which === "settings") return openSettingsOverlay();
+  if (which === "scroll") return openTownHub("scroll");
+  if (which === "star") return openTownHub("star");
+  if (which === "gacha") return openTownHub("gacha");
 }
 let _lastCp = null;
 let _lastTownProfile = null;
@@ -4332,6 +4378,7 @@ const TOWN_WINDOW_IDS = [
   "skill-window-overlay", "map-window-overlay", "equip-overlay",
   "status-window-overlay", "hotkey-window-overlay", "shop-window-overlay",
   "settings-overlay", "keybind-overlay", "customize-overlay",
+  "artale-hub-overlay",
 ];
 function openSkillWindow() {
   const fam = _lastCp?.family || "beginner";
@@ -4388,7 +4435,10 @@ function openHotkeyWindow() {
     ["空白鍵", "跳躍"],
     ["↑ / 點擊", "與 NPC / 傳送門互動"],
     ["Enter", "聚焦聊天輸入"],
-    ["E / I", "裝備 · 道具"],
+    ["E / I", "裝備 · 道具（真穿脫）"],
+    ["B", "衝卷（拖曳卷軸）"],
+    ["R", "星力"],
+    ["G", "轉蛋"],
     ["K", "技能"],
     ["W", "地圖"],
     ["S", "角色狀態"],
@@ -4660,6 +4710,11 @@ window.addEventListener("keydown", (e) => {
     const el = document.querySelector("#" + id);
     if (el && el.classList.contains("is-open")) {
       setOverlayOpen(el, false);
+      // 從城鎮開的 Hub 關掉後要 resume 城鎮
+      if (id === "artale-hub-overlay" && _hubReturnTown) {
+        _hubReturnTown = false;
+        townSession?.resume();
+      }
       e.stopPropagation(); e.preventDefault();
       return;
     }
@@ -4670,6 +4725,10 @@ document.querySelector("#btn-town-hotkey")?.addEventListener("click", () => with
 document.querySelector("#btn-town-status")?.addEventListener("click", () => withAudio(() => openStatusWindow()));
 document.querySelector("#btn-town-shop")?.addEventListener("click", () => withAudio(() => openShopWindow()));
 document.querySelector("#btn-town-settings")?.addEventListener("click", () => withAudio(() => openSettingsOverlay()));
+// 鍛造捷徑（若 HTML 有按鈕）
+document.querySelector("#btn-town-scroll")?.addEventListener("click", () => withAudio(() => openTownHub("scroll")));
+document.querySelector("#btn-town-star")?.addEventListener("click", () => withAudio(() => openTownHub("star")));
+document.querySelector("#btn-town-gacha")?.addEventListener("click", () => withAudio(() => openTownHub("gacha")));
 
 // NPC 對話框（台詞 + 接真功能選項）
 const NPC_DATA = {

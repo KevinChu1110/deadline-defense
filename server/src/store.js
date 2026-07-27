@@ -20,6 +20,8 @@ import {
   usePotentialAction as usePotentialActionCore,
   craftPotential as craftPotentialCore,
 } from "./potential-ops.js";
+import { getScrollView } from "./scroll-ops.js";
+import { getGachaView } from "./gacha-ops.js";
 import {
   buildCombatProfile,
   getBoss,
@@ -291,6 +293,30 @@ export async function usePotentialOnAccount(discordId, slotKey, subIdx, action) 
 export async function craftPotentialOnAccount(discordId, toKey, times = 1) {
   const out = await botOp(discordId, "potential.craft", { toKey, times });
   return out?.result;
+}
+
+/** 衝卷工作台（唯讀 view 本機；寫入走 bot） */
+export function getScrollOnAccount(discordId) {
+  const p = getAccount(discordId);
+  if (!p) return null;
+  return getScrollView(p);
+}
+
+export async function applyScrollOnAccount(discordId, itemId, kind) {
+  const out = await botOp(discordId, "scroll.apply", { itemId, kind });
+  // bot 回 { flash, ok, boom, view, … }
+  return out;
+}
+
+/** 轉蛋（唯讀 view 本機；寫入走 bot） */
+export function getGachaOnAccount(discordId) {
+  const p = getAccount(discordId);
+  if (!p) return null;
+  return getGachaView(p);
+}
+
+export async function pullGachaOnAccount(discordId, n = 1) {
+  return botOp(discordId, "gacha.pull", { n });
 }
 
 /** 豐富 accountSummary 的 equipped 為解析後物品 */

@@ -25,6 +25,10 @@ import {
   getPotentialOnAccount,
   usePotentialOnAccount,
   craftPotentialOnAccount,
+  getScrollOnAccount,
+  applyScrollOnAccount,
+  getGachaOnAccount,
+  pullGachaOnAccount,
   getCombatProfile,
   startActionRaid,
   completeActionRaid,
@@ -426,6 +430,51 @@ const server = http.createServer(async (req, res) => {
         body.action
       );
       return json(res, 200, out, req);
+    }
+
+    // ── 衝卷 ─────────────────────────────────────
+    if (req.method === "GET" && pathname === "/api/scroll") {
+      const sess = sessionFromReq(req);
+      const id = sess?.discordId;
+      if (!id) return json(res, 401, { error: "請先登入" }, req);
+      const view = getScrollOnAccount(id);
+      if (!view) return json(res, 404, { error: "找不到帳號" }, req);
+      return json(res, 200, view, req);
+    }
+    if (req.method === "POST" && pathname === "/api/scroll/apply") {
+      const sess = sessionFromReq(req);
+      const body = await readBody(req);
+      const discordId = sess?.discordId;
+      if (!discordId) return json(res, 401, { error: "請先登入" }, req);
+      if (!body.itemId || !body.kind) return json(res, 400, { error: "需要 itemId 與 kind" }, req);
+      try {
+        const out = await applyScrollOnAccount(discordId, body.itemId, body.kind);
+        return json(res, 200, out, req);
+      } catch (e) {
+        return json(res, 400, { error: e?.message || "衝卷失敗" }, req);
+      }
+    }
+
+    // ── 轉蛋 ─────────────────────────────────────
+    if (req.method === "GET" && pathname === "/api/gacha") {
+      const sess = sessionFromReq(req);
+      const id = sess?.discordId;
+      if (!id) return json(res, 401, { error: "請先登入" }, req);
+      const view = getGachaOnAccount(id);
+      if (!view) return json(res, 404, { error: "找不到帳號" }, req);
+      return json(res, 200, view, req);
+    }
+    if (req.method === "POST" && pathname === "/api/gacha/pull") {
+      const sess = sessionFromReq(req);
+      const body = await readBody(req);
+      const discordId = sess?.discordId;
+      if (!discordId) return json(res, 401, { error: "請先登入" }, req);
+      try {
+        const out = await pullGachaOnAccount(discordId, body.n || 1);
+        return json(res, 200, out, req);
+      } catch (e) {
+        return json(res, 400, { error: e?.message || "轉蛋失敗" }, req);
+      }
     }
 
     if (req.method === "POST" && pathname === "/api/potential/craft") {

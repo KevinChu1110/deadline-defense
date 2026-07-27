@@ -7463,6 +7463,46 @@ body.mode-bc .wave-cta {
   background: linear-gradient(180deg, #ffe9a8, #e8a94a); color: #5a2e08;
 }
 
+/* ── 衝卷台 / 轉蛋 ── */
+.sc-window, .gc-window { max-width: 920px; margin: 0 auto; }
+.sc-hint { margin: 6px 12px 8px; font-size: 0.82rem; }
+.sc-body { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 10px 12px; }
+@media (max-width: 720px) { .sc-body { grid-template-columns: 1fr; } }
+.sc-col-head { font-weight: 800; color: #5a3a12; margin-bottom: 6px; font-size: 0.88rem; }
+.sc-list { max-height: min(52vh, 420px); overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.sc-gear, .sc-scroll {
+  text-align: left; padding: 8px 10px; border-radius: 8px;
+  border: 1px solid rgba(120,80,40,0.35); background: rgba(255,252,245,0.92);
+  cursor: pointer; color: #2c2115;
+}
+.sc-gear strong, .sc-scroll strong { display: block; font-size: 0.9rem; }
+.sc-gear small, .sc-scroll small { color: #7a5a2a; font-size: 0.75rem; }
+.sc-gear.is-on { border-color: #c48a2a; box-shadow: 0 0 0 2px rgba(232,169,74,0.45); background: #fff6e0; }
+.sc-gear.is-full { opacity: 0.55; }
+.sc-gear.drag-over { border-color: #2a8a4a; background: #e8ffe8; }
+.sc-scroll { cursor: grab; }
+.sc-scroll.dragging { opacity: 0.55; }
+.sc-flash {
+  margin: 0 12px 8px; padding: 8px 10px; border-radius: 8px; font-weight: 700; font-size: 0.88rem;
+}
+.sc-flash.ok { background: rgba(40,140,70,0.15); color: #1a6a30; }
+.sc-flash.boom { background: rgba(180,30,30,0.15); color: #8a1515; }
+.sc-flash.info { background: rgba(40,80,140,0.12); color: #2a4a7a; }
+.gc-actions { display: flex; gap: 10px; flex-wrap: wrap; padding: 8px 12px 12px; }
+.gc-results {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 6px; padding: 0 12px 12px;
+}
+.gc-result {
+  padding: 8px; border-radius: 8px; background: rgba(255,252,245,0.95);
+  border: 1px solid rgba(120,80,40,0.3); font-size: 0.82rem; font-weight: 700; color: #3a2a12;
+}
+.gc-result.tier-stone { border-color: #888; color: #555; }
+.gc-result.tier-super { border-color: #e8a94a; background: #fff6e0; }
+.gc-result.tier-cash { border-color: #4a9; }
+.gc-hist-box { padding: 0 12px 14px; }
+.gc-hist { font-size: 0.8rem; color: #5a4a2a; padding: 2px 0; }
+
 /* 正宗楓之谷 NPC 對話框：UI.wz/UIWindow.img/UtilDlgEx 解包九宮格(t頂/c中段/s底) */
 .npc-dialog {
   position: relative;

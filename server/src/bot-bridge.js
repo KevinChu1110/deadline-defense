@@ -38,3 +38,6 @@ export const BOT_ROOT = resolveBotRoot();
 export const starForce = require(path.join(BOT_ROOT, "star-force.js"));
 export const potential = require(path.join(BOT_ROOT, "potential.js"));
 export const currency = require(path.join(BOT_ROOT, "currency.js"));
+// 衝卷 / 轉蛋：與 Discord bot 同一套規則
+export const scrollSys = require(path.join(BOT_ROOT, "scroll-system.js"));
+export const gacha = require(path.join(BOT_ROOT, "gacha.js"));
