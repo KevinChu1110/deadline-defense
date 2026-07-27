@@ -9,3 +9,6 @@ dist
 
 # Local Netlify folder
 .netlify
+
+# WZ 原始資料(route B 紙娃娃源檔,勿進 git — 2.8GB)
+wz-data/

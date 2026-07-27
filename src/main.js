@@ -4277,6 +4277,7 @@ async function openTown() {
   townSession = createTown({
     canvas: document.querySelector("#town-canvas"),
     keys: loadKeybinds(),
+    wzBase: (typeof window !== "undefined" && window.__wzBase) || undefined,
     town, appearance, charClass: activeChar?.class, profile, acts,
     onAct: (a) => {
       if (a.act?.startsWith("travel:")) { const tid = a.act.slice(7); void openWorldMap(tid); return; }
@@ -4409,6 +4410,7 @@ async function openWorldMap(mapId, entryPortal = null) {
   townSession = createTown({
     canvas: document.querySelector("#town-canvas"),
     keys: loadKeybinds(),
+    wzBase: (typeof window !== "undefined" && window.__wzBase) || undefined,
     town: m, appearance, charClass: activeChar?.class, profile,
     assetBase: `/world/${mapId}`, acts: buildTravelActs(mapId, sp), entryPortal,
     onAct: (a) => {
