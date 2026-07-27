@@ -4703,11 +4703,15 @@ async function openWorldMap(mapId, entryPortal = null) {
   _mapEnterAt = Date.now();
   const overlay = document.querySelector("#town-overlay");
   setOverlayOpen(overlay, true);
+  let worldHotbar = null;
+  try { const raw = localStorage.getItem("dd-town-hotbar"); if (raw) worldHotbar = JSON.parse(raw); } catch { /* ignore */ }
   townSession = createTown({
     canvas: document.querySelector("#town-canvas"),
     keys: loadKeybinds(),
     wzBase: (typeof window !== "undefined" && window.__wzBase) || artaleHub.avatarSheetUrl(appearance),
     town: m, appearance, charClass: activeChar?.class, profile,
+    family: profile.family || cp?.family || "beginner",
+    hotbar: worldHotbar,
     assetBase: `/world/${mapId}`, acts: buildTravelActs(mapId, sp), entryPortal,
     onAct: (a) => {
       if (a.act?.startsWith("travel:")) {
