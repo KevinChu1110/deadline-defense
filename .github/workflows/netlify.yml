@@ -20,17 +20,14 @@ jobs:
         run: |
           npm ci
           npm run build
+        env:
+          # API 同源:走 Netlify Edge Function /defense-api 反代(繞 ngrok 攔截頁+第一方cookie)
+          VITE_API_BASE: /defense-api
 
-      - name: Deploy to Netlify
-        uses: nwtgck/actions-netlify@v3.0
-        with:
-          publish-dir: ./dist
-          production-branch: main
-          production-deploy: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: "Deploy from GitHub Actions"
-          enable-pull-request-comment: false
-          enable-commit-comment: false
+      # 用 netlify-cli 部署:會一併打包 netlify.toml 宣告的 edge functions
+      # (原 nwtgck/actions-netlify 只傳 dist,不含 edge function → 手機登入修復會失效)
+      - name: Deploy to Netlify (含 edge functions)
+        run: npx --yes netlify-cli@latest deploy --prod --dir=dist --message "Deploy from GitHub Actions"
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
