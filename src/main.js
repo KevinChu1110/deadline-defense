@@ -70,6 +70,7 @@ import { createActionRaid } from "./game/action-raid.js";
 import { createHunt, keyLabel, DEFAULT_KEYBINDS } from "./game/hunt.js";
 import { createTown } from "./game/town.js";
 import { connectTown } from "./game/town-net.js";
+import { listTownSkills, defaultHotbar, TOWN_SKILL_DEFS, FAMILY_ZH as TOWN_FAMILY_ZH } from "./game/town-skills.js";
 import { WORLD, REGION_COLOR, HOME_MAP, AVAILABLE_MAPS, padMapId } from "./data/world.js";
 import { createQuestSystem } from "./game/quest.js";
 import MI_QUESTS from "./data/quests/maple-island.json";
@@ -4324,12 +4325,20 @@ async function openTown() {
   // 即時多人:連城鎮房(看得到別人+聊天);sheet 用自己的 WZ 紙娃娃 URL
   const townSheet = (typeof window !== "undefined" && window.__wzBase) || artaleHub.avatarSheetUrl(appearance);
   const net = connectTown({ name: profile?.name || activeChar?.name || "冒險者", sheet: townSheet, x: sp.x, y: sp.y, face: 1 });
+  // 快捷欄：localStorage 或職系預設
+  let townHotbar = null;
+  try {
+    const raw = localStorage.getItem("dd-town-hotbar");
+    if (raw) townHotbar = JSON.parse(raw);
+  } catch { /* ignore */ }
   townSession = createTown({
     canvas: document.querySelector("#town-canvas"),
     keys: loadKeybinds(),
     wzBase: townSheet,
     net,
     town, appearance, charClass: activeChar?.class, profile, acts,
+    family: profile.family || cp?.family || "beginner",
+    hotbar: townHotbar,
     onAct: (a) => {
       if (a.act?.startsWith("travel:")) { const tid = a.act.slice(7); void openWorldMap(tid); return; }
       _townReturn = true; stopTown(); setOverlayOpen(overlay, false);
@@ -4364,15 +4373,6 @@ function openTownWindow(which) {
 let _lastCp = null;
 let _lastTownProfile = null;
 const FAMILY_ZH = { warrior: "劍士系", mage: "法師系", archer: "弓箭手系", thief: "盜賊系", pirate: "海盜系", beginner: "初心者" };
-// 各職系代表技能(聊天城鎮視窗展示用;完整技能系統待接)
-const FAMILY_SKILLS = {
-  warrior: ["致命一擊", "衝擊波", "怒潮", "武器防禦", "重生"],
-  mage: ["魔力箭", "冰凍術", "雷電術", "治癒術", "魔法防護"],
-  archer: ["箭雨", "精靈祝福", "鷹眼", "穿透之箭", "致命瞄準"],
-  thief: ["幸運七", "疾風連斬", "隱身術", "毒霧", "暗器精通"],
-  pirate: ["爆頭射擊", "八爪鉤", "衝拳", "轉輪", "海之力量"],
-  beginner: ["三段攻擊", "跳躍", "回復術"],
-};
 // 城鎮可關閉視窗(Esc 優先關這些,不離開城鎮)
 const TOWN_WINDOW_IDS = [
   "skill-window-overlay", "map-window-overlay", "equip-overlay",
@@ -4380,14 +4380,50 @@ const TOWN_WINDOW_IDS = [
   "settings-overlay", "keybind-overlay", "customize-overlay",
   "artale-hub-overlay",
 ];
+
 function openSkillWindow() {
-  const fam = _lastCp?.family || "beginner";
-  const skills = FAMILY_SKILLS[fam] || FAMILY_SKILLS.beginner;
+  const fam = _lastCp?.family || _lastTownProfile?.family || "beginner";
+  const skills = listTownSkills(fam);
+  const hotbar = townSession?.getHotbar?.() || defaultHotbar(fam);
   const body = document.querySelector("#skill-window-body");
-  if (body) body.innerHTML = `<p class="wzw-title">技能</p>`
-    + `<div class="wzw-row"><span class="k">職業</span><span>${escapeHtml(FAMILY_ZH[fam] || fam)}</span></div>`
-    + skills.map((s) => `<div class="wzw-row"><span>🔹 ${escapeHtml(s)}</span></div>`).join("")
-    + `<p class="wzw-note">完整技能系統建置中</p>`;
+  if (body) {
+    body.innerHTML = `<p class="wzw-title">技能</p>`
+      + `<div class="wzw-row"><span class="k">職業</span><span>${escapeHtml(FAMILY_ZH[fam] || TOWN_FAMILY_ZH[fam] || fam)}</span></div>`
+      + `<p class="wzw-note" style="margin:6px 0 4px">點技能 → 裝到快捷 1～4 · 空白鍵二段跳</p>`
+      + `<div class="sk-hotbar-preview">${[0, 1, 2, 3].map((i) => {
+        const id = hotbar[i];
+        const def = id && TOWN_SKILL_DEFS[id];
+        return `<span class="sk-slot" data-sk-slot="${i}" title="快捷 ${i + 1}">`
+          + `<em>${i + 1}</em>${def ? escapeHtml(def.icon + " " + def.name) : "—"}</span>`;
+      }).join("")}</div>`
+      + skills.map((s) => {
+        const passive = s.passive ? " is-passive" : "";
+        return `<button type="button" class="sk-row${passive}" data-sk-id="${escapeHtml(s.id)}" ${s.passive ? "disabled" : ""}>`
+          + `<span class="sk-ico">${escapeHtml(s.icon || "·")}</span>`
+          + `<span class="sk-meta"><strong>${escapeHtml(s.name)}</strong>`
+          + `<small>${escapeHtml(s.desc || "")}${s.note ? " · " + escapeHtml(s.note) : ""}</small></span>`
+          + `<kbd>${escapeHtml(s.keyHint || "")}</kbd></button>`;
+      }).join("")
+      + `<p class="wzw-note">1 速度激發 · 2 瞬移/突刺 · 空白 跳/二段跳</p>`;
+    let assignIdx = 0;
+    body.querySelectorAll("[data-sk-id]").forEach((btn) => {
+      btn.addEventListener("click", () => withAudio(() => {
+        const id = btn.getAttribute("data-sk-id");
+        if (!id || !TOWN_SKILL_DEFS[id]) return;
+        const hb = townSession?.getHotbar?.() || defaultHotbar(fam);
+        const exist = hb.indexOf(id);
+        if (exist >= 0) hb[exist] = null;
+        else {
+          hb[assignIdx % 4] = id;
+          assignIdx = (assignIdx + 1) % 4;
+        }
+        townSession?.setHotbar?.(hb);
+        try { localStorage.setItem("dd-town-hotbar", JSON.stringify(hb)); } catch { /* ignore */ }
+        openSkillWindow();
+        sfx.play("uiOk");
+      }));
+    });
+  }
   setOverlayOpen(document.querySelector("#skill-window-overlay"), true);
   sfx.play("uiClick");
 }
@@ -4450,13 +4486,17 @@ function openHotkeyWindow() {
     ["空白鍵", "跳躍"],
     ["↑ / 點擊", "與 NPC / 傳送門互動"],
     ["Enter", "聚焦聊天輸入"],
-    ["E / I", "裝備 · 道具（真穿脫）"],
-    ["B", "衝卷（拖曳卷軸）"],
+    ["空白鍵", "跳 / 空中再按＝二段跳"],
+    ["1", "速度激發"],
+    ["2", "瞬移（法）/ 突刺（其他）"],
+    ["3 / 4", "自訂快捷（技能窗設定）"],
+    ["E / I", "裝備 · 道具"],
+    ["K", "技能（可裝快捷）"],
+    ["B", "衝卷"],
     ["R", "星力"],
     ["G", "轉蛋"],
-    ["K", "技能"],
     ["W", "地圖"],
-    ["S", "角色狀態"],
+    ["S", "能力值"],
     ["P", "商店"],
     ["O", "設定"],
     ["? / H", "本快捷鍵說明"],

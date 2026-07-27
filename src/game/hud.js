@@ -221,6 +221,13 @@ export function drawHud(ctx, W, H, state = {}) {
       const s = skills[i];
       if (s.icon?.complete && s.icon.naturalWidth) {
         ctx.drawImage(s.icon, cx + 2, cy + 2, cell - 6, cell - 6);
+      } else if (s.label) {
+        // emoji / 文字圖示（城鎮社交技）
+        ctx.save();
+        ctx.font = `${Math.round(14 * scale + 4)}px system-ui`;
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(s.label, cx + (cell - 4) / 2, cy + (cell - 4) / 2 + 1);
+        ctx.restore();
       }
       pixText(ctx, s.key || "", cx + cell - 8 * scale, cy + 9 * scale, { size: 9 * scale + 2, color: "#ffe" });
       if (s.cd > 0 && s.cdMax > 0) {

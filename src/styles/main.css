@@ -7458,6 +7458,36 @@ body.mode-bc .wave-cta {
 /* 快捷鍵說明 / 商店 清單列 */
 .wzw-hotkey { width: min(340px, 90vw); }
 .wzw-shop { width: min(320px, 88vw); }
+/* 技能窗：可裝快捷 */
+.sk-hotbar-preview {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 0 0 8px;
+}
+.sk-slot {
+  display: flex; gap: 4px; align-items: center;
+  padding: 4px 6px; border-radius: 4px; font-size: 0.78rem;
+  background: rgba(255,248,230,0.7); border: 1px solid rgba(150,110,60,0.3);
+  color: #3a2a12;
+}
+.sk-slot em {
+  font-style: normal; font-weight: 900; color: #fff; background: #8a5a20;
+  width: 16px; height: 16px; border-radius: 3px; display: grid; place-items: center; font-size: 0.7rem;
+}
+.sk-row {
+  display: grid; grid-template-columns: 28px 1fr auto; gap: 8px; align-items: center;
+  width: 100%; text-align: left; padding: 7px 6px; margin: 0 0 4px;
+  border: 1px solid rgba(150,110,60,0.25); border-radius: 6px;
+  background: rgba(255,252,245,0.9); color: #2c2115; cursor: pointer;
+}
+.sk-row:hover:not(:disabled) { border-color: #c48a2a; background: #fff6e0; }
+.sk-row:disabled, .sk-row.is-passive { opacity: 0.75; cursor: default; }
+.sk-ico { font-size: 1.2rem; text-align: center; }
+.sk-meta strong { display: block; font-size: 0.88rem; }
+.sk-meta small { color: #8a6a3a; font-size: 0.72rem; }
+.sk-row kbd {
+  font-size: 0.72rem; padding: 2px 5px; border-radius: 3px;
+  background: #efe0c0; border: 1px solid #b09050; color: #5a3a12; font-weight: 800;
+}
+
 /* ── 能力值視窗（官方 UIWindow/Stat 175×337）── */
 #status-window-overlay { z-index: 96; }
 .stat-window {

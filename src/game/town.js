@@ -8,8 +8,12 @@ import { createWzAvatar, drawWzAvatar } from "./avatar-wz.js";
 import { drawHud as drawOfficialHud } from "./hud.js";
 import { createMapCombat } from "./map-combat.js";
 import { sfx } from "../audio/sfx.js";
+import { TOWN_SKILL_DEFS, defaultHotbar, mobilitySkillForFamily } from "./town-skills.js";
 
 const W = 960, H = 540;
+const HASTE_MULT = 1.45;
+const HASTE_DUR = 30;
+const DJUMP = 560; // 二段跳略弱於地面跳
 
 // 楓之谷真氣泡框(UI.wz/ChatBalloon.img[0] 九宮格),模組級快取一次載入
 const CHAT_BALLOON = {};
@@ -91,7 +95,20 @@ export function createTown(opts) {
   const sp = entry || town.portals.find((p) => p.n === "sp") || town.portals[0] || { x: 0, y: 0 };
   // 可 warp 的真實地圖門(pt=2 且有目標圖)
   const warpPortals = (town.portals || []).filter((p) => p.t === 2 && p.tm && p.tm !== 999999999);
-  const player = { x: sp.x, y: sp.y, vx: 0, vy: 0, w: 34, h: 54, face: 1, onGround: false, anim: "idle", animT: 0 };
+  const family = profile?.family || opts.family || "beginner";
+  const player = {
+    x: sp.x, y: sp.y, vx: 0, vy: 0, w: 34, h: 54, face: 1, onGround: false, anim: "idle", animT: 0,
+    attackT: 0, invuln: 0,
+    // 社交技能狀態
+    jumpsLeft: 2, jumpsMax: 2,
+    hasteUntil: 0,
+    skillCd: { haste: 0, teleport: 0, flash: 0 },
+  };
+  // 快捷欄 1～4（可被技能窗改；預設 速度激發 / 職業位移）
+  let hotbar = Array.isArray(opts.hotbar) ? opts.hotbar.slice(0, 4) : defaultHotbar(family);
+  while (hotbar.length < 4) hotbar.push(null);
+  // 技能特效粒子 {x,y,life,max,kind,face}
+  const skillFx = [];
   // camera 世界中心
   let camCX = player.x, camCY = player.y - 80;
 
@@ -103,7 +120,7 @@ export function createTown(opts) {
     player.atkCd = 0; player.attackT = 0;
   }
   const combat = hasMobs ? createMapCombat({ town, footAt, player, profile }) : null;
-  let attackHeld = false, bagOpen = false;
+  let attackHeld = false, bagOpen = false, jumpHeld = false;
 
   const keys = new Set();
   // ── 按鍵配置（設定→localStorage 傳入 opts.keys；MapleStory 預設 Ctrl 攻擊 / 空白跳）──
@@ -122,10 +139,59 @@ export function createTown(opts) {
     { id: "right", x: 108, y: H - 118, w: 74, h: 74, label: "▶" },
     { id: "up", x: W - 190, y: H - 118, w: 74, h: 74, label: "↑" },
     { id: "jump", x: W - 100, y: H - 118, w: 74, h: 74, label: "⤴" },
+    // 城鎮社交技：1 速度激發 · 2 職業位移
+    ...(!hasMobs ? [
+      { id: "sk1", x: W - 184, y: H - 200, w: 62, h: 62, label: "1⚡" },
+      { id: "sk2", x: W - 100, y: H - 200, w: 62, h: 62, label: "2»" },
+    ] : []),
     ...(hasMobs ? [{ id: "attack", x: W - 100, y: H - 200, w: 74, h: 74, label: "⚔" }, { id: "bag", x: W - 184, y: H - 200, w: 62, h: 62, label: "🎒" }] : []),
   ];
   let running = true, paused = false, raf = 0, last = performance.now(), lastDt = 0.016;
   let nearInteract = null, nearType = null, upHeld = false;
+
+  function clampX(x) {
+    return Math.max(town.vr.left + 20, Math.min(town.vr.right - 20, x));
+  }
+  function spawnFx(kind, x, y, face = 1) {
+    skillFx.push({ kind, x, y, face, life: 0.35, max: 0.35 });
+  }
+  /** 施放快捷欄技能 slot 0～3 */
+  function castHotbar(slot) {
+    const id = hotbar[slot];
+    if (!id || id === "double_jump") return;
+    castSkill(id);
+  }
+  function castSkill(id) {
+    const def = TOWN_SKILL_DEFS[id];
+    if (!def) return;
+    if ((player.skillCd[id] || 0) > 0) return;
+    const now = performance.now() / 1000;
+
+    if (id === "haste") {
+      player.hasteUntil = now + HASTE_DUR;
+      player.skillCd.haste = def.cd;
+      spawnFx("haste", player.x, player.y - 40, player.face);
+      try { sfx.play("uiOk"); } catch { /* ignore */ }
+      return;
+    }
+    if (id === "teleport" || id === "flash") {
+      const dist = def.dist || 100;
+      const nx = clampX(player.x + player.face * dist);
+      spawnFx(id, player.x, player.y - 30, player.face);
+      player.x = nx;
+      // 瞬移後若下方有 foothold 就貼地，避免卡空
+      const g = footAt(player.x, player.y - 4);
+      if (g !== null && Math.abs(g - player.y) < 80) { player.y = g; player.vy = 0; player.onGround = true; player.jumpsLeft = player.jumpsMax; }
+      else { player.onGround = false; if (id === "flash") player.vy = Math.min(player.vy, -80); }
+      if (id === "flash") { player.attackT = 0.28; player.anim = "swingO1"; player.animT = 0.28; }
+      else { player.invuln = 0.2; } // 瞬移短暫閃爍
+      player.skillCd[id] = def.cd;
+      spawnFx(id, player.x, player.y - 30, player.face);
+      try { sfx.play(id === "teleport" ? "uiSelect" : "mapleJump"); } catch { /* ignore */ }
+      // 立刻上報位置（別人看得到瞬移）
+      if (net) net.sendMove({ x: player.x, y: player.y, face: player.face, anim: id === "flash" ? "swingO1" : "jump", skill: id });
+    }
+  }
 
   // ── foothold：取 px 下方最近可站的 y（水平/斜線；跳過垂直牆）──
   function footAt(px, fromY) {
@@ -143,17 +209,46 @@ export function createTown(opts) {
 
   function update(dt) {
     if (paused) { player.vx = 0; return; } // 對話中暫停操作
+    const nowSec = performance.now() / 1000;
+    // CD 倒數
+    for (const k of Object.keys(player.skillCd)) {
+      if (player.skillCd[k] > 0) player.skillCd[k] = Math.max(0, player.skillCd[k] - dt);
+    }
+    if (player.invuln > 0) player.invuln = Math.max(0, player.invuln - dt);
+    if (player.attackT > 0) player.attackT = Math.max(0, player.attackT - dt);
+    // 特效生命
+    for (let i = skillFx.length - 1; i >= 0; i--) {
+      skillFx[i].life -= dt;
+      if (skillFx[i].life <= 0) skillFx.splice(i, 1);
+    }
+
     // 輸入（鍵盤 + 手機虛擬鍵）
     const left = keys.has("ArrowLeft") || keys.has("KeyA") || touch.has("left");
     const right = keys.has("ArrowRight") || keys.has("KeyD") || touch.has("right");
-    player.vx = (right ? WALK : 0) - (left ? WALK : 0);
+    const hasted = nowSec < player.hasteUntil;
+    const walkSpd = WALK * (hasted ? HASTE_MULT : 1);
+    player.vx = (right ? walkSpd : 0) - (left ? walkSpd : 0);
     if (right) player.face = 1; if (left) player.face = -1;
-    if ((anyKey(jumpCodes) || touch.has("jump")) && player.onGround) {
-      player.vy = -JUMP; player.onGround = false; sfx.play("mapleJump");
+
+    // 跳 / 二段跳（邊緣觸發，避免長按連跳）
+    const jumpDown = anyKey(jumpCodes) || touch.has("jump");
+    if (jumpDown && !jumpHeld) {
+      if (player.onGround) {
+        player.vy = -JUMP; player.onGround = false; player.jumpsLeft = player.jumpsMax - 1;
+        sfx.play("mapleJump");
+      } else if (player.jumpsLeft > 0) {
+        player.vy = -DJUMP; player.jumpsLeft -= 1;
+        spawnFx("djump", player.x, player.y - 10, player.face);
+        sfx.play("mapleJump");
+      }
     }
+    jumpHeld = jumpDown;
+
+    // 手機快捷技（按下瞬間）
+    // 見 pDown：sk1/sk2 直接 cast
 
     // 水平移動 + VR 夾限
-    player.x = Math.max(town.vr.left + 20, Math.min(town.vr.right - 20, player.x + player.vx * dt));
+    player.x = clampX(player.x + player.vx * dt);
 
     // 垂直：重力 + foothold
     const oldY = player.y;
@@ -161,12 +256,16 @@ export function createTown(opts) {
     let ny = player.y + player.vy * dt;
     if (player.vy >= 0) {
       const g = footAt(player.x, oldY);
-      if (g !== null && oldY <= g + 1 && ny >= g) { ny = g; player.vy = 0; player.onGround = true; }
-      else if (g !== null && Math.abs(ny - g) < 6 && player.onGround) { ny = g; player.vy = 0; }
-      else player.onGround = false;
+      if (g !== null && oldY <= g + 1 && ny >= g) {
+        ny = g; player.vy = 0; player.onGround = true; player.jumpsLeft = player.jumpsMax;
+      } else if (g !== null && Math.abs(ny - g) < 6 && player.onGround) {
+        ny = g; player.vy = 0; player.jumpsLeft = player.jumpsMax;
+      } else player.onGround = false;
     } else player.onGround = false;
     // 掉出地圖底 → 拉回出生點
-    if (ny > town.vr.bottom + 200) { player.x = sp.x; ny = sp.y; player.vy = 0; }
+    if (ny > town.vr.bottom + 200) {
+      player.x = sp.x; ny = sp.y; player.vy = 0; player.jumpsLeft = player.jumpsMax;
+    }
     player.y = ny;
 
     // 動作
@@ -175,14 +274,12 @@ export function createTown(opts) {
     // ── 戰鬥：攻擊 / 怪 AI / 受傷死亡 ──
     if (combat) {
       if (player.atkCd > 0) player.atkCd -= dt;
-      if (player.attackT > 0) player.attackT -= dt;
       const atkDown = anyKey(attackCodes) || touch.has("attack");
       let attackPressed = false;
       if (atkDown && !attackHeld && player.atkCd <= 0) { attackPressed = true; player.atkCd = 0.42; player.attackT = 0.3; }
       attackHeld = atkDown;
-      if (player.invuln > 0) player.invuln -= dt;
       combat.update(dt, attackPressed);
-      if (player.hp <= 0) { player.hp = player.maxHp; player.x = sp.x; player.y = sp.y; player.vy = 0; player.invuln = 1.5; } // 死亡→回出生點
+      if (player.hp <= 0) { player.hp = player.maxHp; player.x = sp.x; player.y = sp.y; player.vy = 0; player.invuln = 1.5; player.jumpsLeft = player.jumpsMax; }
     }
 
     // camera 平滑跟隨 + 夾限
@@ -219,11 +316,12 @@ export function createTown(opts) {
     // 即時多人:節流上報自己的位置/動作(有變才送,最快 120ms 一次)
     if (net) {
       const anim = player.attackT > 0 ? "swingO1" : !player.onGround ? "jump" : (Math.abs(player.vx) > 10 ? "walk1" : "idle");
-      const sig = `${Math.round(player.x)},${Math.round(player.y)},${player.face},${anim}`;
+      const haste = nowSec < player.hasteUntil ? 1 : 0;
+      const sig = `${Math.round(player.x)},${Math.round(player.y)},${player.face},${anim},${haste}`;
       const nowMs = performance.now();
       if (sig !== _lastMoveSig && nowMs - _lastMoveSent > 120) {
         _lastMoveSent = nowMs; _lastMoveSig = sig;
-        net.sendMove({ x: player.x, y: player.y, face: player.face, anim });
+        net.sendMove({ x: player.x, y: player.y, face: player.face, anim, haste });
       }
     }
   }
@@ -355,23 +453,59 @@ export function createTown(opts) {
       const moving = Math.abs(player.vx) > 10 && player.onGround;
       let anim = "stand1";
       if (player.attackT > 0) anim = "swingO1"; else if (!player.onGround) anim = "jump"; else if (moving) anim = "walk1";
-      if (player.invuln > 0 && Math.floor(player.invuln * 20) % 2) ctx.globalAlpha = 0.5; // 受傷閃爍
+      if (player.invuln > 0 && Math.floor(player.invuln * 20) % 2) ctx.globalAlpha = 0.5; // 受傷/瞬移閃爍
       const dollOpts = { anim, dt: lastDt, flip: player.face, targetH: 74, maxW: 70 };
-      // WZ 就緒→用 WZ;否則(載入中/失敗)退回 maplestory,永不變紅方塊
       const drawn = (wzAvatar && wzAvatar.ready)
         ? drawWzAvatar(ctx, wzAvatar, psx, psy + 4, dollOpts)
         : (avatar && drawAvatar(ctx, avatar, psx, psy + 4, dollOpts));
       ctx.globalAlpha = 1;
       if (!drawn) { ctx.fillStyle = "#f87171"; ctx.fillRect(psx - 10, psy - 44, 20, 44); }
+      // 速度激發光環
+      const nowSec = performance.now() / 1000;
+      if (nowSec < player.hasteUntil) {
+        ctx.save();
+        ctx.strokeStyle = `rgba(255,220,80,${0.35 + Math.sin(performance.now() / 120) * 0.2})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.ellipse(psx, psy - 28, 22, 34, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = "#ffe14d"; ctx.font = "12px system-ui"; ctx.textAlign = "center";
+        ctx.fillText("⚡", psx, psy - 72);
+        ctx.restore();
+      }
       // 名牌
       ctx.fillStyle = "rgba(0,0,0,0.5)"; const nm = profile?.name || "冒險者";
       ctx.font = "700 11px system-ui"; ctx.textAlign = "center";
       const tw = ctx.measureText(nm).width;
       ctx.fillRect(psx - tw / 2 - 4, psy + 4, tw + 8, 14);
       ctx.fillStyle = "#fff"; ctx.fillText(nm, psx, psy + 15);
-      // 自己的聊天泡泡(server 快照會過濾自己,故本地自繪)
       if (net?.selfChat && performance.now() - net.selfChat.at < 6000) drawChatBubble(psx, psy - 74, net.selfChat.text);
     };
+    // 技能特效
+    function drawSkillFx() {
+      for (const f of skillFx) {
+        const [sx, sy] = worldToScreen(f.x, f.y);
+        const t = 1 - f.life / f.max;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, 1 - t);
+        if (f.kind === "teleport") {
+          ctx.fillStyle = "#a8e0ff";
+          for (let i = 0; i < 6; i++) {
+            const a = (i / 6) * Math.PI * 2 + t * 4;
+            ctx.beginPath(); ctx.arc(sx + Math.cos(a) * (8 + t * 20), sy + Math.sin(a) * (8 + t * 20), 3, 0, 7); ctx.fill();
+          }
+        } else if (f.kind === "flash" || f.kind === "djump") {
+          ctx.strokeStyle = f.kind === "djump" ? "#fff4a0" : "#ffd080";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(sx - f.face * 30 * (1 - t), sy);
+          ctx.lineTo(sx + f.face * 10, sy - 8);
+          ctx.stroke();
+        } else if (f.kind === "haste") {
+          ctx.fillStyle = "#ffe14d"; ctx.font = "18px system-ui"; ctx.textAlign = "center";
+          ctx.fillText("⚡", sx, sy - t * 24);
+        }
+        ctx.restore();
+      }
+    }
     // 聊天泡泡:楓之谷真氣泡框(ChatBalloon.img 九宮格)
     const drawChatBubble = (sx, bottomY, text) => drawMapleBalloon(ctx, sx, bottomY, text);
     // 他人角色:WZ 紙娃娃(依 sheet 快取)+名牌+聊天泡泡
@@ -428,14 +562,22 @@ export function createTown(opts) {
       ctx.fillText(`P(${player.x | 0},${player.y | 0}) cam(${camCX | 0},${camCY | 0}) ground=${player.onGround}`, 16, 50);
     }
 
-    // 官方底部 StatusBar（UI.wz 解包完整 71px 底板）
+    drawSkillFx();
+    // 官方底部 StatusBar + 快捷技能格
+    const hudSkills = hotbar.map((id, i) => {
+      if (!id || id === "double_jump") return { key: String(i + 1), label: "", cd: 0, cdMax: 1 };
+      const def = TOWN_SKILL_DEFS[id];
+      const cdMax = def?.cd || 1;
+      const cd = player.skillCd[id] || 0;
+      return { key: String(i + 1), label: def?.icon || "·", cd, cdMax };
+    });
     drawOfficialHud(ctx, W, H, {
       name: profile?.name || "冒險者",
       level: combat ? player.level : profile?.level,
       hp: combat ? Math.max(0, Math.round(player.hp)) : (profile?.maxHp || 100),
       hpMax: player.maxHp || profile?.maxHp || 100,
       mp: profile?.maxMp || 60, mpMax: profile?.maxMp || 60,
-      expPct: combat ? combat.expPct() : 0, skills: [],
+      expPct: combat ? combat.expPct() : 0, skills: hudSkills,
     });
     // 楓幣 + 擊殺 + 戰利品計數(戰鬥圖,右上)
     if (combat) {
@@ -590,6 +732,11 @@ export function createTown(opts) {
     if (paused) { keys.clear(); return; } // 對話中不吃操作(Esc 也不離開)
     if (down && e.code === "Escape") { if (combat && bagOpen) { bagOpen = false; return; } if (onExit) onExit(); return; }
     if (down && e.code === "KeyB" && combat) { bagOpen = !bagOpen; e.preventDefault(); return; }
+    // 快捷技能 1～4
+    if (down && !e.repeat) {
+      const slot = { Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3, Numpad1: 0, Numpad2: 1, Numpad3: 2, Numpad4: 3 }[e.code];
+      if (slot != null) { castHotbar(slot); e.preventDefault(); return; }
+    }
     // 楓之谷標準視窗鍵:E裝備 I道具 K技能 W地圖 S狀態 P商店 O設定 H/?快捷鍵
     // 鍛造:B 衝卷 R 星力 G 轉蛋
     if (down && onWindow) {
@@ -599,12 +746,11 @@ export function createTown(opts) {
         KeyH: "hotkey", Slash: "hotkey",
         KeyB: "scroll", KeyR: "star", KeyG: "gacha",
       }[e.code];
-      // ? 在多數鍵盤是 Shift+/ → 另攔 key
       if (!wk && down && (e.key === "?" || e.key === "？")) { onWindow("hotkey"); e.preventDefault(); return; }
       if (wk) { onWindow(wk); e.preventDefault(); return; }
     }
     if (down) keys.add(e.code); else keys.delete(e.code);
-    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "KeyB"].includes(e.code)
+    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "KeyB", "Digit1", "Digit2", "Digit3", "Digit4"].includes(e.code)
       || jumpCodes.has(e.code) || attackCodes.has(e.code)) e.preventDefault();
   }
   const kd = (e) => onKey(e, true), ku = (e) => onKey(e, false);
@@ -624,6 +770,8 @@ export function createTown(opts) {
     if (paused || !isTouch) return;
     const [cx, cy] = canvasXY(e); const id = btnAt(cx, cy);
     if (id === "bag") { e.preventDefault(); bagOpen = !bagOpen; return; } // 切換,非長按
+    if (id === "sk1") { e.preventDefault(); castHotbar(0); return; }
+    if (id === "sk2") { e.preventDefault(); castHotbar(1); return; }
     if (id) { e.preventDefault(); activePointers.set(e.pointerId, id); refreshTouch(); }
   }
   function pMove(e) { if (!activePointers.has(e.pointerId)) return; const [cx, cy] = canvasXY(e); activePointers.set(e.pointerId, btnAt(cx, cy)); refreshTouch(); }
@@ -671,6 +819,14 @@ export function createTown(opts) {
     preload,
     // 戰鬥圖的擊殺記錄(給 main.js 回報 bot 權威結算)
     getCombatKills: () => (combat ? combat.getKills() : null),
+    getHotbar: () => hotbar.slice(),
+    setHotbar(arr) {
+      if (!Array.isArray(arr)) return;
+      hotbar = arr.slice(0, 4);
+      while (hotbar.length < 4) hotbar.push(null);
+    },
+    getFamily: () => family,
+    castSkill,
     start() {
       window.addEventListener("keydown", kd); window.addEventListener("keyup", ku);
       canvas.addEventListener("pointerdown", pDown); canvas.addEventListener("pointermove", pMove);
