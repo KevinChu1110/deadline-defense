@@ -4404,27 +4404,42 @@ function openMapWindow() {
   setOverlayOpen(document.querySelector("#map-window-overlay"), true);
   sfx.play("uiClick");
 }
-/** 角色狀態窗(S)：等級/血魔/攻擊/職系 */
+/** 能力值窗(S)：官方 Stat 框 + 真實 combat profile 數值 */
 function openStatusWindow() {
   const p = _lastTownProfile || {};
   const cp = _lastCp || {};
   const fam = cp.family || "beginner";
-  const name = p.name || "冒險者";
-  const lv = p.level || 1;
-  const maxHp = p.maxHp || 100;
-  const maxMp = p.maxMp || 50;
-  const atk = p.atk || 45;
-  const basic = (p.basicMin != null && p.basicMax != null)
-    ? `${p.basicMin} ~ ${p.basicMax}` : String(atk);
+  const st = cp.stats || {};
+  const name = p.name || cp.name || "冒險者";
+  const lv = p.level || cp.level || 1;
+  const maxHp = p.maxHp || cp.maxHp || 100;
+  const maxMp = p.maxMp || Math.round(maxHp * 0.5);
+  const atk = p.atk || cp.atk || 45;
+  const basicMin = p.basicMin ?? cp.basicMin ?? atk;
+  const basicMax = p.basicMax ?? cp.basicMax ?? atk;
+  const weapon = cp.weaponName || "—";
+  const job = FAMILY_ZH[fam] || fam;
+  // 能力值欄：對齊官方 Stat 窗大致列位（百分比定位，放大後仍可讀）
+  const rows = [
+    { cls: "sf-name", label: "名稱", val: name },
+    { cls: "sf-job", label: "職業", val: job },
+    { cls: "sf-lv", label: "等級", val: String(lv) },
+    { cls: "sf-hp", label: "HP", val: `${maxHp} / ${maxHp}` },
+    { cls: "sf-mp", label: "MP", val: `${maxMp} / ${maxMp}` },
+    { cls: "sf-str", label: "力量", val: String(st.str ?? "—") },
+    { cls: "sf-dex", label: "敏捷", val: String(st.dex ?? "—") },
+    { cls: "sf-int", label: "智力", val: String(st.int ?? "—") },
+    { cls: "sf-luk", label: "幸運", val: String(st.luk ?? "—") },
+    { cls: "sf-atk", label: "攻擊", val: `${basicMin} ~ ${basicMax}` },
+    { cls: "sf-wep", label: "武器", val: weapon },
+  ];
   const body = document.querySelector("#status-window-body");
-  if (body) body.innerHTML = `<p class="wzw-title">角色狀態</p>`
-    + `<div class="wzw-row"><span class="k">名稱</span><span>${escapeHtml(name)}</span></div>`
-    + `<div class="wzw-row"><span class="k">等級</span><span>Lv. ${lv}</span></div>`
-    + `<div class="wzw-row"><span class="k">職業</span><span>${escapeHtml(FAMILY_ZH[fam] || fam)}</span></div>`
-    + `<div class="wzw-row"><span class="k">HP</span><span>${maxHp} / ${maxHp}</span></div>`
-    + `<div class="wzw-row"><span class="k">MP</span><span>${maxMp} / ${maxMp}</span></div>`
-    + `<div class="wzw-row"><span class="k">攻擊</span><span>${escapeHtml(basic)}</span></div>`
-    + `<p class="wzw-note">右下角狀態列也會顯示血魔</p>`;
+  if (body) {
+    body.innerHTML = rows.map((r) =>
+      `<div class="stat-row ${r.cls}"><span class="stat-k">${escapeHtml(r.label)}</span>`
+      + `<span class="stat-v">${escapeHtml(r.val)}</span></div>`
+    ).join("");
+  }
   setOverlayOpen(document.querySelector("#status-window-overlay"), true);
   sfx.play("uiClick");
 }
@@ -4576,6 +4591,9 @@ function buildTownProfile(activeChar, cp) {
     maxMp: Math.round(maxHp * 0.5),
     atk: cp?.atk || (45 + lv * 5),
     basicMin: cp?.basicMin, basicMax: cp?.basicMax,
+    stats: cp?.stats || null,
+    weaponName: cp?.weaponName || null,
+    family: cp?.family || null,
   };
 }
 
@@ -4702,8 +4720,11 @@ document.querySelector("#btn-town-exit")?.addEventListener("click", () => withAu
   document.querySelector("#town-chat-send")?.addEventListener("click", () => withAudio(send));
 })();
 // WZ 視窗關閉 + Esc 優先關視窗(不離開城鎮)
-document.querySelectorAll(".wz-window-close").forEach((b) =>
-  b.addEventListener("click", () => withAudio(() => setOverlayOpen(document.querySelector("#" + b.dataset.close), false))));
+document.querySelectorAll(".wz-window-close, .stat-close, .equip-close").forEach((b) => {
+  if (!b.dataset.close && b.id === "btn-equip-close") return; // equip 另有 handler
+  if (!b.dataset.close) return;
+  b.addEventListener("click", () => withAudio(() => setOverlayOpen(document.querySelector("#" + b.dataset.close), false)));
+});
 window.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
   for (const id of TOWN_WINDOW_IDS) {

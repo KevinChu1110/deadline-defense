@@ -7457,6 +7457,49 @@ body.mode-bc .wave-cta {
 /* 快捷鍵說明 / 商店 清單列 */
 .wzw-hotkey { width: min(340px, 90vw); }
 .wzw-shop { width: min(320px, 88vw); }
+/* ── 能力值視窗（官方 UIWindow/Stat 175×337）── */
+#status-window-overlay { z-index: 96; }
+.stat-window {
+  position: relative;
+  width: min(82vw, 320px);
+  aspect-ratio: 175 / 337;
+  background: url("/ui/window/stat.png") center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 14px 32px rgba(0, 0, 0, 0.55));
+}
+.stat-close {
+  position: absolute; top: 2%; right: 4%;
+  width: 22px; height: 18px; padding: 0;
+  border: none; background: transparent; color: #2a3550;
+  font-size: 13px; font-weight: 900; cursor: pointer; line-height: 1; z-index: 2;
+}
+.stat-close:hover { color: #b02020; }
+.stat-fields {
+  position: absolute; inset: 0;
+  pointer-events: none;
+}
+.stat-row {
+  position: absolute; left: 12%; right: 10%;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: clamp(0.72rem, 2.4vw, 0.88rem);
+  font-weight: 700; color: #2c2115;
+  text-shadow: 0 0 2px rgba(255,255,255,0.5);
+  line-height: 1.2;
+}
+.stat-row .stat-k { color: #5a3a12; min-width: 2.5em; }
+.stat-row .stat-v { color: #1a140c; font-variant-numeric: tabular-nums; text-align: right; }
+/* 列位：依官方 Stat 框大致分區（名稱→職業→等級→血魔→四維→攻擊→武器） */
+.sf-name { top: 11%; }
+.sf-job  { top: 17%; }
+.sf-lv   { top: 23%; }
+.sf-hp   { top: 32%; }
+.sf-mp   { top: 37.5%; }
+.sf-str  { top: 48%; }
+.sf-dex  { top: 53.5%; }
+.sf-int  { top: 59%; }
+.sf-luk  { top: 64.5%; }
+.sf-atk  { top: 76%; }
+.sf-wep  { top: 84%; font-size: clamp(0.65rem, 2.1vw, 0.8rem); }
 .wzw-status { width: min(280px, 82vw); }
 .wzw-key-row {
   display: grid; grid-template-columns: 88px 1fr; gap: 6px;

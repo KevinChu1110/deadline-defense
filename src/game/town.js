@@ -498,36 +498,81 @@ export function createTown(opts) {
     ctx.restore();
   }
 
-  // ── 小地圖（左上，仿原版 MiniMap 深藍框）──
+  // ── 小地圖：UI.wz MiniMap 九宮格框 ──
+  const MM = {};
+  (function loadMinimapFrame() {
+    if (typeof Image === "undefined") return;
+    for (const k of ["nw", "ne", "sw", "se", "n", "s", "w", "e", "c", "title"]) {
+      const im = new Image(); im.src = `/ui/minimap/${k}.png`; MM[k] = im;
+    }
+  })();
+  function drawNineSlice(ctx, x, y, w, h, B) {
+    // MaxMap 切片：角 nw/ne=6×72、sw/se=6×15；邊 n=1×72、s=1×15、w/e=6×1；中心 1×1
+    if (!B.nw?.complete || !B.nw.naturalWidth) return false;
+    const L = B.nw.naturalWidth || 6;           // 左右邊寬
+    const T = B.n?.naturalHeight || B.nw.naturalHeight || 8; // 頂高（切片很高，取可用）
+    // 實際繪製時角/邊要縮到合理：頂欄固定 14、底 10、側 6
+    const topH = 14, botH = 10, side = 6;
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    // 中心
+    if (B.c?.complete) ctx.drawImage(B.c, x + side, y + topH, Math.max(1, w - side * 2), Math.max(1, h - topH - botH));
+    else { ctx.fillStyle = "rgba(20,40,70,0.85)"; ctx.fillRect(x + side, y + topH, w - side * 2, h - topH - botH); }
+    // 四邊
+    if (B.n?.complete) ctx.drawImage(B.n, x + side, y, Math.max(1, w - side * 2), topH);
+    if (B.s?.complete) ctx.drawImage(B.s, x + side, y + h - botH, Math.max(1, w - side * 2), botH);
+    if (B.w?.complete) ctx.drawImage(B.w, x, y + topH, side, Math.max(1, h - topH - botH));
+    if (B.e?.complete) ctx.drawImage(B.e, x + w - side, y + topH, side, Math.max(1, h - topH - botH));
+    // 四角
+    ctx.drawImage(B.nw, x, y, side, topH);
+    ctx.drawImage(B.ne, x + w - side, y, side, topH);
+    ctx.drawImage(B.sw, x, y + h - botH, side, botH);
+    ctx.drawImage(B.se, x + w - side, y + h - botH, side, botH);
+    ctx.restore();
+    return true;
+  }
   function drawMinimap() {
-    const mw = 168, mh = 108, mx = 12, my = 12, pad = 8;
+    const mw = 172, mh = 118, mx = 10, my = 10;
+    const padX = 10, padTop = 18, padBot = 10;
     const wx0 = town.vr.left, wy0 = town.vr.top;
     const ww = town.vr.right - town.vr.left, wh = town.vr.bottom - town.vr.top;
-    const sc = Math.min((mw - pad * 2) / ww, (mh - pad * 2) / wh);
-    const ox = mx + pad + ((mw - pad * 2) - ww * sc) / 2, oy = my + pad + 4;
+    const sc = Math.min((mw - padX * 2) / ww, (mh - padTop - padBot) / wh);
+    const ox = mx + padX + ((mw - padX * 2) - ww * sc) / 2;
+    const oy = my + padTop;
     const mp = (wx, wy) => [ox + (wx - wx0) * sc, oy + (wy - wy0) * sc];
     ctx.save();
-    // 原版風：深藍半透明 + 金邊
-    ctx.fillStyle = "rgba(16, 28, 52, 0.78)";
-    ctx.strokeStyle = "rgba(200, 170, 90, 0.75)"; ctx.lineWidth = 2;
-    ctx.fillRect(mx, my, mw, mh); ctx.strokeRect(mx + 0.5, my + 0.5, mw - 1, mh - 1);
-    ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(mx + 2, my + 2, mw - 4, 14);
-    ctx.fillStyle = "#ffe9a8"; ctx.font = "bold 10px system-ui"; ctx.textAlign = "left";
-    ctx.fillText(town.name || "地圖", mx + 6, my + 13);
+    // 內底（九宮格中心可能是 1×1 透明/色塊）
+    ctx.fillStyle = "rgba(12, 28, 52, 0.82)";
+    ctx.fillRect(mx + 4, my + 4, mw - 8, mh - 8);
+    if (!drawNineSlice(ctx, mx, my, mw, mh, MM)) {
+      ctx.strokeStyle = "rgba(200,170,90,0.8)"; ctx.lineWidth = 2;
+      ctx.strokeRect(mx + 0.5, my + 0.5, mw - 1, mh - 1);
+    }
+    // 標題
+    if (MM.title?.complete && MM.title.naturalWidth) {
+      ctx.drawImage(MM.title, mx + 6, my + 3, MM.title.naturalWidth, MM.title.naturalHeight);
+      ctx.fillStyle = "#ffe9a8"; ctx.font = "bold 10px system-ui"; ctx.textAlign = "left";
+      ctx.fillText(town.name || "地圖", mx + 10 + MM.title.naturalWidth, my + 13);
+    } else {
+      ctx.fillStyle = "#ffe9a8"; ctx.font = "bold 10px system-ui"; ctx.textAlign = "left";
+      ctx.fillText(town.name || "地圖", mx + 10, my + 13);
+    }
     // foothold
-    ctx.strokeStyle = "rgba(160,220,120,0.8)"; ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(160,220,120,0.85)"; ctx.lineWidth = 1;
     for (const f of town.foothold) {
       if (f.x1 === f.x2) continue;
       const [ax, ay] = mp(f.x1, f.y1), [bx, by] = mp(f.x2, f.y2);
       ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
     }
-    // 活動傳送門(彩點) / NPC(橘點)
     for (const a of acts) { const [x, y] = mp(a.x, a.y); ctx.fillStyle = a.color || "#5cf"; ctx.beginPath(); ctx.arc(x, y, 2.5, 0, 7); ctx.fill(); }
     for (const n of town.life) { if (n.type !== "n" || n.hide) continue; const [x, y] = mp(n.x, n.y); ctx.fillStyle = "#ffb84d"; ctx.beginPath(); ctx.arc(x, y, 2, 0, 7); ctx.fill(); }
-    // 玩家(黃點閃)
-    const [px, py] = mp(player.x, player.y);
+    if (net) for (const p of net.players) {
+      const [x, y] = mp(p.x, p.y);
+      ctx.fillStyle = "#7ab8ff"; ctx.beginPath(); ctx.arc(x, y, 2, 0, 7); ctx.fill();
+    }
+    const [ppx, ppy] = mp(player.x, player.y);
     ctx.fillStyle = (performance.now() % 700 < 400) ? "#ffe14d" : "#fff";
-    ctx.beginPath(); ctx.arc(px, py, 3, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(ppx, ppy, 3, 0, 7); ctx.fill();
     ctx.strokeStyle = "#000"; ctx.lineWidth = 0.6; ctx.stroke();
     ctx.restore();
   }

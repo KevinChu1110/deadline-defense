@@ -1,12 +1,8 @@
 /**
- * 官方風底部狀態列 HUD（跨掛機探險/神木防衛戰/Boss突襲/城鎮）。
- * 素材：UI.wz/StatusBar.img 解包
- *   panel-full = base/backgrnd2 (570×71，含上緣聊天條)
- *   gauge-bar  = gauge/bar (340×31 HP/MP/EXP 條圖)
- *   quickslot  = base/quickSlot (151×80)
+ * 官方風底部狀態列 HUD
+ * 素材：UI.wz/StatusBar.img（backgrnd2 + number_* + quickSlot）
  *
- * 用法：每幀在 render 尾端呼叫 drawHud(ctx, W, H, state)。
- *   state = { level, hp, hpMax, mp, mpMax, expPct(0~1), name?, skills:[{key,label,cd,cdMax,icon}] }
+ * state = { level, hp, hpMax, mp, mpMax, expPct(0~1), name?, skills:[] }
  */
 
 const IMG = {};
@@ -16,33 +12,35 @@ function load(name, src) {
   IMG[name] = img;
   return img;
 }
-// 優先用完整 71px 底板；舊 panel.png 當後備
+
 load("panelFull", "/ui/hud/panel-full.png");
 load("panel", "/ui/hud/panel.png");
 load("quick", "/ui/hud/quickslot.png");
-load("topedge", "/ui/hud/topedge.png");
-load("gaugeBar", "/ui/hud/gauge-bar.png");
-load("gaugeGrad", "/ui/hud/gauge-grad.png");
-load("gaugeGray", "/ui/hud/gauge-gray.png");
-load("chatLine", "/ui/hud/chat-line.png");
 
-// panel-full(570×71) 內部槽位 — 對齊 TMS113 StatusBar.img 目測座標
-// backgrnd2 上方約 33px 是聊天/名條區，下方是 LV + 三條
+// 官方數字字型（5×7，繪製時 ×2 放大）
+const NUM = {};
+for (let i = 0; i <= 9; i++) loadNum(String(i), `/ui/hud/num/${i}.png`);
+loadNum("slash", "/ui/hud/num/slash.png");
+loadNum("percent", "/ui/hud/num/percent.png");
+loadNum("lbracket", "/ui/hud/num/lbracket.png");
+loadNum("rbracket", "/ui/hud/num/rbracket.png");
+function loadNum(k, src) {
+  const img = new Image();
+  img.src = src;
+  NUM[k] = img;
+}
+
 const P = {
   w: 570, h: 71,
-  // 下方 gauge 區（從 y≈33 起）
-  lv:  { x: 52,  y: 36, w: 100, h: 28 },
+  lv:  { x: 58,  y: 42, w: 90, h: 22 },
   hp:  { x: 168, y: 40, w: 236, h: 10 },
   mp:  { x: 168, y: 53, w: 236, h: 10 },
   exp: { x: 418, y: 47, w: 140, h: 12 },
-  // 上方名牌區
   name: { x: 80, y: 10, w: 200, h: 16 },
 };
-
-// 若只用裁切後 38px panel，y 整體上移 33
 const P_SHORT = {
   w: 570, h: 38,
-  lv:  { x: 52,  y: 3,  w: 100, h: 30 },
+  lv:  { x: 58,  y: 8,  w: 90, h: 22 },
   hp:  { x: 168, y: 7,  w: 236, h: 10 },
   mp:  { x: 168, y: 20, w: 236, h: 10 },
   exp: { x: 418, y: 14, w: 140, h: 12 },
@@ -77,23 +75,54 @@ function bar(ctx, px, py, slot, pct, colStops) {
   ctx.restore();
 }
 
-/** 用官方 gauge/bar 圖拉伸填條（更像原版） */
-function gaugeSprite(ctx, px, py, slot, pct, sprite) {
-  if (!sprite?.complete || !sprite.naturalWidth) {
-    return false;
+/** 量測 bitmap 字串寬度（scale 倍） */
+function measureNum(str, scale = 2) {
+  let w = 0;
+  for (const ch of String(str)) {
+    const key = ch === "/" ? "slash" : ch === "%" ? "percent" : ch === "[" ? "lbracket" : ch === "]" ? "rbracket" : ch;
+    const im = NUM[key];
+    if (im?.complete && im.naturalWidth) w += im.naturalWidth * scale + scale; // +1px gap
+    else w += 5 * scale + scale;
   }
-  const x = px + slot.x, y = py + slot.y, w = slot.w, h = slot.h;
-  const fw = Math.max(0, Math.min(1, pct)) * w;
-  if (fw < 1) return true;
+  return w;
+}
+
+/**
+ * 繪製官方數字字串
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {string} str
+ * @param {number} x 左上或對齊點
+ * @param {number} y 垂直中心
+ * @param {{ scale?: number, align?: 'left'|'center'|'right' }} opts
+ */
+function drawNum(ctx, str, x, y, { scale = 2, align = "left" } = {}) {
+  const s = String(str);
+  let tw = measureNum(s, scale);
+  let cx = x;
+  if (align === "center") cx = x - tw / 2;
+  else if (align === "right") cx = x - tw;
+  const h = 7 * scale;
+  const top = Math.round(y - h / 2);
   ctx.save();
-  ctx.beginPath();
-  ctx.rect(x, y, fw, h);
-  ctx.clip();
-  // 拉伸條圖到槽位高度
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(sprite, 0, 0, sprite.naturalWidth, sprite.naturalHeight, x, y, w, h);
+  for (const ch of s) {
+    const key = ch === "/" ? "slash" : ch === "%" ? "percent" : ch === "[" ? "lbracket" : ch === "]" ? "rbracket" : ch;
+    const im = NUM[key];
+    if (im?.complete && im.naturalWidth) {
+      const dw = im.naturalWidth * scale, dh = im.naturalHeight * scale;
+      ctx.drawImage(im, Math.round(cx), top, dw, dh);
+      cx += dw + scale;
+    } else {
+      // 後備：系統字
+      ctx.font = `700 ${8 * scale}px monospace`;
+      ctx.fillStyle = "#fff";
+      ctx.textBaseline = "middle";
+      ctx.fillText(ch, cx, y);
+      cx += 5 * scale + scale;
+    }
+  }
   ctx.restore();
-  return true;
+  return tw;
 }
 
 function pixText(ctx, txt, x, y, { size = 11, color = "#fff", align = "center" } = {}) {
@@ -126,27 +155,25 @@ export function drawHud(ctx, W, H, state = {}) {
   const totalW = pw + gap + qw;
   const px = Math.round((W - totalW) / 2);
   const py = Math.round(H - Math.max(ph, qh) - 4);
+  const yOff = Math.max(ph, qh) - ph;
 
   ctx.save();
   ctx.imageSmoothingEnabled = false;
-
-  // 底板
-  ctx.drawImage(full, px, py + (Math.max(ph, qh) - ph), pw, ph);
+  ctx.drawImage(full, px, py + yOff, pw, ph);
 
   const slot = (s) => ({
     x: s.x * scale,
-    y: s.y * scale + (Math.max(ph, qh) - ph),
+    y: s.y * scale + yOff,
     w: s.w * scale,
     h: s.h * scale,
   });
   const sx = (v) => px + v * scale;
-  const sy = (v) => py + v * scale + (Math.max(ph, qh) - ph);
+  const sy = (v) => py + v * scale + yOff;
 
   const hpPct = (state.hp ?? 1) / (state.hpMax || 1);
   const mpPct = (state.mp ?? 1) / (state.mpMax || 1);
   const expPct = state.expPct ?? 0;
 
-  // 血魔經驗：圓角漸層（對齊原版三槽位置；gauge 圖層作底光可選）
   bar(ctx, px, py, slot(layout.hp), hpPct,
     [[0, "#ff9a9a"], [0.45, "#f03030"], [1, "#a01010"]]);
   bar(ctx, px, py, slot(layout.mp), mpPct,
@@ -154,31 +181,34 @@ export function drawHud(ctx, W, H, state = {}) {
   bar(ctx, px, py, slot(layout.exp), expPct,
     [[0, "#f0ff80"], [0.45, "#c8e000"], [1, "#7a9800"]]);
 
-  // LV
+  // 官方數字（scale 約 2×UI scale）
+  const nScale = Math.max(2, Math.round(2 * scale));
   const lv = layout.lv;
-  pixText(ctx, String(state.level ?? "—"),
-    sx(lv.x + lv.w / 2 + 8), sy(lv.y + lv.h / 2),
-    { size: 13 * scale + 2, color: "#ffe9a8" });
+  drawNum(ctx, String(state.level ?? 0),
+    sx(lv.x + lv.w / 2), sy(lv.y + lv.h / 2), { scale: nScale, align: "center" });
 
   if (state.hpMax) {
-    pixText(ctx, `${state.hp | 0}/${state.hpMax | 0}`,
-      sx(layout.hp.x + layout.hp.w / 2), sy(layout.hp.y + layout.hp.h / 2), { size: 9 });
+    drawNum(ctx, `${state.hp | 0}/${state.hpMax | 0}`,
+      sx(layout.hp.x + layout.hp.w / 2), sy(layout.hp.y + layout.hp.h / 2),
+      { scale: nScale, align: "center" });
   }
   if (state.mpMax) {
-    pixText(ctx, `${state.mp | 0}/${state.mpMax | 0}`,
-      sx(layout.mp.x + layout.mp.w / 2), sy(layout.mp.y + layout.mp.h / 2), { size: 9 });
+    drawNum(ctx, `${state.mp | 0}/${state.mpMax | 0}`,
+      sx(layout.mp.x + layout.mp.w / 2), sy(layout.mp.y + layout.mp.h / 2),
+      { scale: nScale, align: "center" });
   }
-  pixText(ctx, `${((expPct) * 100).toFixed(1)}%`,
-    sx(layout.exp.x + layout.exp.w / 2), sy(layout.exp.y + layout.exp.h / 2), { size: 8.5 });
+  // EXP 百分比（取整，官方字沒有小數點）
+  const expPctInt = Math.min(99, Math.max(0, Math.floor((expPct || 0) * 100)));
+  drawNum(ctx, `${expPctInt}%`,
+    sx(layout.exp.x + layout.exp.w / 2), sy(layout.exp.y + layout.exp.h / 2),
+    { scale: nScale, align: "center" });
 
-  // 角色名（完整底板上方聊天區）
   if (useFull && layout.name && state.name) {
     pixText(ctx, String(state.name),
       sx(layout.name.x), sy(layout.name.y + layout.name.h / 2),
       { size: 11 * scale + 1, color: "#fff4d8", align: "left" });
   }
 
-  // 快捷技能格
   if (quick?.complete && quick.naturalWidth) {
     const qx = px + pw + gap;
     const qy = Math.round(py + Math.max(ph, qh) - qh);
@@ -205,7 +235,6 @@ export function drawHud(ctx, W, H, state = {}) {
   ctx.restore();
 }
 
-/** HUD 素材是否就緒 */
 export function hudReady() {
   return !!(
     (IMG.panelFull?.complete && IMG.panelFull.naturalWidth)

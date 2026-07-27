@@ -456,11 +456,13 @@
             </div>
           </div>
 
-          <!-- 角色狀態(S)：等級/血魔/攻擊 -->
+          <!-- 能力值(S)：UI.wz UIWindow/Stat 官方框 175×337 -->
           <div id="status-window-overlay" class="overlay dialog-overlay" hidden>
-            <div class="wz-window wzw-status" role="dialog" aria-modal="true" aria-label="角色狀態">
-              <button type="button" class="wz-window-close" data-close="status-window-overlay" aria-label="關閉">✕</button>
-              <div class="wz-window-body" id="status-window-body"></div>
+            <div class="stat-window" role="dialog" aria-modal="true" aria-label="能力值">
+              <button type="button" class="stat-close" data-close="status-window-overlay" aria-label="關閉">✕</button>
+              <div class="stat-fields" id="status-window-body">
+                <!-- 由 openStatusWindow 填入定位欄位 -->
+              </div>
             </div>
           </div>
 
