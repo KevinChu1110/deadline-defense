@@ -456,6 +456,30 @@
             </div>
           </div>
 
+          <!-- 角色狀態(S)：等級/血魔/攻擊 -->
+          <div id="status-window-overlay" class="overlay dialog-overlay" hidden>
+            <div class="wz-window wzw-status" role="dialog" aria-modal="true" aria-label="角色狀態">
+              <button type="button" class="wz-window-close" data-close="status-window-overlay" aria-label="關閉">✕</button>
+              <div class="wz-window-body" id="status-window-body"></div>
+            </div>
+          </div>
+
+          <!-- 快捷鍵說明(?/H) -->
+          <div id="hotkey-window-overlay" class="overlay dialog-overlay" hidden>
+            <div class="wz-window wzw-hotkey" role="dialog" aria-modal="true" aria-label="快捷鍵說明">
+              <button type="button" class="wz-window-close" data-close="hotkey-window-overlay" aria-label="關閉">✕</button>
+              <div class="wz-window-body" id="hotkey-window-body"></div>
+            </div>
+          </div>
+
+          <!-- 商店(P)：自由市場雜貨/展示 -->
+          <div id="shop-window-overlay" class="overlay dialog-overlay" hidden>
+            <div class="wz-window wzw-shop" role="dialog" aria-modal="true" aria-label="商店">
+              <button type="button" class="wz-window-close" data-close="shop-window-overlay" aria-label="關閉">✕</button>
+              <div class="wz-window-body" id="shop-window-body"></div>
+            </div>
+          </div>
+
           <!-- 掛機探險：選地圖 -->
           <div id="hunt-picker-overlay" class="overlay dialog-overlay" hidden>
             <div class="dialog-card maple-panel maple-ornament hunt-picker-card" role="dialog" aria-modal="true">
@@ -512,12 +536,24 @@
             <div class="action-raid-shell maple-panel maple-ornament">
               <header class="action-raid-bar">
                 <div><p class="overlay-kicker">城鎮 · TOWN</p><h2 id="town-title">自由市場</h2></div>
-                <div class="action-raid-bar-actions">
+                <div class="action-raid-bar-actions town-chrome-actions">
                   <span class="muted">←→ 移動 · 空白 跳 · ↑/點 對話 · Enter 聊天 · Esc 離開</span>
+                  <button type="button" class="btn town-chrome-btn" id="btn-town-hotkey" title="快捷鍵 (?)">⌨️</button>
+                  <button type="button" class="btn town-chrome-btn" id="btn-town-status" title="狀態 (S)">❤️</button>
+                  <button type="button" class="btn town-chrome-btn" id="btn-town-shop" title="商店 (P)">🛒</button>
+                  <button type="button" class="btn town-chrome-btn" id="btn-town-settings" title="設定 (O)">⚙️</button>
                   <button type="button" class="btn" id="btn-town-exit">離開</button>
                 </div>
               </header>
               <canvas id="town-canvas" width="960" height="540" aria-label="城鎮場景"></canvas>
+              <!-- 右下角：迷你狀態列（名稱/等級/血魔）— 聊天列在左下，不重疊 -->
+              <div id="town-status-bar" class="town-status-bar" aria-live="polite">
+                <div class="tsb-name"><span id="tsb-name">冒險者</span> <span class="tsb-lv">Lv.<span id="tsb-lv">1</span></span></div>
+                <div class="tsb-bars">
+                  <div class="tsb-row tsb-hp"><span>HP</span><div class="tsb-track"><i id="tsb-hp-fill"></i></div><em id="tsb-hp-txt">—</em></div>
+                  <div class="tsb-row tsb-mp"><span>MP</span><div class="tsb-track"><i id="tsb-mp-fill"></i></div><em id="tsb-mp-txt">—</em></div>
+                </div>
+              </div>
               <div class="town-chat-bar">
                 <input id="town-chat-input" type="text" maxlength="80" placeholder="說點什麼…（Enter 送出）" autocomplete="off" />
                 <button type="button" class="btn primary maple-primary" id="town-chat-send">送出</button>

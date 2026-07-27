@@ -540,9 +540,15 @@ export function createTown(opts) {
     if (paused) { keys.clear(); return; } // 對話中不吃操作(Esc 也不離開)
     if (down && e.code === "Escape") { if (combat && bagOpen) { bagOpen = false; return; } if (onExit) onExit(); return; }
     if (down && e.code === "KeyB" && combat) { bagOpen = !bagOpen; e.preventDefault(); return; }
-    // 楓之谷標準視窗鍵:E裝備 I道具 K技能 W地圖
+    // 楓之谷標準視窗鍵:E裝備 I道具 K技能 W地圖 S狀態 P商店 O設定 H/?快捷鍵
     if (down && onWindow) {
-      const wk = { KeyE: "equip", KeyI: "item", KeyK: "skill", KeyW: "map" }[e.code];
+      const wk = {
+        KeyE: "equip", KeyI: "item", KeyK: "skill", KeyW: "map",
+        KeyS: "status", KeyP: "shop", KeyO: "settings",
+        KeyH: "hotkey", Slash: "hotkey",
+      }[e.code];
+      // ? 在多數鍵盤是 Shift+/ → 另攔 key
+      if (!wk && down && (e.key === "?" || e.key === "？")) { onWindow("hotkey"); e.preventDefault(); return; }
       if (wk) { onWindow(wk); e.preventDefault(); return; }
     }
     if (down) keys.add(e.code); else keys.delete(e.code);

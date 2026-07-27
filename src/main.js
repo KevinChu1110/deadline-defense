@@ -4268,6 +4268,7 @@ async function openTown() {
   const { activeChar, appearance, cp } = await loadAppearanceForActive();
   _lastCp = cp; // 給技能視窗取 family
   const profile = buildTownProfile(activeChar, cp);
+  _lastTownProfile = profile;
   // 活動傳送門 + 通往弓箭手村的世界旅行門：放在出生點平台附近
   const sp = town.portals.find((p) => p.n === "sp") || { x: 179, y: 30 };
   // 收斂需求:先只做「大家進來聊天的城鎮」→ 收起所有戰鬥/旅行入口(狩獵場/神木防衛戰/Boss突襲/世界旅行)
@@ -4275,6 +4276,7 @@ async function openTown() {
   stopTown();
   hideAllOverlays();
   setTownTitle(WORLD[HOME_MAP]?.name || "自由市場");
+  paintTownStatusBar(profile);
   const overlay = document.querySelector("#town-overlay");
   setOverlayOpen(overlay, true);
   // 即時多人:連城鎮房(看得到別人+聊天);sheet 用自己的 WZ 紙娃娃 URL
@@ -4295,7 +4297,7 @@ async function openTown() {
     },
     onNpc: (n) => openNpcDialog(n),
     onExit: () => { stopTown(); setOverlayOpen(overlay, false); openTitleScreen(); },
-    onWindow: (which) => openTownWindow(which), // E裝備 I道具 K技能 W地圖
+    onWindow: (which) => openTownWindow(which), // E/I/K/W/S/P/O/H
   });
   // 進場前預載資產 + 進度條，避免物件逐張 pop-in
   await townSession.preload((p) => drawTownLoading(document.querySelector("#town-canvas"), p));
@@ -4303,13 +4305,18 @@ async function openTown() {
   sfx.startBgm("town"); // 自由市場官方 BGM(FloralLife)
 }
 
-// 楓之谷標準視窗鍵:E裝備 I道具(=現有裝備+背包窗) K技能 W地圖
+// 楓之谷標準視窗鍵:E裝備 I道具 K技能 W地圖 + S狀態 H/?快捷鍵 P商店 O設定
 function openTownWindow(which) {
   if (which === "equip" || which === "item") return openEquip();
   if (which === "skill") return openSkillWindow();
   if (which === "map") return openMapWindow();
+  if (which === "status") return openStatusWindow();
+  if (which === "hotkey" || which === "help") return openHotkeyWindow();
+  if (which === "shop") return openShopWindow();
+  if (which === "settings") return openSettingsOverlay();
 }
 let _lastCp = null;
+let _lastTownProfile = null;
 const FAMILY_ZH = { warrior: "劍士系", mage: "法師系", archer: "弓箭手系", thief: "盜賊系", pirate: "海盜系", beginner: "初心者" };
 // 各職系代表技能(聊天城鎮視窗展示用;完整技能系統待接)
 const FAMILY_SKILLS = {
@@ -4320,6 +4327,12 @@ const FAMILY_SKILLS = {
   pirate: ["爆頭射擊", "八爪鉤", "衝拳", "轉輪", "海之力量"],
   beginner: ["三段攻擊", "跳躍", "回復術"],
 };
+// 城鎮可關閉視窗(Esc 優先關這些,不離開城鎮)
+const TOWN_WINDOW_IDS = [
+  "skill-window-overlay", "map-window-overlay", "equip-overlay",
+  "status-window-overlay", "hotkey-window-overlay", "shop-window-overlay",
+  "settings-overlay", "keybind-overlay", "customize-overlay",
+];
 function openSkillWindow() {
   const fam = _lastCp?.family || "beginner";
   const skills = FAMILY_SKILLS[fam] || FAMILY_SKILLS.beginner;
@@ -4329,6 +4342,7 @@ function openSkillWindow() {
     + skills.map((s) => `<div class="wzw-row"><span>🔹 ${escapeHtml(s)}</span></div>`).join("")
     + `<p class="wzw-note">完整技能系統建置中</p>`;
   setOverlayOpen(document.querySelector("#skill-window-overlay"), true);
+  sfx.play("uiClick");
 }
 function openMapWindow() {
   const name = WORLD[HOME_MAP]?.name || "自由市場";
@@ -4341,6 +4355,130 @@ function openMapWindow() {
       : `<div class="wzw-row"><span>—</span></div>`)
     + `<p class="wzw-note">大家都在同一張圖聊天</p>`;
   setOverlayOpen(document.querySelector("#map-window-overlay"), true);
+  sfx.play("uiClick");
+}
+/** 角色狀態窗(S)：等級/血魔/攻擊/職系 */
+function openStatusWindow() {
+  const p = _lastTownProfile || {};
+  const cp = _lastCp || {};
+  const fam = cp.family || "beginner";
+  const name = p.name || "冒險者";
+  const lv = p.level || 1;
+  const maxHp = p.maxHp || 100;
+  const maxMp = p.maxMp || 50;
+  const atk = p.atk || 45;
+  const basic = (p.basicMin != null && p.basicMax != null)
+    ? `${p.basicMin} ~ ${p.basicMax}` : String(atk);
+  const body = document.querySelector("#status-window-body");
+  if (body) body.innerHTML = `<p class="wzw-title">角色狀態</p>`
+    + `<div class="wzw-row"><span class="k">名稱</span><span>${escapeHtml(name)}</span></div>`
+    + `<div class="wzw-row"><span class="k">等級</span><span>Lv. ${lv}</span></div>`
+    + `<div class="wzw-row"><span class="k">職業</span><span>${escapeHtml(FAMILY_ZH[fam] || fam)}</span></div>`
+    + `<div class="wzw-row"><span class="k">HP</span><span>${maxHp} / ${maxHp}</span></div>`
+    + `<div class="wzw-row"><span class="k">MP</span><span>${maxMp} / ${maxMp}</span></div>`
+    + `<div class="wzw-row"><span class="k">攻擊</span><span>${escapeHtml(basic)}</span></div>`
+    + `<p class="wzw-note">右下角狀態列也會顯示血魔</p>`;
+  setOverlayOpen(document.querySelector("#status-window-overlay"), true);
+  sfx.play("uiClick");
+}
+/** 快捷鍵說明(?/H) */
+function openHotkeyWindow() {
+  const rows = [
+    ["← → / A D", "左右移動"],
+    ["空白鍵", "跳躍"],
+    ["↑ / 點擊", "與 NPC / 傳送門互動"],
+    ["Enter", "聚焦聊天輸入"],
+    ["E / I", "裝備 · 道具"],
+    ["K", "技能"],
+    ["W", "地圖"],
+    ["S", "角色狀態"],
+    ["P", "商店"],
+    ["O", "設定"],
+    ["? / H", "本快捷鍵說明"],
+    ["Esc", "關視窗 → 再按離開城鎮"],
+  ];
+  const body = document.querySelector("#hotkey-window-body");
+  if (body) body.innerHTML = `<p class="wzw-title">快捷鍵</p>`
+    + rows.map(([k, v]) => `<div class="wzw-key-row"><kbd>${escapeHtml(k)}</kbd><span>${escapeHtml(v)}</span></div>`).join("")
+    + `<p class="wzw-note">手機可用畫面虛擬鍵 + 右上角按鈕</p>`;
+  setOverlayOpen(document.querySelector("#hotkey-window-overlay"), true);
+  sfx.play("uiClick");
+}
+// 自由市場展示商店(聊天城鎮介面完整用;真交易接 Discord 自由市場後接線)
+const TOWN_SHOP = {
+  consumable: [
+    { id: "red-potion", ico: "🧪", name: "紅色藥水", desc: "回復少量 HP", price: 50 },
+    { id: "blue-potion", ico: "💙", name: "藍色藥水", desc: "回復少量 MP", price: 50 },
+    { id: "orange-potion", ico: "🧡", name: "橙色藥水", desc: "回復中量 HP", price: 160 },
+    { id: "white-potion", ico: "🤍", name: "白色藥水", desc: "回復大量 HP", price: 320 },
+  ],
+  scroll: [
+    { id: "scroll-10", ico: "📜", name: "卷軸 10%", desc: "裝備強化(展示)", price: 1000 },
+    { id: "scroll-60", ico: "📜", name: "卷軸 60%", desc: "裝備強化(展示)", price: 5000 },
+    { id: "scroll-100", ico: "✨", name: "卷軸 100%", desc: "裝備強化(展示)", price: 25000 },
+  ],
+  special: [
+    { id: "hair-coupon", ico: "💇", name: "美髮券", desc: "開造型工房換髮型", price: 3000 },
+    { id: "face-coupon", ico: "😊", name: "整形券", desc: "開造型工房換臉型", price: 5000 },
+    { id: "pet-food", ico: "🍖", name: "寵物食品", desc: "餵食寵物(展示)", price: 200 },
+  ],
+};
+const SHOP_TAB_ZH = { consumable: "消耗", scroll: "卷軸", special: "特殊" };
+let _shopTab = "consumable";
+function openShopWindow(tab) {
+  if (tab) _shopTab = tab;
+  if (!TOWN_SHOP[_shopTab]) _shopTab = "consumable";
+  const items = TOWN_SHOP[_shopTab];
+  const body = document.querySelector("#shop-window-body");
+  if (body) {
+    body.innerHTML = `<p class="wzw-title">自由市場 · 商店</p>`
+      + `<div class="wzw-shop-tabs">${Object.keys(TOWN_SHOP).map((k) =>
+        `<button type="button" data-shop-tab="${k}" class="${k === _shopTab ? "is-on" : ""}">${SHOP_TAB_ZH[k] || k}</button>`
+      ).join("")}</div>`
+      + items.map((it) =>
+        `<div class="wzw-shop-item" data-shop-id="${escapeHtml(it.id)}" role="button" tabindex="0">`
+        + `<span class="ico">${it.ico}</span>`
+        + `<span class="meta"><strong>${escapeHtml(it.name)}</strong><small>${escapeHtml(it.desc)}</small></span>`
+        + `<span class="price">🪙 ${it.price.toLocaleString()}</span>`
+        + `</div>`
+      ).join("")
+      + `<p class="wzw-note">展示商店 · 真交易將接 Discord 自由市場</p>`;
+    body.querySelectorAll("[data-shop-tab]").forEach((b) => {
+      b.addEventListener("click", () => withAudio(() => openShopWindow(b.dataset.shopTab)));
+    });
+    body.querySelectorAll(".wzw-shop-item").forEach((row) => {
+      row.addEventListener("click", () => withAudio(() => {
+        const id = row.dataset.shopId;
+        const it = Object.values(TOWN_SHOP).flat().find((x) => x.id === id);
+        if (!it) return;
+        if (id === "hair-coupon" || id === "face-coupon") {
+          setOverlayOpen(document.querySelector("#shop-window-overlay"), false);
+          openCustomize();
+          showToast(`已開啟造型工房（${it.name}）`);
+          return;
+        }
+        showToast(`「${it.name}」· 展示中（真購買待接市場）· ${it.price} 楓幣`);
+        sfx.play("uiOk");
+      }));
+    });
+  }
+  setOverlayOpen(document.querySelector("#shop-window-overlay"), true);
+  sfx.play("uiClick");
+}
+/** 同步右下角 HTML 狀態列(進場/換角時呼叫) */
+function paintTownStatusBar(profile) {
+  const p = profile || _lastTownProfile || {};
+  const maxHp = p.maxHp || 100;
+  const maxMp = p.maxMp || 50;
+  const set = (id, v) => { const el = document.querySelector("#" + id); if (el) el.textContent = v; };
+  set("tsb-name", p.name || "冒險者");
+  set("tsb-lv", String(p.level || 1));
+  set("tsb-hp-txt", `${maxHp}/${maxHp}`);
+  set("tsb-mp-txt", `${maxMp}/${maxMp}`);
+  const hpFill = document.querySelector("#tsb-hp-fill");
+  const mpFill = document.querySelector("#tsb-mp-fill");
+  if (hpFill) hpFill.style.transform = "scaleX(1)";
+  if (mpFill) mpFill.style.transform = "scaleX(1)";
 }
 
 // ── 世界地圖標題列 + 旅行傳送門 ──
@@ -4448,6 +4586,8 @@ async function openWorldMap(mapId, entryPortal = null) {
   m.name = name;
   const { activeChar, appearance, cp } = await loadAppearanceForActive();
   const profile = buildTownProfile(activeChar, cp);
+  _lastCp = cp; _lastTownProfile = profile;
+  paintTownStatusBar(profile);
   const sp = m.portals.find((p) => p.n === "sp") || m.portals[0] || { x: 0, y: 0 };
   stopTown();
   hideAllOverlays();
@@ -4476,6 +4616,7 @@ async function openWorldMap(mapId, entryPortal = null) {
     onNpc: (n) => openNpcDialog(n),
     onPortal: (p) => warpPortal(mapId, p),
     onExit: () => { reportCombatKills(mapId); stopTown(); setOverlayOpen(overlay, false); openTitleScreen(); },
+    onWindow: (which) => openTownWindow(which),
   });
   await townSession.preload((p) => drawTownLoading(document.querySelector("#town-canvas"), p));
   townSession.start();
@@ -4510,31 +4651,42 @@ document.querySelector("#btn-town-exit")?.addEventListener("click", () => withAu
   input?.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); send(); } e.stopPropagation(); });
   document.querySelector("#town-chat-send")?.addEventListener("click", () => withAudio(send));
 })();
-// WZ 視窗(技能/地圖)關閉 + Esc 優先關視窗(不離開城鎮)
+// WZ 視窗關閉 + Esc 優先關視窗(不離開城鎮)
 document.querySelectorAll(".wz-window-close").forEach((b) =>
   b.addEventListener("click", () => withAudio(() => setOverlayOpen(document.querySelector("#" + b.dataset.close), false))));
 window.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
-  for (const id of ["skill-window-overlay", "map-window-overlay", "equip-overlay"]) {
+  for (const id of TOWN_WINDOW_IDS) {
     const el = document.querySelector("#" + id);
-    if (el && el.classList.contains("is-open")) { setOverlayOpen(el, false); e.stopPropagation(); e.preventDefault(); return; }
+    if (el && el.classList.contains("is-open")) {
+      setOverlayOpen(el, false);
+      e.stopPropagation(); e.preventDefault();
+      return;
+    }
   }
 }, true); // capture:先於 town 的 window keydown
+// 城鎮 chrome 按鈕
+document.querySelector("#btn-town-hotkey")?.addEventListener("click", () => withAudio(() => openHotkeyWindow()));
+document.querySelector("#btn-town-status")?.addEventListener("click", () => withAudio(() => openStatusWindow()));
+document.querySelector("#btn-town-shop")?.addEventListener("click", () => withAudio(() => openShopWindow()));
+document.querySelector("#btn-town-settings")?.addEventListener("click", () => withAudio(() => openSettingsOverlay()));
 
 // NPC 對話框（台詞 + 接真功能選項）
 const NPC_DATA = {
-  // 富蘭德里 — 裝備/造型商人
+  // 富蘭德里 — 裝備/造型/商店
   "9030000": {
-    line: "冒險家你好！要打理一下你的裝備跟造型嗎？",
+    line: "冒險家你好！要打理裝備、逛商店，還是換造型？",
     opts: [
+      { t: "🛒 逛商店", fn: () => { closeNpcDialog(); openShopWindow(); } },
       { t: "🎒 查看裝備", fn: () => { closeNpcDialog(); openEquip(); } },
       { t: "✨ 造型工房", fn: () => { closeNpcDialog(); openCustomize(); } },
     ],
   },
   // 史庫魯基 — 學者/嚮導
   "9030100": {
-    line: "嘿嘿，想研究怪物情報，還是先看看新手指南？",
+    line: "嘿嘿，想研究怪物情報，還是先看看操作說明？",
     opts: [
+      { t: "⌨️ 快捷鍵", fn: () => { closeNpcDialog(); openHotkeyWindow(); } },
       { t: "📖 怪物圖鑑", fn: () => { closeNpcDialog(); openDexOverlay(); } },
       { t: "📘 遊戲指南", fn: () => { closeNpcDialog(); openGuideOverlay("play"); } },
     ],

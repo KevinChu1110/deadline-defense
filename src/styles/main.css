@@ -7366,10 +7366,56 @@ body.mode-bc .wave-cta {
   pointer-events: auto; padding: 3px 12px; font-size: 0.8rem;
   background: rgba(20,16,10,0.65); color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px;
 }
+/* 頂部 chrome 小按鈕(快捷鍵/狀態/商店/設定) */
+#town-overlay .town-chrome-actions { display: flex; gap: 6px; align-items: center; pointer-events: auto; }
+#town-overlay .town-chrome-btn {
+  pointer-events: auto; padding: 3px 8px; font-size: 0.9rem; line-height: 1;
+  background: rgba(20,16,10,0.65); color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px;
+  min-width: 32px;
+}
+#town-overlay .town-chrome-btn:hover { background: rgba(50,40,20,0.85); border-color: rgba(255,220,140,0.6); }
+
+/* 右下角迷你狀態列(名稱+HP/MP) — 不擋左下聊天 */
+.town-status-bar {
+  position: absolute; bottom: 10px; right: 12px; z-index: 6;
+  min-width: 168px; max-width: min(240px, 36vw);
+  padding: 7px 10px 8px;
+  background: rgba(12, 10, 8, 0.72);
+  border: 1px solid rgba(255, 233, 168, 0.35);
+  border-radius: 8px;
+  color: #fff; font-size: 0.78rem;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+  pointer-events: none;
+}
+.town-status-bar .tsb-name {
+  font-weight: 800; color: #ffe9a8; margin-bottom: 5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  text-shadow: 0 1px 2px #000;
+}
+.town-status-bar .tsb-lv { color: #c8e8ff; font-weight: 700; margin-left: 4px; font-size: 0.74rem; }
+.town-status-bar .tsb-row {
+  display: grid; grid-template-columns: 22px 1fr auto; gap: 5px; align-items: center;
+  margin-top: 3px;
+}
+.town-status-bar .tsb-row span { font-weight: 800; font-size: 0.68rem; opacity: 0.9; }
+.town-status-bar .tsb-row em { font-style: normal; font-size: 0.68rem; color: rgba(255,255,255,0.85); min-width: 52px; text-align: right; }
+.town-status-bar .tsb-track {
+  height: 8px; border-radius: 4px; background: rgba(0,0,0,0.45);
+  border: 1px solid rgba(255,255,255,0.15); overflow: hidden;
+}
+.town-status-bar .tsb-track i {
+  display: block; height: 100%; width: 100%; border-radius: 3px;
+  background: linear-gradient(180deg, #ff8a8a, #c41a1a);
+  transform-origin: left center; transform: scaleX(1);
+}
+.town-status-bar .tsb-mp .tsb-track i {
+  background: linear-gradient(180deg, #8fd6ff, #1a6fc0);
+}
+
 /* 聊天輸入:貼左下細長條,半透黑(MapleStory 聊天列風) */
 #town-overlay .town-chat-bar {
   position: absolute; bottom: 8px; left: 10px; z-index: 6;
-  width: min(440px, 62vw); padding: 0; gap: 6px; background: transparent;
+  width: min(400px, 52vw); padding: 0; gap: 6px; background: transparent;
 }
 #town-overlay .town-chat-bar input {
   padding: 6px 10px; border-radius: 4px; font-size: 0.85rem;
@@ -7378,6 +7424,44 @@ body.mode-bc .wave-cta {
 #town-overlay .town-chat-bar input::placeholder { color: rgba(255,255,255,0.55); }
 #town-overlay .town-chat-bar input:focus { border-color: rgba(255,220,140,0.8); box-shadow: none; background: rgba(0,0,0,0.62); }
 #town-overlay .town-chat-bar .btn { padding: 5px 12px; font-size: 0.82rem; }
+
+/* 快捷鍵說明 / 商店 清單列 */
+.wzw-hotkey { width: min(340px, 90vw); }
+.wzw-shop { width: min(320px, 88vw); }
+.wzw-status { width: min(280px, 82vw); }
+.wzw-key-row {
+  display: grid; grid-template-columns: 88px 1fr; gap: 6px;
+  padding: 5px 2px; border-bottom: 1px solid rgba(150,110,60,0.18);
+  align-items: center; font-size: 0.86rem;
+}
+.wzw-key-row kbd {
+  display: inline-block; min-width: 72px; text-align: center;
+  padding: 2px 6px; border-radius: 4px;
+  background: linear-gradient(180deg, #fdf6e6, #e8d4a8);
+  border: 1px solid #9c7638; color: #5a3a12; font-weight: 800;
+  font-family: system-ui, monospace; font-size: 0.78rem;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+}
+.wzw-shop-item {
+  display: grid; grid-template-columns: 36px 1fr auto; gap: 8px; align-items: center;
+  padding: 7px 4px; border-bottom: 1px solid rgba(150,110,60,0.18);
+  cursor: pointer; border-radius: 4px;
+}
+.wzw-shop-item:hover { background: rgba(255, 233, 168, 0.25); }
+.wzw-shop-item .ico { font-size: 1.35rem; text-align: center; }
+.wzw-shop-item .meta { min-width: 0; }
+.wzw-shop-item .meta strong { display: block; color: #3a2a12; font-size: 0.88rem; }
+.wzw-shop-item .meta small { color: #8a6a3a; font-size: 0.74rem; }
+.wzw-shop-item .price { color: #a06010; font-weight: 800; font-size: 0.82rem; white-space: nowrap; }
+.wzw-shop-tabs { display: flex; gap: 6px; justify-content: center; margin: 0 0 8px; flex-wrap: wrap; }
+.wzw-shop-tabs button {
+  padding: 3px 10px; border-radius: 4px; border: 1px solid #9c7638;
+  background: linear-gradient(180deg, #fdf6e6, #e9d3a4); color: #5a3a12;
+  font-weight: 800; font-size: 0.78rem; cursor: pointer;
+}
+.wzw-shop-tabs button.is-on {
+  background: linear-gradient(180deg, #ffe9a8, #e8a94a); color: #5a2e08;
+}
 
 /* 正宗楓之谷 NPC 對話框：UI.wz/UIWindow.img/UtilDlgEx 解包九宮格(t頂/c中段/s底) */
 .npc-dialog {
