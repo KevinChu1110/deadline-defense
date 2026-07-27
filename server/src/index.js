@@ -125,6 +125,14 @@ function readBody(req) {
 }
 
 function sessionFromReq(req) {
+  // 手機瀏覽器擋第三方 cookie(前端 netlify / API ngrok 不同網域)→
+  // 優先認 Authorization: Bearer <sid>(token 交接);退回 cookie(桌機同站/首方)
+  const authz = req.headers.authorization || "";
+  const m = /^Bearer\s+(.+)$/i.exec(authz);
+  if (m) {
+    const s = auth.getSession(decodeURIComponent(m[1]));
+    if (s) return s;
+  }
   const cookies = auth.parseCookies(req);
   return auth.getSession(cookies.artale_sid);
 }
@@ -225,8 +233,10 @@ const server = http.createServer(async (req, res) => {
         });
         const sid = auth.createSession(user);
         // 多個 Set-Cookie 要用陣列
+        // sid 放 URL fragment(#)交接:不會送到伺服器/不進 Referer,前端存 localStorage
+        // 當 Bearer token 用(手機第三方 cookie 被擋時的主要路徑);Set-Cookie 保留給桌機首方後備
         res.writeHead(302, {
-          Location: `${web}/?artale_login=ok`,
+          Location: `${web}/?artale_login=ok#sid=${encodeURIComponent(sid)}`,
           "Set-Cookie": [
             auth.sessionCookie(sid),
             "artale_oauth_state=; Path=/; HttpOnly; Max-Age=0",

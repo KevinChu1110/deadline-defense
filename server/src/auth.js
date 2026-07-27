@@ -202,7 +202,7 @@ export function corsHeaders(req) {
     "Access-Control-Allow-Credentials": "true",
     "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
     "Access-Control-Allow-Headers":
-      "Content-Type, ngrok-skip-browser-warning",
+      "Content-Type, Authorization, ngrok-skip-browser-warning",
     Vary: "Origin",
   };
 }

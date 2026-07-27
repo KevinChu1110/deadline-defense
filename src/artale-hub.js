@@ -4,6 +4,14 @@
 import { getWorldChapters } from "./data/world-stages.js";
 
 const SESSION_KEY = "artale-web-discord-id";
+const AUTH_TOKEN_KEY = "artale-web-auth-token"; // OAuth 交接 token(手機第三方 cookie 被擋時用 Bearer)
+
+export function getAuthToken() {
+  try { return localStorage.getItem(AUTH_TOKEN_KEY) || ""; } catch { return ""; }
+}
+export function setAuthToken(t) {
+  try { if (t) localStorage.setItem(AUTH_TOKEN_KEY, String(t)); else localStorage.removeItem(AUTH_TOKEN_KEY); } catch { /* ignore */ }
+}
 
 /** SIT 預設 API（Netlify 前端 + ngrok）；可被 VITE_API_BASE 覆寫 */
 const DEFAULT_NGROK_API =
@@ -70,6 +78,7 @@ export function setLinkedDiscordId(id) {
 
 async function api(path, opts = {}) {
   const { headers: extraHeaders, ...rest } = opts || {};
+  const token = getAuthToken(); // 手機:第三方 cookie 被擋,改用 Bearer token
   const res = await fetch(apiUrl(path), {
     credentials: "include",
     ...rest,
@@ -77,6 +86,7 @@ async function api(path, opts = {}) {
       "Content-Type": "application/json",
       // ngrok free：瀏覽器 fetch 必須帶此 header，否則回警告 HTML → 被當成 API 掛了
       "ngrok-skip-browser-warning": "69420",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(extraHeaders || {}),
     },
   });
@@ -94,7 +104,9 @@ export async function fetchSessionMe() {
 }
 
 export async function logoutSession() {
-  return api("/api/auth/logout", { method: "POST", body: "{}" });
+  const r = await api("/api/auth/logout", { method: "POST", body: "{}" });
+  setAuthToken(null); // 清掉 Bearer token
+  return r;
 }
 
 export async function devLogin(discordId, username) {

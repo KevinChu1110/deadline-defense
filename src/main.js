@@ -882,10 +882,15 @@ async function openArtaleHub() {
   hubState = { ...hubState, error: "", apiOk: null, oauthOk: null };
   paintHub();
 
-  // OAuth 回跳 query
+  // OAuth 回跳 query + fragment token 交接(手機第三方 cookie 被擋→用 Bearer)
   const params = new URLSearchParams(window.location.search);
+  const hashParams = new URLSearchParams((window.location.hash || "").replace(/^#/, ""));
+  const handoffSid = hashParams.get("sid");
+  if (handoffSid) {
+    artaleHub.setAuthToken(handoffSid); // 存 token,後續 API 用 Authorization: Bearer
+  }
   if (params.get("artale_login") === "ok") {
-    history.replaceState({}, "", window.location.pathname);
+    history.replaceState({}, "", window.location.pathname); // 清掉 query + hash(含 token)
     showToast("Discord 登入成功");
   } else if (params.get("artale_login") === "error") {
     const msg = params.get("msg") || "登入失敗";
