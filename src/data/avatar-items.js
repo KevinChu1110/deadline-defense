@@ -41,6 +41,30 @@ export const AVATAR_CATALOG = {
   cape: [0, 1102000, 1102041, 1102084, 1102277],
 };
 
+// 武器 category → 官方基礎武器 item id(maplestory.io 可渲染;真裝備取近似外觀,
+// 自訂裝備因無官方圖也對到同類別官方武器)。已逐一驗證可渲染。
+export const WEAPON_CAT_ID = {
+  sword_1h: 1302000, sword_2h: 1402000, axe_1h: 1312000, axe_2h: 1412000,
+  blunt_1h: 1322000, blunt_2h: 1422000, spear: 1432000, polearm: 1442000,
+  dagger: 1332000, wand: 1372000, staff: 1382000, bow: 1452000,
+  crossbow: 1462000, claw: 1472000, knuckle: 1482000, gun: 1492000,
+  dual_bowgun: 1522000,
+};
+// 職系 → 官方近似套服/披風(有裝備該槽才套用;取自換裝目錄的合法 id)
+const FAMILY_OVERALL = { warrior: 1050131, mage: 1050131, archer: 1050017, thief: 1050017, pirate: 1050113 };
+
+/** combat profile 的 look(真實裝備 category) → 外觀覆寫(官方近似 id)。
+ *  武器依實際裝備類別精準對應;防具槽有裝才給職業合適外觀(近似)。 */
+export function applyLook(appearance, look, family) {
+  if (!look) return appearance;
+  const a = { ...appearance };
+  if (look.weaponCat && WEAPON_CAT_ID[look.weaponCat]) a.weapon = WEAPON_CAT_ID[look.weaponCat];
+  const s = look.slots || {};
+  if (s.overall && FAMILY_OVERALL[family]) { a.overall = FAMILY_OVERALL[family]; delete a.top; delete a.bottom; }
+  if (s.cape) a.cape = 1102000;
+  return a;
+}
+
 /** 外觀 → maplestory.io 角色 API item 陣列（過濾 0/空）
  * ⚠️ maplestory.io 角色需「身體(200x)」+「頭(120x = skin+10000)」兩件才有頭;
  *    只給 skin 會渲染成無頭裸身。head 由 skin 自動衍生(不佔外觀槽)。 */

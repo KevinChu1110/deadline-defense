@@ -71,6 +71,21 @@ function equippedWeapon(pp) {
   return findItem(pp, id);
 }
 
+/** 紙娃娃外觀：把玩家實際裝備的可見槽位(武器/頭盔/套服/鞋/手套/披風)
+ *  的 category/name 攤出來，前端據此對到 maplestory.io 官方 item id。 */
+function gearLook(pp) {
+  const eq = pp.equipped || {};
+  const w = equippedWeapon(pp);
+  const slots = {};
+  for (const s of ["helmet", "overall", "shoes", "glove", "cape"]) {
+    const id = eq[s];
+    if (!id) continue;
+    const it = findItem(pp, id);
+    if (it) slots[s] = { category: it.category || null, name: it.name || null, level: it.level || 0 };
+  }
+  return { weaponCat: w?.category || null, weaponName: w?.name || null, slots };
+}
+
 function familyOf(cls) {
   if (MAGE.has(cls)) return "mage";
   if (ARCHER.has(cls)) return "archer";
@@ -168,6 +183,7 @@ export function buildCombatProfile(pp) {
     level,
     stats: { str, dex, int: int_, luk },
     weaponName: weapon?.name || "徒手",
+    look: gearLook(pp),
     weaponAtk: weaponAtk + starAtt,
     atk,
     maxHp,

@@ -74,7 +74,7 @@ import { createQuestSystem } from "./game/quest.js";
 import MI_QUESTS from "./data/quests/maple-island.json";
 import MI_DIALOGS from "./data/dialogs/maple-island.json";
 import { createAvatar as _mkAvatar, drawAvatar as _drawAvatar } from "./game/avatar.js";
-import { loadAppearance, saveAppearance, defaultAppearance, AVATAR_CATALOG, appearanceItems } from "./data/avatar-items.js";
+import { loadAppearance, saveAppearance, defaultAppearance, AVATAR_CATALOG, appearanceItems, applyLook } from "./data/avatar-items.js";
 import { equipToAppearance } from "./data/avatar-map.js";
 import { getStageById } from "./data/stages.js";
 import { themeForStage } from "./data/map-themes.js";
@@ -4322,8 +4322,9 @@ async function loadAppearanceForActive() {
   // 真實戰鬥數值(HP/攻擊/武器類別) — 失敗給保守預設
   let cp = null;
   try { cp = await artaleHub.fetchCombatProfile(); } catch { /* 未登入/離線 */ }
-  // 用真實職系補武器(未識別職業預設會沒武器);紙娃娃至少拿對武器
+  // 真實裝備 → 紙娃娃外觀:武器依實際裝備類別精準對應;有裝防具槽給職業近似外觀
   const FAMILY_WEAPON = { warrior: 1302000, mage: 1382000, archer: 1452000, thief: 1332000, pirate: 1482000 };
+  if (cp?.look) appearance = applyLook(appearance, cp.look, cp.family);
   if (cp?.family && FAMILY_WEAPON[cp.family] && !appearance.weapon) appearance.weapon = FAMILY_WEAPON[cp.family];
   return { activeChar, appearance, cp };
 }
