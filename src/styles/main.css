@@ -7309,6 +7309,30 @@ body.mode-bc .wave-cta {
 /* ── NPC 對話框（楓之谷風）── */
 #npc-dialog-overlay { display: none; position: fixed; inset: 0; z-index: 95; background: rgba(10,8,6,0.5); pointer-events: auto; }
 #npc-dialog-overlay.is-open { display: grid; place-items: center; }
+/* WZ 視窗(技能K/地圖W):用乾淨的 UtilDlgEx 九宮格木框(t頂/c中/s底,無烤死槽位) */
+.wz-window {
+  position: relative; box-sizing: border-box;
+  width: min(280px, 82vw); padding: 32px 22px 42px;
+  image-rendering: pixelated;
+  background:
+    url(/ui/dialog/t.png) top center no-repeat,
+    url(/ui/dialog/s.png) bottom center no-repeat,
+    url(/ui/dialog/c.png) center center repeat-y;
+  background-size: 100% 28px, 100% 58px, 100% 20px;
+  filter: drop-shadow(0 14px 34px rgba(0,0,0,0.55));
+}
+.wz-window-close {
+  position: absolute; top: 8px; right: 14px; width: 18px; height: 18px; padding: 0;
+  border: 0; background: transparent; color: #7a5a2a; font-size: 14px; line-height: 1; cursor: pointer; z-index: 2;
+}
+.wz-window-close:hover { color: #b02020; }
+.wz-window-body { color: #2c2115; font-size: 0.9rem; line-height: 1.6; max-height: 60vh; overflow-y: auto; }
+.wzw-title { font-weight: 900; color: #5a3a12; margin: 0 0 8px; font-size: 1rem; text-align: center; letter-spacing: 1px; }
+.wzw-row { display: flex; gap: 6px; align-items: center; padding: 4px 2px; border-bottom: 1px solid rgba(150,110,60,0.2); }
+.wzw-row .k { color: #7a1f1f; font-weight: 700; min-width: 56px; }
+.wzw-map-name { text-align: center; font-weight: 800; color: #3a2a12; font-size: 1rem; margin: 2px 0 8px; }
+.wzw-note { color: #8a6a3a; font-size: 0.78rem; margin-top: 8px; text-align: center; }
+
 /* 城鎮聊天列(預設;#town-overlay 內另有像原版覆寫) */
 .town-chat-bar { display: flex; gap: 8px; padding: 8px 10px; align-items: center; }
 .town-chat-bar input {

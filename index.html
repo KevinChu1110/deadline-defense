@@ -440,6 +440,22 @@
             </div>
           </div>
 
+          <!-- 技能視窗(K)：WZ UIWindow/Skill 框 + 技能清單 -->
+          <div id="skill-window-overlay" class="overlay dialog-overlay" hidden>
+            <div class="wz-window wzw-skill" role="dialog" aria-modal="true" aria-label="技能視窗">
+              <button type="button" class="wz-window-close" data-close="skill-window-overlay" aria-label="關閉">✕</button>
+              <div class="wz-window-body" id="skill-window-body"></div>
+            </div>
+          </div>
+
+          <!-- 地圖視窗(W)：WZ 框 + 目前地圖 -->
+          <div id="map-window-overlay" class="overlay dialog-overlay" hidden>
+            <div class="wz-window wzw-map" role="dialog" aria-modal="true" aria-label="地圖視窗">
+              <button type="button" class="wz-window-close" data-close="map-window-overlay" aria-label="關閉">✕</button>
+              <div class="wz-window-body" id="map-window-body"></div>
+            </div>
+          </div>
+
           <!-- 掛機探險：選地圖 -->
           <div id="hunt-picker-overlay" class="overlay dialog-overlay" hidden>
             <div class="dialog-card maple-panel maple-ornament hunt-picker-card" role="dialog" aria-modal="true">

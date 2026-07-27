@@ -4266,6 +4266,7 @@ async function openTown() {
   if (!_townData) _townData = await (await fetch("/town/fm/town.json")).json();
   const town = _townData;
   const { activeChar, appearance, cp } = await loadAppearanceForActive();
+  _lastCp = cp; // 給技能視窗取 family
   const profile = buildTownProfile(activeChar, cp);
   // 活動傳送門 + 通往弓箭手村的世界旅行門：放在出生點平台附近
   const sp = town.portals.find((p) => p.n === "sp") || { x: 179, y: 30 };
@@ -4294,11 +4295,52 @@ async function openTown() {
     },
     onNpc: (n) => openNpcDialog(n),
     onExit: () => { stopTown(); setOverlayOpen(overlay, false); openTitleScreen(); },
+    onWindow: (which) => openTownWindow(which), // E裝備 I道具 K技能 W地圖
   });
   // 進場前預載資產 + 進度條，避免物件逐張 pop-in
   await townSession.preload((p) => drawTownLoading(document.querySelector("#town-canvas"), p));
   townSession.start();
   sfx.startBgm("town"); // 自由市場官方 BGM(FloralLife)
+}
+
+// 楓之谷標準視窗鍵:E裝備 I道具(=現有裝備+背包窗) K技能 W地圖
+function openTownWindow(which) {
+  if (which === "equip" || which === "item") return openEquip();
+  if (which === "skill") return openSkillWindow();
+  if (which === "map") return openMapWindow();
+}
+let _lastCp = null;
+const FAMILY_ZH = { warrior: "劍士系", mage: "法師系", archer: "弓箭手系", thief: "盜賊系", pirate: "海盜系", beginner: "初心者" };
+// 各職系代表技能(聊天城鎮視窗展示用;完整技能系統待接)
+const FAMILY_SKILLS = {
+  warrior: ["致命一擊", "衝擊波", "怒潮", "武器防禦", "重生"],
+  mage: ["魔力箭", "冰凍術", "雷電術", "治癒術", "魔法防護"],
+  archer: ["箭雨", "精靈祝福", "鷹眼", "穿透之箭", "致命瞄準"],
+  thief: ["幸運七", "疾風連斬", "隱身術", "毒霧", "暗器精通"],
+  pirate: ["爆頭射擊", "八爪鉤", "衝拳", "轉輪", "海之力量"],
+  beginner: ["三段攻擊", "跳躍", "回復術"],
+};
+function openSkillWindow() {
+  const fam = _lastCp?.family || "beginner";
+  const skills = FAMILY_SKILLS[fam] || FAMILY_SKILLS.beginner;
+  const body = document.querySelector("#skill-window-body");
+  if (body) body.innerHTML = `<p class="wzw-title">技能</p>`
+    + `<div class="wzw-row"><span class="k">職業</span><span>${escapeHtml(FAMILY_ZH[fam] || fam)}</span></div>`
+    + skills.map((s) => `<div class="wzw-row"><span>🔹 ${escapeHtml(s)}</span></div>`).join("")
+    + `<p class="wzw-note">完整技能系統建置中</p>`;
+  setOverlayOpen(document.querySelector("#skill-window-overlay"), true);
+}
+function openMapWindow() {
+  const name = WORLD[HOME_MAP]?.name || "自由市場";
+  const npcs = (_townData?.life || []).filter((l) => l.type === "n" && !l.hide);
+  const body = document.querySelector("#map-window-body");
+  if (body) body.innerHTML = `<p class="wzw-title">地圖</p>`
+    + `<p class="wzw-map-name">📍 ${escapeHtml(name)}</p>`
+    + `<div class="wzw-row"><span class="k">在場 NPC</span></div>`
+    + (npcs.length ? npcs.map((n) => `<div class="wzw-row"><span>· ${escapeHtml(n.name || "NPC")}</span></div>`).join("")
+      : `<div class="wzw-row"><span>—</span></div>`)
+    + `<p class="wzw-note">大家都在同一張圖聊天</p>`;
+  setOverlayOpen(document.querySelector("#map-window-overlay"), true);
 }
 
 // ── 世界地圖標題列 + 旅行傳送門 ──
@@ -4468,6 +4510,16 @@ document.querySelector("#btn-town-exit")?.addEventListener("click", () => withAu
   input?.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); send(); } e.stopPropagation(); });
   document.querySelector("#town-chat-send")?.addEventListener("click", () => withAudio(send));
 })();
+// WZ 視窗(技能/地圖)關閉 + Esc 優先關視窗(不離開城鎮)
+document.querySelectorAll(".wz-window-close").forEach((b) =>
+  b.addEventListener("click", () => withAudio(() => setOverlayOpen(document.querySelector("#" + b.dataset.close), false))));
+window.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  for (const id of ["skill-window-overlay", "map-window-overlay", "equip-overlay"]) {
+    const el = document.querySelector("#" + id);
+    if (el && el.classList.contains("is-open")) { setOverlayOpen(el, false); e.stopPropagation(); e.preventDefault(); return; }
+  }
+}, true); // capture:先於 town 的 window keydown
 
 // NPC 對話框（台詞 + 接真功能選項）
 const NPC_DATA = {

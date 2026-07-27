@@ -53,7 +53,7 @@ function drawMapleBalloon(ctx, cx, bottomY, text) {
 const GRAVITY = 2000, WALK = 230, JUMP = 620;
 
 export function createTown(opts) {
-  const { canvas, town, appearance, charClass, profile, onAct, onNpc, onExit, onPortal } = opts;
+  const { canvas, town, appearance, charClass, profile, onAct, onNpc, onExit, onPortal, onWindow } = opts;
   const acts = opts.acts || []; // [{label, act, x, y, color}] 活動傳送門
   const base = opts.assetBase || "/town/fm"; // 資產根目錄(城鎮=/town/fm;世界地圖=/world/<id>)
   const ctx = canvas.getContext("2d");
@@ -540,6 +540,11 @@ export function createTown(opts) {
     if (paused) { keys.clear(); return; } // 對話中不吃操作(Esc 也不離開)
     if (down && e.code === "Escape") { if (combat && bagOpen) { bagOpen = false; return; } if (onExit) onExit(); return; }
     if (down && e.code === "KeyB" && combat) { bagOpen = !bagOpen; e.preventDefault(); return; }
+    // 楓之谷標準視窗鍵:E裝備 I道具 K技能 W地圖
+    if (down && onWindow) {
+      const wk = { KeyE: "equip", KeyI: "item", KeyK: "skill", KeyW: "map" }[e.code];
+      if (wk) { onWindow(wk); e.preventDefault(); return; }
+    }
     if (down) keys.add(e.code); else keys.delete(e.code);
     if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "KeyB"].includes(e.code)
       || jumpCodes.has(e.code) || attackCodes.has(e.code)) e.preventDefault();
