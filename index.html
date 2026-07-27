@@ -536,30 +536,56 @@
             <div class="action-raid-shell maple-panel maple-ornament">
               <header class="action-raid-bar">
                 <div><p class="overlay-kicker">城鎮 · TOWN</p><h2 id="town-title">自由市場</h2></div>
+                <!-- 右上：原版 StatusBar 快捷鍵圖示（UI.wz 解包） -->
                 <div class="action-raid-bar-actions town-chrome-actions">
                   <span class="muted">←→ 移動 · 空白 跳 · ↑/點 對話 · Enter 聊天 · Esc 離開</span>
-                  <button type="button" class="btn town-chrome-btn" id="btn-town-hotkey" title="快捷鍵 (?)">⌨️</button>
-                  <button type="button" class="btn town-chrome-btn" id="btn-town-status" title="狀態 (S)">❤️</button>
-                  <button type="button" class="btn town-chrome-btn" id="btn-town-scroll" title="衝卷 (B)">📜</button>
-                  <button type="button" class="btn town-chrome-btn" id="btn-town-star" title="星力 (R)">⭐</button>
-                  <button type="button" class="btn town-chrome-btn" id="btn-town-gacha" title="轉蛋 (G)">🎰</button>
-                  <button type="button" class="btn town-chrome-btn" id="btn-town-shop" title="商店 (P)">🛒</button>
-                  <button type="button" class="btn town-chrome-btn" id="btn-town-settings" title="設定 (O)">⚙️</button>
-                  <button type="button" class="btn" id="btn-town-exit">離開</button>
+                  <button type="button" class="ms-key-btn" id="btn-town-equip" title="裝備 (E)" data-town-act="equip">
+                    <img src="/ui/hud/bt/EquipKey_normal_0.png" alt="裝備" draggable="false" />
+                  </button>
+                  <button type="button" class="ms-key-btn" id="btn-town-item" title="道具 (I)" data-town-act="item">
+                    <img src="/ui/hud/bt/InvenKey_normal_0.png" alt="道具" draggable="false" />
+                  </button>
+                  <button type="button" class="ms-key-btn" id="btn-town-status" title="狀態 (S)" data-town-act="status">
+                    <img src="/ui/hud/bt/StatKey_normal_0.png" alt="狀態" draggable="false" />
+                  </button>
+                  <button type="button" class="ms-key-btn" id="btn-town-skill" title="技能 (K)" data-town-act="skill">
+                    <img src="/ui/hud/bt/SkillKey_normal_0.png" alt="技能" draggable="false" />
+                  </button>
+                  <button type="button" class="ms-key-btn" id="btn-town-hotkey" title="快捷鍵 (?)" data-town-act="hotkey">
+                    <img src="/ui/hud/bt/KeySet_normal_0.png" alt="快捷鍵" draggable="false" />
+                  </button>
+                  <button type="button" class="ms-key-btn ms-key-wide" id="btn-town-shop" title="商店 (P)" data-town-act="shop">
+                    <img src="/ui/hud/bt/BtShop_normal_0.png" alt="商店" draggable="false" />
+                  </button>
+                  <button type="button" class="ms-key-btn ms-key-wide" id="btn-town-scroll" title="衝卷 (B)" data-town-act="scroll">
+                    <img src="/ui/hud/bt/BtShort_normal_0.png" alt="衝卷" draggable="false" />
+                  </button>
+                  <button type="button" class="ms-key-btn ms-key-wide" id="btn-town-star" title="星力 (R)" data-town-act="star">
+                    <img src="/ui/hud/bt/BtMenu_normal_0.png" alt="選單" draggable="false" />
+                  </button>
+                  <button type="button" class="ms-key-btn ms-key-wide" id="btn-town-gacha" title="轉蛋 (G)" data-town-act="gacha">
+                    <img src="/ui/hud/bt/BtNPT_normal_0.png" alt="轉蛋" draggable="false" />
+                  </button>
+                  <button type="button" class="ms-key-btn" id="btn-town-settings" title="設定 (O)" data-town-act="settings">
+                    <img src="/ui/hud/bt/KeySet_normal_0.png" alt="設定" draggable="false" />
+                  </button>
+                  <button type="button" class="btn town-exit-btn" id="btn-town-exit">離開</button>
                 </div>
               </header>
               <canvas id="town-canvas" width="960" height="540" aria-label="城鎮場景"></canvas>
-              <!-- 右下角：迷你狀態列（名稱/等級/血魔）— 聊天列在左下，不重疊 -->
-              <div id="town-status-bar" class="town-status-bar" aria-live="polite">
+              <!-- 右下角迷你狀態：改為仿 StatusBar 名牌（主狀態列在 canvas 底部） -->
+              <div id="town-status-bar" class="town-status-bar maple-nameplate" aria-live="polite" hidden>
                 <div class="tsb-name"><span id="tsb-name">冒險者</span> <span class="tsb-lv">Lv.<span id="tsb-lv">1</span></span></div>
                 <div class="tsb-bars">
                   <div class="tsb-row tsb-hp"><span>HP</span><div class="tsb-track"><i id="tsb-hp-fill"></i></div><em id="tsb-hp-txt">—</em></div>
                   <div class="tsb-row tsb-mp"><span>MP</span><div class="tsb-track"><i id="tsb-mp-fill"></i></div><em id="tsb-mp-txt">—</em></div>
                 </div>
               </div>
-              <div class="town-chat-bar">
-                <input id="town-chat-input" type="text" maxlength="80" placeholder="說點什麼…（Enter 送出）" autocomplete="off" />
-                <button type="button" class="btn primary maple-primary" id="town-chat-send">送出</button>
+              <!-- 左下：仿原版聊天輸入（StatusBar 上方 chat 區風格） -->
+              <div class="town-chat-bar maple-chat">
+                <span class="maple-chat-label">全部</span>
+                <input id="town-chat-input" type="text" maxlength="80" placeholder="輸入對話…" autocomplete="off" />
+                <button type="button" class="maple-chat-send" id="town-chat-send" title="送出">送出</button>
               </div>
             </div>
           </div>

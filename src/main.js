@@ -4720,15 +4720,21 @@ window.addEventListener("keydown", (e) => {
     }
   }
 }, true); // capture:先於 town 的 window keydown
-// 城鎮 chrome 按鈕
-document.querySelector("#btn-town-hotkey")?.addEventListener("click", () => withAudio(() => openHotkeyWindow()));
-document.querySelector("#btn-town-status")?.addEventListener("click", () => withAudio(() => openStatusWindow()));
-document.querySelector("#btn-town-shop")?.addEventListener("click", () => withAudio(() => openShopWindow()));
-document.querySelector("#btn-town-settings")?.addEventListener("click", () => withAudio(() => openSettingsOverlay()));
-// 鍛造捷徑（若 HTML 有按鈕）
-document.querySelector("#btn-town-scroll")?.addEventListener("click", () => withAudio(() => openTownHub("scroll")));
-document.querySelector("#btn-town-star")?.addEventListener("click", () => withAudio(() => openTownHub("star")));
-document.querySelector("#btn-town-gacha")?.addEventListener("click", () => withAudio(() => openTownHub("gacha")));
+// 城鎮 chrome：原版 StatusBar 快捷鍵圖示 → data-town-act
+document.querySelectorAll("[data-town-act]").forEach((btn) => {
+  btn.addEventListener("click", () => withAudio(() => {
+    const act = btn.getAttribute("data-town-act");
+    if (act === "equip" || act === "item") return openTownWindow(act);
+    if (act === "skill") return openSkillWindow();
+    if (act === "status") return openStatusWindow();
+    if (act === "hotkey") return openHotkeyWindow();
+    if (act === "shop") return openShopWindow();
+    if (act === "settings") return openSettingsOverlay();
+    if (act === "scroll") return openTownHub("scroll");
+    if (act === "star") return openTownHub("star");
+    if (act === "gacha") return openTownHub("gacha");
+  }));
+});
 
 // NPC 對話框（台詞 + 接真功能選項）
 const NPC_DATA = {

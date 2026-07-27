@@ -7366,64 +7366,93 @@ body.mode-bc .wave-cta {
   pointer-events: auto; padding: 3px 12px; font-size: 0.8rem;
   background: rgba(20,16,10,0.65); color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px;
 }
-/* 頂部 chrome 小按鈕(快捷鍵/狀態/商店/設定) */
-#town-overlay .town-chrome-actions { display: flex; gap: 6px; align-items: center; pointer-events: auto; }
-#town-overlay .town-chrome-btn {
-  pointer-events: auto; padding: 3px 8px; font-size: 0.9rem; line-height: 1;
-  background: rgba(20,16,10,0.65); color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px;
-  min-width: 32px;
+/* 頂部 chrome：原版 StatusBar 快捷鍵圖示（EquipKey/InvenKey…） */
+#town-overlay .town-chrome-actions {
+  display: flex; gap: 3px; align-items: center; pointer-events: auto; flex-wrap: wrap; justify-content: flex-end;
 }
-#town-overlay .town-chrome-btn:hover { background: rgba(50,40,20,0.85); border-color: rgba(255,220,140,0.6); }
+#town-overlay .ms-key-btn {
+  pointer-events: auto; padding: 0; margin: 0; border: 0; background: transparent;
+  cursor: pointer; line-height: 0; image-rendering: pixelated;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.65));
+}
+#town-overlay .ms-key-btn img {
+  display: block; width: auto; height: 22px; image-rendering: pixelated;
+}
+#town-overlay .ms-key-btn.ms-key-wide img { height: 28px; }
+#town-overlay .ms-key-btn:hover { filter: drop-shadow(0 0 3px #ffe9a8) brightness(1.12); }
+#town-overlay .ms-key-btn:active { transform: translateY(1px); filter: brightness(0.92); }
+#town-overlay .town-exit-btn {
+  pointer-events: auto; padding: 3px 10px; font-size: 0.78rem; margin-left: 4px;
+  background: rgba(20,16,10,0.72); color: #fff; border: 1px solid rgba(255,233,168,0.4); border-radius: 4px;
+}
+#town-overlay .town-exit-btn:hover { background: rgba(60,40,20,0.9); }
 
-/* 右下角迷你狀態列(名稱+HP/MP) — 不擋左下聊天 */
-.town-status-bar {
-  position: absolute; bottom: 10px; right: 12px; z-index: 6;
-  min-width: 168px; max-width: min(240px, 36vw);
-  padding: 7px 10px 8px;
-  background: rgba(12, 10, 8, 0.72);
-  border: 1px solid rgba(255, 233, 168, 0.35);
-  border-radius: 8px;
-  color: #fff; font-size: 0.78rem;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
-  pointer-events: none;
-}
-.town-status-bar .tsb-name {
-  font-weight: 800; color: #ffe9a8; margin-bottom: 5px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  text-shadow: 0 1px 2px #000;
-}
-.town-status-bar .tsb-lv { color: #c8e8ff; font-weight: 700; margin-left: 4px; font-size: 0.74rem; }
-.town-status-bar .tsb-row {
-  display: grid; grid-template-columns: 22px 1fr auto; gap: 5px; align-items: center;
-  margin-top: 3px;
-}
-.town-status-bar .tsb-row span { font-weight: 800; font-size: 0.68rem; opacity: 0.9; }
-.town-status-bar .tsb-row em { font-style: normal; font-size: 0.68rem; color: rgba(255,255,255,0.85); min-width: 52px; text-align: right; }
-.town-status-bar .tsb-track {
-  height: 8px; border-radius: 4px; background: rgba(0,0,0,0.45);
-  border: 1px solid rgba(255,255,255,0.15); overflow: hidden;
-}
-.town-status-bar .tsb-track i {
-  display: block; height: 100%; width: 100%; border-radius: 3px;
-  background: linear-gradient(180deg, #ff8a8a, #c41a1a);
-  transform-origin: left center; transform: scaleX(1);
-}
-.town-status-bar .tsb-mp .tsb-track i {
-  background: linear-gradient(180deg, #8fd6ff, #1a6fc0);
-}
+/* 右下角迷你狀態（預設 hidden；主狀態用 canvas StatusBar） */
+.town-status-bar { display: none; }
 
-/* 聊天輸入:貼左下細長條,半透黑(MapleStory 聊天列風) */
-#town-overlay .town-chat-bar {
-  position: absolute; bottom: 8px; left: 10px; z-index: 6;
-  width: min(400px, 52vw); padding: 0; gap: 6px; background: transparent;
+/* 聊天輸入：仿 StatusBar 上方 chat 區（深底 + 細金邊，非綠色現代鈕） */
+#town-overlay .town-chat-bar.maple-chat {
+  position: absolute; bottom: 10px; left: 12px; z-index: 6;
+  width: min(420px, 55vw); padding: 3px 4px 3px 6px; gap: 4px;
+  display: flex; align-items: center;
+  background:
+    linear-gradient(180deg, rgba(40,36,48,0.92), rgba(18,16,24,0.94));
+  border: 1px solid rgba(180,160,120,0.55);
+  border-radius: 2px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 2px 8px rgba(0,0,0,0.45);
 }
-#town-overlay .town-chat-bar input {
-  padding: 6px 10px; border-radius: 4px; font-size: 0.85rem;
-  background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.28); color: #fff;
+#town-overlay .maple-chat-label {
+  flex: 0 0 auto; font-size: 0.72rem; font-weight: 800; color: #e8d8a8;
+  padding: 2px 6px; background: rgba(0,0,0,0.35); border: 1px solid rgba(160,140,100,0.4);
+  border-radius: 2px; text-shadow: 0 1px 1px #000;
 }
-#town-overlay .town-chat-bar input::placeholder { color: rgba(255,255,255,0.55); }
-#town-overlay .town-chat-bar input:focus { border-color: rgba(255,220,140,0.8); box-shadow: none; background: rgba(0,0,0,0.62); }
-#town-overlay .town-chat-bar .btn { padding: 5px 12px; font-size: 0.82rem; }
+#town-overlay .town-chat-bar.maple-chat input {
+  flex: 1; min-width: 0; padding: 4px 8px; border-radius: 2px; font-size: 0.82rem;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(100,90,70,0.6); color: #f4f0e4;
+  outline: none; box-shadow: none;
+}
+#town-overlay .town-chat-bar.maple-chat input::placeholder { color: rgba(220,210,180,0.45); }
+#town-overlay .town-chat-bar.maple-chat input:focus {
+  border-color: rgba(230,200,120,0.75); background: rgba(0,0,0,0.55);
+}
+#town-overlay .maple-chat-send {
+  flex: 0 0 auto; padding: 3px 10px; font-size: 0.78rem; font-weight: 800;
+  color: #3a2a10; cursor: pointer;
+  background: linear-gradient(180deg, #f5e6b8 0%, #d4b06a 55%, #b89040 100%);
+  border: 1px solid #8a6a30; border-radius: 2px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 1px 2px rgba(0,0,0,0.35);
+}
+#town-overlay .maple-chat-send:hover { filter: brightness(1.06); }
+#town-overlay .maple-chat-send:active { transform: translateY(1px); }
+
+/* 底部 canvas HUD 給聊天列留空間：聊天浮在左下，HUD 置中不重疊太多 */
+#town-overlay #town-canvas { margin-bottom: 0; }
+
+/* NPC 對話：用官方 BtOK 風按鈕 + 更貼 UtilDlgEx */
+.npc-dialog-actions .btn {
+  min-width: 52px;
+  background: url(/ui/dialog/BtOK_normal.png) center / 100% 100% no-repeat,
+    linear-gradient(180deg, #fdf6e6 0%, #e9d3a4 48%, #d8ba82 100%);
+  color: #3a2a10; border: 1px solid #7a5a28;
+  border-radius: 2px; padding: 3px 12px; font-weight: 800; font-size: 0.82rem;
+  cursor: pointer; image-rendering: pixelated;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 1px 2px rgba(0,0,0,0.3);
+}
+.npc-dialog-actions .btn:hover {
+  filter: brightness(1.06);
+  background: url(/ui/dialog/BtOK_mouseOver.png) center / 100% 100% no-repeat,
+    linear-gradient(180deg, #fffbf0, #eeddb4);
+}
+.npc-dialog-actions .btn:active {
+  transform: translateY(1px);
+  background: url(/ui/dialog/BtOK_pressed.png) center / 100% 100% no-repeat,
+    linear-gradient(180deg, #e0c890, #c9a868);
+}
+.npc-dialog-actions .btn.primary {
+  background: url(/ui/dialog/BtYes_normal.png) center / 100% 100% no-repeat,
+    linear-gradient(180deg, #ffe9a8 0%, #e8a94a 55%, #cf8a2a 100%);
+  color: #4a2808; border-color: #a5691f;
+}
 
 /* 快捷鍵說明 / 商店 清單列 */
 .wzw-hotkey { width: min(340px, 90vw); }

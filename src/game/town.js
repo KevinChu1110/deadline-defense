@@ -428,11 +428,14 @@ export function createTown(opts) {
       ctx.fillText(`P(${player.x | 0},${player.y | 0}) cam(${camCX | 0},${camCY | 0}) ground=${player.onGround}`, 16, 50);
     }
 
-    // 官方底部 HUD
+    // 官方底部 StatusBar（UI.wz 解包完整 71px 底板）
     drawOfficialHud(ctx, W, H, {
+      name: profile?.name || "冒險者",
       level: combat ? player.level : profile?.level,
-      hp: combat ? Math.max(0, Math.round(player.hp)) : (profile?.maxHp || 100), hpMax: player.maxHp || profile?.maxHp || 100,
-      mp: profile?.maxMp || 60, mpMax: profile?.maxMp || 60, expPct: combat ? combat.expPct() : 0, skills: [],
+      hp: combat ? Math.max(0, Math.round(player.hp)) : (profile?.maxHp || 100),
+      hpMax: player.maxHp || profile?.maxHp || 100,
+      mp: profile?.maxMp || 60, mpMax: profile?.maxMp || 60,
+      expPct: combat ? combat.expPct() : 0, skills: [],
     });
     // 楓幣 + 擊殺 + 戰利品計數(戰鬥圖,右上)
     if (combat) {
@@ -495,20 +498,22 @@ export function createTown(opts) {
     ctx.restore();
   }
 
-  // ── 小地圖（左上，foothold 折線 + 玩家/NPC/傳送門點）──
+  // ── 小地圖（左上，仿原版 MiniMap 深藍框）──
   function drawMinimap() {
     const mw = 168, mh = 108, mx = 12, my = 12, pad = 8;
     const wx0 = town.vr.left, wy0 = town.vr.top;
     const ww = town.vr.right - town.vr.left, wh = town.vr.bottom - town.vr.top;
     const sc = Math.min((mw - pad * 2) / ww, (mh - pad * 2) / wh);
-    const ox = mx + pad + ((mw - pad * 2) - ww * sc) / 2, oy = my + pad;
+    const ox = mx + pad + ((mw - pad * 2) - ww * sc) / 2, oy = my + pad + 4;
     const mp = (wx, wy) => [ox + (wx - wx0) * sc, oy + (wy - wy0) * sc];
     ctx.save();
-    // 框
-    ctx.fillStyle = "rgba(20,30,50,0.72)"; ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.lineWidth = 1;
-    ctx.fillRect(mx, my, mw, mh); ctx.strokeRect(mx, my, mw, mh);
-    ctx.fillStyle = "#fff"; ctx.font = "9px system-ui"; ctx.textAlign = "left";
-    ctx.fillText("小地圖 · " + town.name, mx + 5, my + 11);
+    // 原版風：深藍半透明 + 金邊
+    ctx.fillStyle = "rgba(16, 28, 52, 0.78)";
+    ctx.strokeStyle = "rgba(200, 170, 90, 0.75)"; ctx.lineWidth = 2;
+    ctx.fillRect(mx, my, mw, mh); ctx.strokeRect(mx + 0.5, my + 0.5, mw - 1, mh - 1);
+    ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(mx + 2, my + 2, mw - 4, 14);
+    ctx.fillStyle = "#ffe9a8"; ctx.font = "bold 10px system-ui"; ctx.textAlign = "left";
+    ctx.fillText(town.name || "地圖", mx + 6, my + 13);
     // foothold
     ctx.strokeStyle = "rgba(160,220,120,0.8)"; ctx.lineWidth = 1;
     for (const f of town.foothold) {
