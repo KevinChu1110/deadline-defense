@@ -67,7 +67,8 @@ function pickLoadout(family, classSlug) {
 
 // 技能預設鍵：用數字列(不與 WASD 移動衝突)
 const DEFAULT_SKILL_KEYS = ["Digit1", "Digit2", "Digit3", "Digit4"];
-export const DEFAULT_KEYBINDS = { attack: "KeyJ", jump: "Space", dash: "KeyL", skills: [...DEFAULT_SKILL_KEYS] };
+// MapleStory 經典預設：攻擊 Ctrl、跳躍 空白鍵
+export const DEFAULT_KEYBINDS = { attack: "ControlLeft", jump: "Space", dash: "KeyL", skills: [...DEFAULT_SKILL_KEYS] };
 
 export function createHunt(opts) {
   const { canvas, profile, enemies, theme, keybinds, charClass, bgCode, appearance, onExit } = opts;
@@ -570,5 +571,7 @@ export function keyLabel(code) {
   if (code === "Space") return "空白";
   if (code.startsWith("Arrow")) return { ArrowUp: "↑", ArrowDown: "↓", ArrowLeft: "←", ArrowRight: "→" }[code];
   if (code === "ShiftLeft" || code === "ShiftRight") return "Shift";
+  if (code === "ControlLeft" || code === "ControlRight") return "Ctrl";
+  if (code === "AltLeft" || code === "AltRight") return "Alt";
   return code;
 }

@@ -59,6 +59,14 @@ export function createTown(opts) {
   let attackHeld = false, bagOpen = false;
 
   const keys = new Set();
+  // ── 按鍵配置（設定→localStorage 傳入 opts.keys；MapleStory 預設 Ctrl 攻擊 / 空白跳）──
+  // 移動固定用方向鍵(楓之谷慣例)；跳/攻擊可自訂；Left/Right 修飾鍵成對觸發
+  const KB = opts.keys || {};
+  const pairCode = (c) => !c ? [] : c.endsWith("Left") ? [c, c.slice(0, -4) + "Right"]
+    : c.endsWith("Right") ? [c, c.slice(0, -5) + "Left"] : [c];
+  const jumpCodes = new Set(pairCode(KB.jump || "Space"));
+  const attackCodes = new Set(pairCode(KB.attack || "ControlLeft"));
+  const anyKey = (set) => { for (const c of set) if (keys.has(c)) return true; return false; };
   // 手機虛擬按鍵
   const isTouch = (typeof window !== "undefined") && (("ontouchstart" in window) || (navigator.maxTouchPoints > 0) || window.matchMedia?.("(pointer: coarse)").matches);
   const touch = new Set();
@@ -93,7 +101,7 @@ export function createTown(opts) {
     const right = keys.has("ArrowRight") || keys.has("KeyD") || touch.has("right");
     player.vx = (right ? WALK : 0) - (left ? WALK : 0);
     if (right) player.face = 1; if (left) player.face = -1;
-    if ((keys.has("Space") || keys.has("KeyW") || touch.has("jump")) && player.onGround) {
+    if ((anyKey(jumpCodes) || touch.has("jump")) && player.onGround) {
       player.vy = -JUMP; player.onGround = false; sfx.play("mapleJump");
     }
 
@@ -121,7 +129,7 @@ export function createTown(opts) {
     if (combat) {
       if (player.atkCd > 0) player.atkCd -= dt;
       if (player.attackT > 0) player.attackT -= dt;
-      const atkDown = keys.has("KeyJ") || keys.has("KeyZ") || touch.has("attack");
+      const atkDown = anyKey(attackCodes) || touch.has("attack");
       let attackPressed = false;
       if (atkDown && !attackHeld && player.atkCd <= 0) { attackPressed = true; player.atkCd = 0.42; player.attackT = 0.3; }
       attackHeld = atkDown;
@@ -447,7 +455,8 @@ export function createTown(opts) {
     if (down && e.code === "Escape") { if (combat && bagOpen) { bagOpen = false; return; } if (onExit) onExit(); return; }
     if (down && e.code === "KeyB" && combat) { bagOpen = !bagOpen; e.preventDefault(); return; }
     if (down) keys.add(e.code); else keys.delete(e.code);
-    if (["ArrowLeft", "ArrowRight", "ArrowUp", "Space", "KeyA", "KeyD", "KeyW", "KeyJ", "KeyZ", "KeyB"].includes(e.code)) e.preventDefault();
+    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "KeyB"].includes(e.code)
+      || jumpCodes.has(e.code) || attackCodes.has(e.code)) e.preventDefault();
   }
   const kd = (e) => onKey(e, true), ku = (e) => onKey(e, false);
 

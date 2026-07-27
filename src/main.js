@@ -294,6 +294,7 @@ const els = {
   huntMapList: document.querySelector("#hunt-map-list"),
   btnHuntPickerClose: document.querySelector("#btn-hunt-picker-close"),
   btnHuntKeys: document.querySelector("#btn-hunt-keys"),
+  btnSettingsKeys: document.querySelector("#btn-settings-keys"),
   keybindOverlay: document.querySelector("#keybind-overlay"),
   keybindList: document.querySelector("#keybind-list"),
   btnKeybindSave: document.querySelector("#btn-keybind-save"),
@@ -3783,6 +3784,7 @@ els.btnCzSave?.addEventListener("click", () => withAudio(czSave));
 els.btnCzCancel?.addEventListener("click", () => withAudio(() => setOverlayOpen(els.customizeOverlay, false)));
 els.btnHuntPickerClose?.addEventListener("click", () => withAudio(() => { setOverlayOpen(els.huntPickerOverlay, false); openArtaleHub(); }));
 els.btnHuntKeys?.addEventListener("click", () => withAudio(openKeybinds));
+els.btnSettingsKeys?.addEventListener("click", () => withAudio(openKeybinds));
 els.btnKeybindReset?.addEventListener("click", () => withAudio(() => { _kbDraft = { ...DEFAULT_KEYBINDS, skills: [...DEFAULT_KEYBINDS.skills] }; renderKeybinds(); }));
 els.btnKeybindSave?.addEventListener("click", () => withAudio(() => { saveKeybinds(_kbDraft); setOverlayOpen(els.keybindOverlay, false); showToast("按鍵已儲存"); }));
 window.addEventListener("keydown", onKeybindCapture, true);
@@ -4274,6 +4276,7 @@ async function openTown() {
   setOverlayOpen(overlay, true);
   townSession = createTown({
     canvas: document.querySelector("#town-canvas"),
+    keys: loadKeybinds(),
     town, appearance, charClass: activeChar?.class, profile, acts,
     onAct: (a) => {
       if (a.act?.startsWith("travel:")) { const tid = a.act.slice(7); void openWorldMap(tid); return; }
@@ -4404,6 +4407,7 @@ async function openWorldMap(mapId, entryPortal = null) {
   setOverlayOpen(overlay, true);
   townSession = createTown({
     canvas: document.querySelector("#town-canvas"),
+    keys: loadKeybinds(),
     town: m, appearance, charClass: activeChar?.class, profile,
     assetBase: `/world/${mapId}`, acts: buildTravelActs(mapId, sp), entryPortal,
     onAct: (a) => {

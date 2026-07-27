@@ -58,7 +58,12 @@ export function drawAvatar(ctx, avatar, x, footY, opts = {}) {
   const idx = Math.floor(avatar._t[anim] / fps) % seq.length;
   const rec = (seq[idx] && seq[idx].ready) ? seq[idx] : ready[0];
   const img = rec.img;
-  let scale = opts.targetH ? opts.targetH / img.height : (opts.scale || 1);
+  // 縮放基準：用站立幀的固定高度，避免各 walk 幀 bbox 高度不同→逐幀忽大忽小/上下抖
+  let scale;
+  if (opts.targetH) {
+    const refImg = (avatar.frames.stand1 || []).find((r) => r && r.ready)?.img;
+    scale = opts.targetH / ((refImg && refImg.height) || img.height);
+  } else scale = opts.scale || 1;
   if (opts.maxW && img.width * scale > opts.maxW) scale = opts.maxW / img.width; // 寬姿勢/大武器不超出畫布
   const w = img.width * scale, h = img.height * scale;
   const flip = opts.flip || 1;
