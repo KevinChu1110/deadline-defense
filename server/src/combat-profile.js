@@ -3,6 +3,11 @@
  * v1 簡化：等級 + 裝備物/魔攻 + 基礎素質（完整 class-formula 二期）
  */
 import { getItemSlot } from "./equip.js";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirnameCP = path.dirname(fileURLToPath(import.meta.url));
 
 const MAGE = new Set([
   "mage",
@@ -71,8 +76,28 @@ function equippedWeapon(pp) {
   return findItem(pp, id);
 }
 
-/** 紙娃娃外觀：把玩家實際裝備的可見槽位(武器/頭盔/套服/鞋/手套/披風)
- *  的 category/name 攤出來，前端據此對到 maplestory.io 官方 item id。 */
+// 裝備中文名 → 真實 WZ item id(String.wz 抽出;顯示真原圖)。route B 用。
+let _wzNames = null;
+function wzNames() {
+  if (_wzNames) return _wzNames;
+  try {
+    const p = path.resolve(__dirnameCP, "..", "wz-item-names.json");
+    _wzNames = JSON.parse(fs.readFileSync(p, "utf8")).byName || {};
+  } catch { _wzNames = {}; }
+  return _wzNames;
+}
+const _WZ_PREFIX = ["強化", "永恆", "時空", "時光", "地獄", "混沌", "夢魘"];
+/** 裝備名→真實 WZ id：精準 → 剝高階前綴再對 → null(交給類別後備) */
+function resolveWzId(name) {
+  if (!name) return null;
+  const map = wzNames();
+  if (map[name]) return map[name];
+  for (const p of _WZ_PREFIX) if (name.startsWith(p) && map[name.slice(p.length)]) return map[name.slice(p.length)];
+  return null;
+}
+
+/** 紙娃娃外觀：玩家實際裝備的可見槽位(武器/頭盔/套服/鞋/手套/披風)
+ *  → category + name + 對到的真實 WZ id(wzId)。route B 據 wzId(真原圖)或 category(近似)渲染。 */
 function gearLook(pp) {
   const eq = pp.equipped || {};
   const w = equippedWeapon(pp);
@@ -81,9 +106,9 @@ function gearLook(pp) {
     const id = eq[s];
     if (!id) continue;
     const it = findItem(pp, id);
-    if (it) slots[s] = { category: it.category || null, name: it.name || null, level: it.level || 0 };
+    if (it) slots[s] = { category: it.category || null, name: it.name || null, level: it.level || 0, wzId: resolveWzId(it.name) };
   }
-  return { weaponCat: w?.category || null, weaponName: w?.name || null, slots };
+  return { weaponCat: w?.category || null, weaponName: w?.name || null, weaponWzId: resolveWzId(w?.name), slots };
 }
 
 function familyOf(cls) {

@@ -53,15 +53,35 @@ export const WEAPON_CAT_ID = {
 // 職系 → 官方近似套服/披風(有裝備該槽才套用;取自換裝目錄的合法 id)
 const FAMILY_OVERALL = { warrior: 1050131, mage: 1050131, archer: 1050017, thief: 1050017, pirate: 1050113 };
 
-/** combat profile 的 look(真實裝備 category) → 外觀覆寫(官方近似 id)。
- *  武器依實際裝備類別精準對應;防具槽有裝才給職業合適外觀(近似)。 */
+// WZ item id → 外觀槽位鍵(依 id 範圍;Character.wz 目錄對應)
+function slotKeyForId(id) {
+  if (id >= 1000000 && id < 1006000) return "hat";
+  if (id >= 1040000 && id < 1050000) return "top";
+  if (id >= 1050000 && id < 1060000) return "overall";
+  if (id >= 1060000 && id < 1070000) return "bottom";
+  if (id >= 1070000 && id < 1080000) return "shoes";
+  if (id >= 1080000 && id < 1090000) return "glove";
+  if (id >= 1100000 && id < 1103000) return "cape";
+  return null;
+}
+
+/** combat profile 的 look → 外觀覆寫。
+ *  優先用 wzId(裝備名對到的真實 WZ id→真原圖);對不到才用類別/職系近似。 */
 export function applyLook(appearance, look, family) {
   if (!look) return appearance;
   const a = { ...appearance };
-  if (look.weaponCat && WEAPON_CAT_ID[look.weaponCat]) a.weapon = WEAPON_CAT_ID[look.weaponCat];
+  // 武器:真實 id 優先,否則類別後備
+  a.weapon = look.weaponWzId || (look.weaponCat && WEAPON_CAT_ID[look.weaponCat]) || a.weapon;
   const s = look.slots || {};
-  if (s.overall && FAMILY_OVERALL[family]) { a.overall = FAMILY_OVERALL[family]; delete a.top; delete a.bottom; }
-  if (s.cape) a.cape = 1102000;
+  for (const slot of Object.values(s)) {
+    if (slot?.wzId) {
+      const key = slotKeyForId(slot.wzId);
+      if (key) { a[key] = slot.wzId; if (key === "overall") { delete a.top; delete a.bottom; } }
+    }
+  }
+  // 近似後備:有裝套服/披風但沒對到真實 id → 職系近似
+  if (s.overall && !s.overall.wzId && FAMILY_OVERALL[family]) { a.overall = FAMILY_OVERALL[family]; delete a.top; delete a.bottom; }
+  if (s.cape && !s.cape.wzId) a.cape = 1102000;
   return a;
 }
 
