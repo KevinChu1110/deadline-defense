@@ -8,7 +8,8 @@ import { createWzAvatar, drawWzAvatar } from "./avatar-wz.js";
 import { drawHud as drawOfficialHud } from "./hud.js";
 import { createMapCombat } from "./map-combat.js";
 import { sfx } from "../audio/sfx.js";
-import { TOWN_SKILL_DEFS, defaultHotbar, mobilitySkillForFamily } from "./town-skills.js";
+import { TOWN_SKILL_DEFS, defaultHotbar, getSkillIconImg } from "./town-skills.js";
+import { spawnSkillFx, updateSkillFx, drawSkillFx, preloadSkillFx } from "./skill-fx.js";
 
 const W = 960, H = 540;
 const HASTE_MULT = 1.45;
@@ -107,8 +108,14 @@ export function createTown(opts) {
   // 快捷欄 1～4（可被技能窗改；預設 速度激發 / 職業位移）
   let hotbar = Array.isArray(opts.hotbar) ? opts.hotbar.slice(0, 4) : defaultHotbar(family);
   while (hotbar.length < 4) hotbar.push(null);
-  // 技能特效粒子 {x,y,life,max,kind,face}
+  // WZ 技能特效（skill-fx.js；座標先存世界，畫時轉螢幕）
   const skillFx = [];
+  // 預載本職會用到的特效
+  preloadSkillFx([
+    TOWN_SKILL_DEFS.haste.wzId,
+    TOWN_SKILL_DEFS.teleport.wzId,
+    TOWN_SKILL_DEFS.flash.wzId,
+  ]);
   // camera 世界中心
   let camCX = player.x, camCY = player.y - 80;
 
@@ -141,8 +148,8 @@ export function createTown(opts) {
     { id: "jump", x: W - 100, y: H - 118, w: 74, h: 74, label: "⤴" },
     // 城鎮社交技：1 速度激發 · 2 職業位移
     ...(!hasMobs ? [
-      { id: "sk1", x: W - 184, y: H - 200, w: 62, h: 62, label: "1⚡" },
-      { id: "sk2", x: W - 100, y: H - 200, w: 62, h: 62, label: "2»" },
+      { id: "sk1", x: W - 184, y: H - 200, w: 62, h: 62, label: "1" },
+      { id: "sk2", x: W - 100, y: H - 200, w: 62, h: 62, label: "2" },
     ] : []),
     ...(hasMobs ? [{ id: "attack", x: W - 100, y: H - 200, w: 74, h: 74, label: "⚔" }, { id: "bag", x: W - 184, y: H - 200, w: 62, h: 62, label: "🎒" }] : []),
   ];
@@ -152,8 +159,16 @@ export function createTown(opts) {
   function clampX(x) {
     return Math.max(town.vr.left + 20, Math.min(town.vr.right - 20, x));
   }
-  function spawnFx(kind, x, y, face = 1) {
-    skillFx.push({ kind, x, y, face, life: 0.35, max: 0.35 });
+  /** 在玩家位置播 WZ 技能特效（世界座標） */
+  function playWzFx(wzId, ox = 0, oy = -36, face = player.face) {
+    if (!wzId) return;
+    spawnSkillFx(skillFx, wzId, player.x + ox, player.y + oy, {
+      flip: face < 0,
+      scale: 1,
+    });
+    // 標記世界座標，畫時轉螢幕（skill-fx 預設當 canvas 座標）
+    const last = skillFx[skillFx.length - 1];
+    if (last) { last.wx = last.x; last.wy = last.y; last._world = true; }
   }
   /** 施放快捷欄技能 slot 0～3 */
   function castHotbar(slot) {
@@ -170,25 +185,24 @@ export function createTown(opts) {
     if (id === "haste") {
       player.hasteUntil = now + HASTE_DUR;
       player.skillCd.haste = def.cd;
-      spawnFx("haste", player.x, player.y - 40, player.face);
+      playWzFx(def.wzId, 0, -40);
       try { sfx.play("uiOk"); } catch { /* ignore */ }
       return;
     }
     if (id === "teleport" || id === "flash") {
       const dist = def.dist || 100;
+      playWzFx(def.wzId, 0, -30); // 起點
       const nx = clampX(player.x + player.face * dist);
-      spawnFx(id, player.x, player.y - 30, player.face);
       player.x = nx;
       // 瞬移後若下方有 foothold 就貼地，避免卡空
       const g = footAt(player.x, player.y - 4);
       if (g !== null && Math.abs(g - player.y) < 80) { player.y = g; player.vy = 0; player.onGround = true; player.jumpsLeft = player.jumpsMax; }
       else { player.onGround = false; if (id === "flash") player.vy = Math.min(player.vy, -80); }
       if (id === "flash") { player.attackT = 0.28; player.anim = "swingO1"; player.animT = 0.28; }
-      else { player.invuln = 0.2; } // 瞬移短暫閃爍
+      else { player.invuln = 0.2; }
       player.skillCd[id] = def.cd;
-      spawnFx(id, player.x, player.y - 30, player.face);
+      playWzFx(def.wzId, 0, -30); // 終點
       try { sfx.play(id === "teleport" ? "uiSelect" : "mapleJump"); } catch { /* ignore */ }
-      // 立刻上報位置（別人看得到瞬移）
       if (net) net.sendMove({ x: player.x, y: player.y, face: player.face, anim: id === "flash" ? "swingO1" : "jump", skill: id });
     }
   }
@@ -216,11 +230,7 @@ export function createTown(opts) {
     }
     if (player.invuln > 0) player.invuln = Math.max(0, player.invuln - dt);
     if (player.attackT > 0) player.attackT = Math.max(0, player.attackT - dt);
-    // 特效生命
-    for (let i = skillFx.length - 1; i >= 0; i--) {
-      skillFx[i].life -= dt;
-      if (skillFx[i].life <= 0) skillFx.splice(i, 1);
-    }
+    updateSkillFx(skillFx, dt);
 
     // 輸入（鍵盤 + 手機虛擬鍵）
     const left = keys.has("ArrowLeft") || keys.has("KeyA") || touch.has("left");
@@ -238,7 +248,8 @@ export function createTown(opts) {
         sfx.play("mapleJump");
       } else if (player.jumpsLeft > 0) {
         player.vy = -DJUMP; player.jumpsLeft -= 1;
-        spawnFx("djump", player.x, player.y - 10, player.face);
+        // 二段跳：疾風之步 effect sheet（j0_2 有完整幀）
+        playWzFx("j0_2", 0, -8);
         sfx.play("mapleJump");
       }
     }
@@ -460,16 +471,18 @@ export function createTown(opts) {
         : (avatar && drawAvatar(ctx, avatar, psx, psy + 4, dollOpts));
       ctx.globalAlpha = 1;
       if (!drawn) { ctx.fillStyle = "#f87171"; ctx.fillRect(psx - 10, psy - 44, 20, 44); }
-      // 速度激發光環
+      // 速度激發：頭上官方技能 icon（非 emoji）
       const nowSec = performance.now() / 1000;
       if (nowSec < player.hasteUntil) {
-        ctx.save();
-        ctx.strokeStyle = `rgba(255,220,80,${0.35 + Math.sin(performance.now() / 120) * 0.2})`;
-        ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.ellipse(psx, psy - 28, 22, 34, 0, 0, Math.PI * 2); ctx.stroke();
-        ctx.fillStyle = "#ffe14d"; ctx.font = "12px system-ui"; ctx.textAlign = "center";
-        ctx.fillText("⚡", psx, psy - 72);
-        ctx.restore();
+        const ico = getSkillIconImg(TOWN_SKILL_DEFS.haste.wzId);
+        if (ico?.complete && ico.naturalWidth) {
+          const s = 22;
+          ctx.save();
+          ctx.imageSmoothingEnabled = false;
+          ctx.globalAlpha = 0.85 + Math.sin(performance.now() / 180) * 0.15;
+          ctx.drawImage(ico, psx - s / 2, psy - 78, s, s);
+          ctx.restore();
+        }
       }
       // 名牌
       ctx.fillStyle = "rgba(0,0,0,0.5)"; const nm = profile?.name || "冒險者";
@@ -479,32 +492,19 @@ export function createTown(opts) {
       ctx.fillStyle = "#fff"; ctx.fillText(nm, psx, psy + 15);
       if (net?.selfChat && performance.now() - net.selfChat.at < 6000) drawChatBubble(psx, psy - 74, net.selfChat.text);
     };
-    // 技能特效
-    function drawSkillFx() {
+    /** WZ 技能特效：世界座標 → 螢幕後交給 skill-fx 繪製 */
+    function drawTownSkillFx() {
+      if (!skillFx.length) return;
+      // 暫時改成螢幕座標
+      const bak = skillFx.map((f) => ({ f, x: f.x, y: f.y }));
       for (const f of skillFx) {
-        const [sx, sy] = worldToScreen(f.x, f.y);
-        const t = 1 - f.life / f.max;
-        ctx.save();
-        ctx.globalAlpha = Math.max(0, 1 - t);
-        if (f.kind === "teleport") {
-          ctx.fillStyle = "#a8e0ff";
-          for (let i = 0; i < 6; i++) {
-            const a = (i / 6) * Math.PI * 2 + t * 4;
-            ctx.beginPath(); ctx.arc(sx + Math.cos(a) * (8 + t * 20), sy + Math.sin(a) * (8 + t * 20), 3, 0, 7); ctx.fill();
-          }
-        } else if (f.kind === "flash" || f.kind === "djump") {
-          ctx.strokeStyle = f.kind === "djump" ? "#fff4a0" : "#ffd080";
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.moveTo(sx - f.face * 30 * (1 - t), sy);
-          ctx.lineTo(sx + f.face * 10, sy - 8);
-          ctx.stroke();
-        } else if (f.kind === "haste") {
-          ctx.fillStyle = "#ffe14d"; ctx.font = "18px system-ui"; ctx.textAlign = "center";
-          ctx.fillText("⚡", sx, sy - t * 24);
+        if (f._world || f.wx != null) {
+          const [sx, sy] = worldToScreen(f.wx ?? f.x, f.wy ?? f.y);
+          f.x = sx; f.y = sy;
         }
-        ctx.restore();
       }
+      drawSkillFx(ctx, skillFx);
+      for (const { f, x, y } of bak) { f.x = x; f.y = y; }
     }
     // 聊天泡泡:楓之谷真氣泡框(ChatBalloon.img 九宮格)
     const drawChatBubble = (sx, bottomY, text) => drawMapleBalloon(ctx, sx, bottomY, text);
@@ -562,14 +562,18 @@ export function createTown(opts) {
       ctx.fillText(`P(${player.x | 0},${player.y | 0}) cam(${camCX | 0},${camCY | 0}) ground=${player.onGround}`, 16, 50);
     }
 
-    drawSkillFx();
-    // 官方底部 StatusBar + 快捷技能格
+    drawTownSkillFx();
+    // 官方底部 StatusBar + 快捷技能格（WZ icon）
     const hudSkills = hotbar.map((id, i) => {
-      if (!id || id === "double_jump") return { key: String(i + 1), label: "", cd: 0, cdMax: 1 };
+      if (!id || id === "double_jump") return { key: String(i + 1), cd: 0, cdMax: 1 };
       const def = TOWN_SKILL_DEFS[id];
       const cdMax = def?.cd || 1;
       const cd = player.skillCd[id] || 0;
-      return { key: String(i + 1), label: def?.icon || "·", cd, cdMax };
+      return {
+        key: String(i + 1),
+        icon: def?.wzId ? getSkillIconImg(def.wzId) : null,
+        cd, cdMax,
+      };
     });
     drawOfficialHud(ctx, W, H, {
       name: profile?.name || "冒險者",
@@ -590,7 +594,7 @@ export function createTown(opts) {
     }
     // 戰利品袋面板(B 開)
     if (combat && bagOpen) drawBag();
-    // 手機虛擬按鍵
+    // 手機虛擬按鍵（技能鍵用 WZ icon，不用 emoji）
     if (isTouch) {
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
       for (const b of touchBtns) {
@@ -599,7 +603,22 @@ export function createTown(opts) {
         ctx.fillStyle = "#1a1208"; ctx.beginPath(); ctx.roundRect(b.x, b.y, b.w, b.h, 14); ctx.fill();
         ctx.globalAlpha = on ? 1 : 0.75;
         ctx.strokeStyle = "#ffe9a8"; ctx.lineWidth = 2; ctx.stroke();
-        ctx.fillStyle = "#ffe9a8"; ctx.font = "26px system-ui"; ctx.fillText(b.label, b.x + b.w / 2, b.y + b.h / 2 + 2);
+        let drewIcon = false;
+        if (b.id === "sk1" || b.id === "sk2") {
+          const sid = hotbar[b.id === "sk1" ? 0 : 1];
+          const def = sid && TOWN_SKILL_DEFS[sid];
+          const ico = def?.wzId && getSkillIconImg(def.wzId);
+          if (ico?.complete && ico.naturalWidth) {
+            const s = Math.min(b.w, b.h) - 16;
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(ico, b.x + (b.w - s) / 2, b.y + (b.h - s) / 2, s, s);
+            drewIcon = true;
+          }
+        }
+        if (!drewIcon) {
+          ctx.fillStyle = "#ffe9a8"; ctx.font = "22px system-ui";
+          ctx.fillText(b.label, b.x + b.w / 2, b.y + b.h / 2 + 2);
+        }
       }
       ctx.globalAlpha = 1;
     }

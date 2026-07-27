@@ -70,7 +70,7 @@ import { createActionRaid } from "./game/action-raid.js";
 import { createHunt, keyLabel, DEFAULT_KEYBINDS } from "./game/hunt.js";
 import { createTown } from "./game/town.js";
 import { connectTown } from "./game/town-net.js";
-import { listTownSkills, defaultHotbar, TOWN_SKILL_DEFS, FAMILY_ZH as TOWN_FAMILY_ZH } from "./game/town-skills.js";
+import { listTownSkills, defaultHotbar, TOWN_SKILL_DEFS, FAMILY_ZH as TOWN_FAMILY_ZH, iconUrl } from "./game/town-skills.js";
 import { WORLD, REGION_COLOR, HOME_MAP, AVAILABLE_MAPS, padMapId } from "./data/world.js";
 import { createQuestSystem } from "./game/quest.js";
 import MI_QUESTS from "./data/quests/maple-island.json";
@@ -4393,18 +4393,22 @@ function openSkillWindow() {
       + `<div class="sk-hotbar-preview">${[0, 1, 2, 3].map((i) => {
         const id = hotbar[i];
         const def = id && TOWN_SKILL_DEFS[id];
+        const ic = def?.wzId ? `<img class="sk-ico-img" src="${iconUrl(def.wzId)}" alt="" draggable="false" />` : "";
         return `<span class="sk-slot" data-sk-slot="${i}" title="快捷 ${i + 1}">`
-          + `<em>${i + 1}</em>${def ? escapeHtml(def.icon + " " + def.name) : "—"}</span>`;
+          + `<em>${i + 1}</em>${ic}<span>${def ? escapeHtml(def.name) : "—"}</span></span>`;
       }).join("")}</div>`
       + skills.map((s) => {
         const passive = s.passive ? " is-passive" : "";
+        const ic = s.wzId
+          ? `<img class="sk-ico-img" src="${iconUrl(s.wzId)}" alt="" draggable="false" />`
+          : `<span class="sk-ico">·</span>`;
         return `<button type="button" class="sk-row${passive}" data-sk-id="${escapeHtml(s.id)}" ${s.passive ? "disabled" : ""}>`
-          + `<span class="sk-ico">${escapeHtml(s.icon || "·")}</span>`
+          + ic
           + `<span class="sk-meta"><strong>${escapeHtml(s.name)}</strong>`
           + `<small>${escapeHtml(s.desc || "")}${s.note ? " · " + escapeHtml(s.note) : ""}</small></span>`
           + `<kbd>${escapeHtml(s.keyHint || "")}</kbd></button>`;
       }).join("")
-      + `<p class="wzw-note">1 速度激發 · 2 瞬移/突刺 · 空白 跳/二段跳</p>`;
+      + `<p class="wzw-note">1 速度激發 · 2 瞬間移動/衝鋒 · 空白 跳/二段跳</p>`;
     let assignIdx = 0;
     body.querySelectorAll("[data-sk-id]").forEach((btn) => {
       btn.addEventListener("click", () => withAudio(() => {

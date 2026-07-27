@@ -7481,6 +7481,12 @@ body.mode-bc .wave-cta {
 .sk-row:hover:not(:disabled) { border-color: #c48a2a; background: #fff6e0; }
 .sk-row:disabled, .sk-row.is-passive { opacity: 0.75; cursor: default; }
 .sk-ico { font-size: 1.2rem; text-align: center; }
+.sk-ico-img {
+  width: 28px; height: 28px; image-rendering: pixelated;
+  object-fit: contain; display: block;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.35));
+}
+.sk-slot .sk-ico-img { width: 20px; height: 20px; }
 .sk-meta strong { display: block; font-size: 0.88rem; }
 .sk-meta small { color: #8a6a3a; font-size: 0.72rem; }
 .sk-row kbd {
