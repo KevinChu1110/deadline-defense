@@ -41,13 +41,15 @@ export const AVATAR_CATALOG = {
   cape: [0, 1102000, 1102041, 1102084, 1102277],
 };
 
-/** 外觀 → maplestory.io 角色 API item 陣列（過濾 0/空） */
+/** 外觀 → maplestory.io 角色 API item 陣列（過濾 0/空）
+ * ⚠️ maplestory.io 角色需「身體(200x)」+「頭(120x = skin+10000)」兩件才有頭;
+ *    只給 skin 會渲染成無頭裸身。head 由 skin 自動衍生(不佔外觀槽)。 */
 export function appearanceItems(a) {
-  const order = ["skin", "face", "hair", "hat", "overall", "top", "bottom", "cape", "weapon"];
-  return order
-    .map((s) => a[s])
-    .filter((id) => id && id > 0)
-    .map((itemId) => ({ itemId, version: AVATAR_VER, region: AVATAR_REGION }));
+  const items = [];
+  const push = (id) => { if (id && id > 0) items.push({ itemId: id, version: AVATAR_VER, region: AVATAR_REGION }); };
+  if (a.skin && a.skin > 0) { push(a.skin); push(a.skin + 10000); } // 身體 + 頭
+  for (const s of ["face", "hair", "hat", "overall", "top", "bottom", "cape", "weapon"]) push(a[s]);
+  return items;
 }
 
 // ── 外觀儲存（localStorage，per 角色）──
