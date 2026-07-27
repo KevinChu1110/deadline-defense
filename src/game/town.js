@@ -10,6 +10,46 @@ import { createMapCombat } from "./map-combat.js";
 import { sfx } from "../audio/sfx.js";
 
 const W = 960, H = 540;
+
+// 楓之谷真氣泡框(UI.wz/ChatBalloon.img[0] 九宮格),模組級快取一次載入
+const CHAT_BALLOON = {};
+(function loadChatBalloon() {
+  if (typeof Image === "undefined") return;
+  for (const k of ["nw", "ne", "sw", "se", "n", "s", "w", "e", "c", "arrow"]) {
+    const im = new Image(); im.src = `/ui/chat/${k}.png`; CHAT_BALLOON[k] = im;
+  }
+})();
+function drawMapleBalloon(ctx, cx, bottomY, text) {
+  const B = CHAT_BALLOON;
+  if (!B.c || !B.c.complete || !B.c.naturalWidth) { // 素材未載好→退白框
+    ctx.font = "600 12px system-ui"; ctx.textAlign = "center";
+    const tw = Math.min(220, ctx.measureText(text).width) + 16;
+    ctx.fillStyle = "rgba(255,255,255,0.96)"; ctx.strokeStyle = "rgba(0,0,0,0.25)";
+    ctx.beginPath(); ctx.roundRect(cx - tw / 2, bottomY - 22, tw, 22, 8); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#2c2115"; ctx.fillText(text, cx, bottomY - 7, 216); return;
+  }
+  ctx.font = "12px system-ui"; ctx.textAlign = "left"; ctx.textBaseline = "top";
+  const tw = Math.min(240, Math.ceil(ctx.measureText(text).width));
+  const padX = 5, padY = 3, edge = 6;
+  const innerW = tw + padX * 2, innerH = 14 + padY * 2;
+  const bw = innerW + edge * 2, bh = innerH + edge * 2;
+  const x = Math.round(cx - bw / 2), y = Math.round(bottomY - bh - 8); // 8=箭頭高度
+  ctx.save(); ctx.imageSmoothingEnabled = false;
+  // 中心 + 四邊(拉伸) + 四角
+  ctx.drawImage(B.c, x + edge, y + edge, innerW, innerH);
+  ctx.drawImage(B.n, x + edge, y, innerW, edge);
+  ctx.drawImage(B.s, x + edge, y + bh - edge, innerW, edge);
+  ctx.drawImage(B.w, x, y + edge, edge, innerH);
+  ctx.drawImage(B.e, x + bw - edge, y + edge, edge, innerH);
+  ctx.drawImage(B.nw, x, y); ctx.drawImage(B.ne, x + bw - edge, y);
+  ctx.drawImage(B.sw, x, y + bh - edge); ctx.drawImage(B.se, x + bw - edge, y + bh - edge);
+  // 箭頭(指向下方角色)
+  ctx.drawImage(B.arrow, Math.round(cx - B.arrow.width / 2), y + bh - 1);
+  // 文字(黑)
+  ctx.fillStyle = "#000"; ctx.textBaseline = "top";
+  ctx.fillText(text, x + edge + padX, y + edge + padY, 240);
+  ctx.restore();
+}
 const GRAVITY = 2000, WALK = 230, JUMP = 620;
 
 export function createTown(opts) {
@@ -332,17 +372,8 @@ export function createTown(opts) {
       // 自己的聊天泡泡(server 快照會過濾自己,故本地自繪)
       if (net?.selfChat && performance.now() - net.selfChat.at < 6000) drawChatBubble(psx, psy - 74, net.selfChat.text);
     };
-    // 聊天泡泡(白底圓角+小尾巴),用於自己與他人
-    const drawChatBubble = (sx, topY, text) => {
-      ctx.font = "600 12px system-ui"; ctx.textAlign = "center";
-      const tw = Math.min(220, ctx.measureText(text).width);
-      const pad = 8, w = tw + pad * 2, h = 22;
-      const x = sx - w / 2, y = topY - h;
-      ctx.fillStyle = "rgba(255,255,255,0.96)"; ctx.strokeStyle = "rgba(0,0,0,0.25)"; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.roundRect(x, y, w, h, 8); ctx.fill(); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(sx - 5, y + h); ctx.lineTo(sx + 5, y + h); ctx.lineTo(sx, y + h + 6); ctx.closePath(); ctx.fillStyle = "rgba(255,255,255,0.96)"; ctx.fill();
-      ctx.fillStyle = "#2c2115"; ctx.fillText(text, sx, y + 15, 216);
-    };
+    // 聊天泡泡:楓之谷真氣泡框(ChatBalloon.img 九宮格)
+    const drawChatBubble = (sx, bottomY, text) => drawMapleBalloon(ctx, sx, bottomY, text);
     // 他人角色:WZ 紙娃娃(依 sheet 快取)+名牌+聊天泡泡
     const drawRemote = (p) => {
       const [sx, sy] = worldToScreen(p.x, p.y);
