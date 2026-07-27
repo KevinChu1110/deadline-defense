@@ -209,10 +209,11 @@
                     <span class="btn-shine" aria-hidden="true"></span>
                     ▶️ 進入遊戲
                   </button>
-                  <button type="button" id="btn-start-game" class="btn title-btn title-btn-hub">
+                  <!-- 收斂需求:戰鬥類暫時收起,先只做聊天城鎮(之後要開回來把 hidden 拿掉即可) -->
+                  <button type="button" id="btn-start-game" class="btn title-btn title-btn-hub" hidden>
                     🛡️ 神木防衛戰
                   </button>
-                  <button type="button" id="btn-weekly" class="btn title-btn title-btn-weekly">
+                  <button type="button" id="btn-weekly" class="btn title-btn title-btn-weekly" hidden>
                     ⚔️ 每週挑戰
                   </button>
                 </nav>
@@ -496,11 +497,15 @@
               <header class="action-raid-bar">
                 <div><p class="overlay-kicker">城鎮 · TOWN</p><h2 id="town-title">自由市場</h2></div>
                 <div class="action-raid-bar-actions">
-                  <span class="muted">←→ 移動 · 空白 跳 · Ctrl 攻擊 · ↑/點 對話/傳送門 · B 背包 · Esc 離開</span>
+                  <span class="muted">←→ 移動 · 空白 跳 · ↑/點 對話 · Enter 聊天 · Esc 離開</span>
                   <button type="button" class="btn" id="btn-town-exit">離開</button>
                 </div>
               </header>
               <canvas id="town-canvas" width="960" height="540" aria-label="城鎮場景"></canvas>
+              <div class="town-chat-bar">
+                <input id="town-chat-input" type="text" maxlength="80" placeholder="說點什麼…（Enter 送出）" autocomplete="off" />
+                <button type="button" class="btn primary maple-primary" id="town-chat-send">送出</button>
+              </div>
             </div>
           </div>
 

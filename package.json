@@ -16,6 +16,7 @@
     "vite": "^6.3.5"
   },
   "dependencies": {
+    "colyseus.js": "^0.15.28",
     "gifuct-js": "^2.1.2"
   }
 }

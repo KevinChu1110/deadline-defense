@@ -69,6 +69,7 @@ import * as artaleHub from "./artale-hub.js";
 import { createActionRaid } from "./game/action-raid.js";
 import { createHunt, keyLabel, DEFAULT_KEYBINDS } from "./game/hunt.js";
 import { createTown } from "./game/town.js";
+import { connectTown } from "./game/town-net.js";
 import { WORLD, REGION_COLOR, HOME_MAP, AVAILABLE_MAPS, padMapId } from "./data/world.js";
 import { createQuestSystem } from "./game/quest.js";
 import MI_QUESTS from "./data/quests/maple-island.json";
@@ -4268,21 +4269,21 @@ async function openTown() {
   const profile = buildTownProfile(activeChar, cp);
   // 活動傳送門 + 通往弓箭手村的世界旅行門：放在出生點平台附近
   const sp = town.portals.find((p) => p.n === "sp") || { x: 179, y: 30 };
-  const acts = [
-    { label: "🗡️ 掛機探險", act: "hunt", x: sp.x - 120, y: 30, color: "#7ed957" },
-    { label: "🛡️ 神木防衛戰", act: "tower", x: sp.x, y: 30, color: "#ffd23c" },
-    { label: "🐉 Boss 突襲", act: "raid", x: sp.x + 120, y: 30, color: "#ff6b6b" },
-    ...buildTravelActs(HOME_MAP, { x: sp.x + 240, y: 30 }),
-  ];
+  // 收斂需求:先只做「大家進來聊天的城鎮」→ 收起所有戰鬥/旅行入口(狩獵場/神木防衛戰/Boss突襲/世界旅行)
+  const acts = [];
   stopTown();
   hideAllOverlays();
   setTownTitle(WORLD[HOME_MAP]?.name || "自由市場");
   const overlay = document.querySelector("#town-overlay");
   setOverlayOpen(overlay, true);
+  // 即時多人:連城鎮房(看得到別人+聊天);sheet 用自己的 WZ 紙娃娃 URL
+  const townSheet = (typeof window !== "undefined" && window.__wzBase) || artaleHub.avatarSheetUrl(appearance);
+  const net = connectTown({ name: profile?.name || activeChar?.name || "冒險者", sheet: townSheet, x: sp.x, y: sp.y, face: 1 });
   townSession = createTown({
     canvas: document.querySelector("#town-canvas"),
     keys: loadKeybinds(),
-    wzBase: (typeof window !== "undefined" && window.__wzBase) || artaleHub.avatarSheetUrl(appearance),
+    wzBase: townSheet,
+    net,
     town, appearance, charClass: activeChar?.class, profile, acts,
     onAct: (a) => {
       if (a.act?.startsWith("travel:")) { const tid = a.act.slice(7); void openWorldMap(tid); return; }
@@ -4456,6 +4457,17 @@ function drawTownLoading(canvas, pct) {
   ctx.fillText(Math.round(pct * 100) + "%", W / 2, by + bh + 20);
 }
 document.querySelector("#btn-town-exit")?.addEventListener("click", () => withAudio(() => { stopTown(); setOverlayOpen(document.querySelector("#town-overlay"), false); openTitleScreen(); }));
+// 城鎮聊天:Enter / 送出 → net.sendChat
+(function wireTownChat() {
+  const input = document.querySelector("#town-chat-input");
+  const send = () => {
+    const t = (input?.value || "").trim();
+    if (t && townSession?.net) townSession.net.sendChat(t);
+    if (input) { input.value = ""; input.blur(); } // blur 讓移動鍵恢復
+  };
+  input?.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); send(); } e.stopPropagation(); });
+  document.querySelector("#town-chat-send")?.addEventListener("click", () => withAudio(send));
+})();
 
 // NPC 對話框（台詞 + 接真功能選項）
 const NPC_DATA = {

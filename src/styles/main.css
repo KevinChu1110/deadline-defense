@@ -7309,6 +7309,16 @@ body.mode-bc .wave-cta {
 /* ── NPC 對話框（楓之谷風）── */
 #npc-dialog-overlay { display: none; position: fixed; inset: 0; z-index: 95; background: rgba(10,8,6,0.5); pointer-events: auto; }
 #npc-dialog-overlay.is-open { display: grid; place-items: center; }
+/* 城鎮聊天列 */
+.town-chat-bar { display: flex; gap: 8px; padding: 8px 10px; align-items: center; }
+.town-chat-bar input {
+  flex: 1; min-width: 0; padding: 9px 12px; border-radius: 8px;
+  border: 1px solid rgba(120,80,40,0.5); background: rgba(255,252,245,0.95);
+  color: #2c2115; font-size: 0.95rem; outline: none;
+}
+.town-chat-bar input:focus { border-color: #d8a24a; box-shadow: 0 0 0 2px rgba(216,162,74,0.3); }
+.town-chat-bar .btn { flex: 0 0 auto; }
+
 /* 正宗楓之谷 NPC 對話框：UI.wz/UIWindow.img/UtilDlgEx 解包九宮格(t頂/c中段/s底) */
 .npc-dialog {
   position: relative;

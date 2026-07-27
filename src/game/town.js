@@ -41,6 +41,10 @@ export function createTown(opts) {
   // WZ 紙娃娃(route B):wzBase 有值就載;maplestory 一律建當「WZ 未就緒/載入失敗」的後備
   const wzAvatar = opts.wzBase ? createWzAvatar(opts.wzBase) : null;
   const avatar = appearance ? createAvatar(appearance) : null;
+  // 即時多人:net 由 main.js 傳入(connectTown);remoteAvatars 依 sheet URL 快取他人紙娃娃
+  const net = opts.net || null;
+  const remoteAvatars = new Map();
+  let _lastMoveSent = 0, _lastMoveSig = "";
 
   // 出生點：指定入口 portal(跨圖 warp 用) > "sp" > 第一個
   const entry = opts.entryPortal ? town.portals.find((p) => p.n === opts.entryPortal) : null;
@@ -171,6 +175,17 @@ export function createTown(opts) {
       else if (nearType === "portal" && onPortal) onPortal(nearInteract);
     }
     upHeld = up;
+
+    // 即時多人:節流上報自己的位置/動作(有變才送,最快 120ms 一次)
+    if (net) {
+      const anim = player.attackT > 0 ? "swingO1" : !player.onGround ? "jump" : (Math.abs(player.vx) > 10 ? "walk1" : "idle");
+      const sig = `${Math.round(player.x)},${Math.round(player.y)},${player.face},${anim}`;
+      const nowMs = performance.now();
+      if (sig !== _lastMoveSig && nowMs - _lastMoveSent > 120) {
+        _lastMoveSent = nowMs; _lastMoveSig = sig;
+        net.sendMove({ x: player.x, y: player.y, face: player.face, anim });
+      }
+    }
   }
 
   function worldToScreen(wx, wy) { return [wx - camCX + W / 2, wy - camCY + H / 2]; }
@@ -314,13 +329,43 @@ export function createTown(opts) {
       const tw = ctx.measureText(nm).width;
       ctx.fillRect(psx - tw / 2 - 4, psy + 4, tw + 8, 14);
       ctx.fillStyle = "#fff"; ctx.fillText(nm, psx, psy + 15);
+      // 自己的聊天泡泡(server 快照會過濾自己,故本地自繪)
+      if (net?.selfChat && performance.now() - net.selfChat.at < 6000) drawChatBubble(psx, psy - 74, net.selfChat.text);
     };
+    // 聊天泡泡(白底圓角+小尾巴),用於自己與他人
+    const drawChatBubble = (sx, topY, text) => {
+      ctx.font = "600 12px system-ui"; ctx.textAlign = "center";
+      const tw = Math.min(220, ctx.measureText(text).width);
+      const pad = 8, w = tw + pad * 2, h = 22;
+      const x = sx - w / 2, y = topY - h;
+      ctx.fillStyle = "rgba(255,255,255,0.96)"; ctx.strokeStyle = "rgba(0,0,0,0.25)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.roundRect(x, y, w, h, 8); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sx - 5, y + h); ctx.lineTo(sx + 5, y + h); ctx.lineTo(sx, y + h + 6); ctx.closePath(); ctx.fillStyle = "rgba(255,255,255,0.96)"; ctx.fill();
+      ctx.fillStyle = "#2c2115"; ctx.fillText(text, sx, y + 15, 216);
+    };
+    // 他人角色:WZ 紙娃娃(依 sheet 快取)+名牌+聊天泡泡
+    const drawRemote = (p) => {
+      const [sx, sy] = worldToScreen(p.x, p.y);
+      if (sx < -80 || sx > W + 80) return;
+      let av = remoteAvatars.get(p.sheet);
+      if (!av && p.sheet) { av = createWzAvatar(p.sheet); remoteAvatars.set(p.sheet, av); }
+      const drawn = av && av.ready && drawWzAvatar(ctx, av, sx, sy + 4, { anim: p.anim || "idle", dt: lastDt, flip: p.face, targetH: 74 });
+      if (!drawn) { ctx.fillStyle = "rgba(120,170,255,0.6)"; ctx.fillRect(sx - 10, sy - 44, 20, 44); }
+      const nm = p.name || "冒險者";
+      ctx.font = "700 10px system-ui"; ctx.textAlign = "center";
+      const tw = ctx.measureText(nm).width;
+      ctx.fillStyle = "rgba(60,90,160,0.85)"; ctx.fillRect(sx - tw / 2 - 4, sy + 4, tw + 8, 13);
+      ctx.fillStyle = "#eaf2ff"; ctx.fillText(nm, sx, sy + 14);
+      if (p.chat && Date.now() - (p.chatT || 0) < 6000) drawChatBubble(sx, sy - 74, p.chat);
+    };
+
     const entities = [];
     for (const n of town.life) {
       if (n.type !== "n" || n.hide) continue;
       entities.push({ y: worldToScreen(n.x, n.y)[1], draw: () => drawNpc(n) });
     }
     if (combat) for (const m of combat.aliveMobs()) entities.push({ y: worldToScreen(m.x, m.y)[1], draw: () => combat.drawMob(ctx, m, worldToScreen, W) });
+    if (net) for (const p of net.players) entities.push({ y: worldToScreen(p.x, p.y)[1], draw: () => drawRemote(p) });
     entities.push({ y: worldToScreen(player.x, player.y)[1], draw: drawPlayerDoll });
     entities.sort((a, b) => a.y - b.y); // 腳底越高(遠)越先畫
     for (const e of entities) e.draw();
@@ -458,6 +503,9 @@ export function createTown(opts) {
     raf = requestAnimationFrame(loop);
   }
   function onKey(e, down) {
+    // 聊天輸入框聚焦時不吃鍵盤(否則打字會移動角色)
+    const ae = typeof document !== "undefined" && document.activeElement;
+    if (ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA")) { keys.clear(); return; }
     if (paused) { keys.clear(); return; } // 對話中不吃操作(Esc 也不離開)
     if (down && e.code === "Escape") { if (combat && bagOpen) { bagOpen = false; return; } if (onExit) onExit(); return; }
     if (down && e.code === "KeyB" && combat) { bagOpen = !bagOpen; e.preventDefault(); return; }
@@ -542,7 +590,9 @@ export function createTown(opts) {
       canvas.removeEventListener("pointerdown", pDown); canvas.removeEventListener("pointermove", pMove);
       window.removeEventListener("pointerup", pUp); window.removeEventListener("pointercancel", pUp);
       canvas.removeEventListener("click", onClick);
+      if (net) { try { net.leave(); } catch { /* ignore */ } }
     },
+    net,
     pause() { paused = true; keys.clear(); touch.clear(); activePointers.clear(); upHeld = true; },
     resume() { paused = false; upHeld = true; },
   };
