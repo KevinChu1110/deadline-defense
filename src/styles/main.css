@@ -7309,7 +7309,7 @@ body.mode-bc .wave-cta {
 /* ── NPC 對話框（楓之谷風）── */
 #npc-dialog-overlay { display: none; position: fixed; inset: 0; z-index: 95; background: rgba(10,8,6,0.5); pointer-events: auto; }
 #npc-dialog-overlay.is-open { display: grid; place-items: center; }
-/* 城鎮聊天列 */
+/* 城鎮聊天列(預設;#town-overlay 內另有像原版覆寫) */
 .town-chat-bar { display: flex; gap: 8px; padding: 8px 10px; align-items: center; }
 .town-chat-bar input {
   flex: 1; min-width: 0; padding: 9px 12px; border-radius: 8px;
@@ -7318,6 +7318,42 @@ body.mode-bc .wave-cta {
 }
 .town-chat-bar input:focus { border-color: #d8a24a; box-shadow: 0 0 0 2px rgba(216,162,74,0.3); }
 .town-chat-bar .btn { flex: 0 0 auto; }
+
+/* ── 城鎮:像原版楓之谷(A+B)→畫面幾乎全給遊戲,chrome 最小浮層 ── */
+#town-overlay.action-raid-overlay { padding: 0; background: #000; }
+#town-overlay .action-raid-shell {
+  width: 100%; max-width: 100%; height: 100vh; max-height: 100vh;
+  border: 0; border-radius: 0; box-shadow: none; position: relative; justify-content: center;
+  background: #000;
+}
+#town-overlay .maple-panel::before, #town-overlay .maple-panel::after,
+#town-overlay .maple-ornament::before, #town-overlay .maple-ornament::after { display: none !important; } /* 去外木框裝飾 */
+#town-overlay #town-canvas { width: min(100%, 177.78vh); height: auto; margin: 0 auto; display: block; }
+/* 頂部:透明浮層,只留小小地圖名+離開;按鍵提示收掉 */
+#town-overlay .action-raid-bar {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 6;
+  background: linear-gradient(180deg, rgba(0,0,0,0.4), rgba(0,0,0,0));
+  padding: 6px 12px; pointer-events: none; flex-wrap: nowrap;
+}
+#town-overlay .action-raid-bar .overlay-kicker { display: none; }
+#town-overlay .action-raid-bar h2 { margin: 0; font-size: 0.85rem; color: #fff; text-shadow: 0 1px 3px #000; font-weight: 800; }
+#town-overlay .action-raid-bar-actions .muted { display: none; }
+#town-overlay #btn-town-exit {
+  pointer-events: auto; padding: 3px 12px; font-size: 0.8rem;
+  background: rgba(20,16,10,0.65); color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px;
+}
+/* 聊天輸入:貼左下細長條,半透黑(MapleStory 聊天列風) */
+#town-overlay .town-chat-bar {
+  position: absolute; bottom: 8px; left: 10px; z-index: 6;
+  width: min(440px, 62vw); padding: 0; gap: 6px; background: transparent;
+}
+#town-overlay .town-chat-bar input {
+  padding: 6px 10px; border-radius: 4px; font-size: 0.85rem;
+  background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.28); color: #fff;
+}
+#town-overlay .town-chat-bar input::placeholder { color: rgba(255,255,255,0.55); }
+#town-overlay .town-chat-bar input:focus { border-color: rgba(255,220,140,0.8); box-shadow: none; background: rgba(0,0,0,0.62); }
+#town-overlay .town-chat-bar .btn { padding: 5px 12px; font-size: 0.82rem; }
 
 /* 正宗楓之谷 NPC 對話框：UI.wz/UIWindow.img/UtilDlgEx 解包九宮格(t頂/c中段/s底) */
 .npc-dialog {
