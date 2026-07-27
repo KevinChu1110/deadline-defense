@@ -7309,31 +7309,56 @@ body.mode-bc .wave-cta {
 /* ── NPC 對話框（楓之谷風）── */
 #npc-dialog-overlay { display: none; position: fixed; inset: 0; z-index: 95; background: rgba(10,8,6,0.5); pointer-events: auto; }
 #npc-dialog-overlay.is-open { display: grid; place-items: center; }
+/* 正宗楓之谷 NPC 對話框：UI.wz/UIWindow.img/UtilDlgEx 解包九宮格(t頂/c中段/s底) */
 .npc-dialog {
-  display: flex; gap: 12px; align-items: flex-end;
-  width: min(92vw, 520px);
-  padding: 14px 16px;
-  background: linear-gradient(180deg, #fbf3df 0%, #f2e3c0 100%);
-  border: 3px solid #6b4a24;
-  border-radius: 14px;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.6);
+  position: relative;
+  box-sizing: border-box;
+  width: min(529px, 94vw);
+  min-height: 120px;
+  padding: 34px 26px 46px 20px;
+  display: flex; gap: 14px; align-items: flex-start;
+  background:
+    url(/ui/dialog/t.png) top center no-repeat,
+    url(/ui/dialog/s.png) bottom center no-repeat,
+    url(/ui/dialog/c.png) center center repeat-y;
+  background-size: 100% 28px, 100% 58px, 100% 20px;
+  image-rendering: pixelated;
+  border: 0; border-radius: 0;
+  filter: drop-shadow(0 14px 34px rgba(0,0,0,0.55));
 }
 .npc-dialog-face {
-  width: 96px; height: auto; max-height: 130px;
+  width: 108px; height: auto; max-height: 128px;
   object-fit: contain; object-position: bottom;
   image-rendering: pixelated;
   filter: drop-shadow(0 3px 4px rgba(0,0,0,0.25));
   flex: 0 0 auto;
+  align-self: center;
 }
-.npc-dialog-body { flex: 1; min-width: 0; }
+.npc-dialog-body { flex: 1; min-width: 0; padding-right: 4px; }
 .npc-dialog-name {
-  font-weight: 900; color: #7a1f1f; font-size: 1rem; margin-bottom: 6px;
-  border-bottom: 2px solid rgba(120,80,40,0.4); padding-bottom: 4px;
+  font-weight: 900; color: #7a4a12; font-size: 0.92rem; margin-bottom: 6px;
+  letter-spacing: 0.5px;
 }
-.npc-dialog-text { color: #3a2412; font-size: 0.95rem; line-height: 1.5; margin: 0 0 12px; min-height: 42px; }
-.npc-dialog-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.npc-dialog-text {
+  color: #2c2115; font-size: 0.95rem; line-height: 1.55; margin: 0 0 10px;
+  min-height: 46px; font-family: system-ui, "Microsoft JhengHei", sans-serif;
+}
+/* 按鈕列：正常流靠右，木框 c 段自動長高容納(職業選擇 6 顆也不爆框) */
+.npc-dialog-actions {
+  display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap;
+  margin-top: 4px;
+}
+/* 木質小按鈕(仿 UtilDlgEx 按鈕風，配合動態標籤) */
 .npc-dialog-actions .btn {
-  background: linear-gradient(180deg, #b47a34, #8a5620); color: #fff3d8;
-  border: 2px solid #5a3410; border-radius: 8px; padding: 7px 16px; font-weight: 800; cursor: pointer;
+  background: linear-gradient(180deg, #fdf6e6 0%, #e9d3a4 48%, #d8ba82 100%);
+  color: #5a3a12; border: 1px solid #9c7638;
+  border-radius: 4px; padding: 4px 14px; font-weight: 800; font-size: 0.85rem;
+  cursor: pointer; box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 1px 2px rgba(0,0,0,0.25);
 }
-.npc-dialog-actions .btn:hover { filter: brightness(1.08); }
+.npc-dialog-actions .btn:hover { filter: brightness(1.05); background: linear-gradient(180deg, #fffbf0, #eeddb4); }
+.npc-dialog-actions .btn:active { transform: translateY(1px); }
+/* 主要選項(接任務/轉職)稍微強調 */
+.npc-dialog-actions .btn.primary {
+  background: linear-gradient(180deg, #ffe9a8 0%, #e8a94a 55%, #cf8a2a 100%);
+  color: #5a2e08; border-color: #a5691f;
+}
