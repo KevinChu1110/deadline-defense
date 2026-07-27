@@ -32,6 +32,16 @@ rsync -az --delete \
   ./server/ "${REMOTE}:${REMOTE_DIR}/server/"
 rsync -az --delete ./dist/ "${REMOTE}:${REMOTE_DIR}/dist/"
 
+# WZ 紙娃娃渲染源檔(route B):Character.wz + Base.wz → 遠端 wz/(rsync 增量,首次 ~188MB)
+WZ_SRC="${WZ_SRC:-./wz-data/wztms113}"
+if [ -f "${WZ_SRC}/Character.wz" ]; then
+  echo "▶ rsync WZ(Character/Base 紙娃娃源檔)…"
+  ssh "${REMOTE}" "mkdir -p '${REMOTE_DIR}/wz'"
+  rsync -az "${WZ_SRC}/Character.wz" "${WZ_SRC}/Base.wz" "${REMOTE}:${REMOTE_DIR}/wz/"
+else
+  echo "⚠ 找不到 ${WZ_SRC}/Character.wz,略過 WZ 同步(紙娃娃會退回 maplestory)"
+fi
+
 echo "▶ 遠端 .env / PM2…"
 ssh "${REMOTE}" bash -s <<EOF
 set -euo pipefail
@@ -45,6 +55,7 @@ HOST=127.0.0.1
 BOT_ROOT=/home/kevin.chu/artale-bot
 PLAYER_DATA_PATH=/home/kevin.chu/artale-bot/player-data.json
 STATIC_DIR=/home/kevin.chu/artale-web/dist
+WZ_DIR=/home/kevin.chu/artale-web/wz
 # 對外走 ngrok（VPN 擋 DuckDNS）；與 artale-games 共用固定網域
 WEB_ORIGIN=https://primary-marmoset-publicly.ngrok-free.app/defense
 DISCORD_REDIRECT_URI=https://primary-marmoset-publicly.ngrok-free.app/defense/api/auth/discord/callback
@@ -62,6 +73,7 @@ else
   grep -q '^HOST=' "\$DIR/server/.env" || echo 'HOST=127.0.0.1' >> "\$DIR/server/.env"
   grep -q '^COOKIE_SECURE=' "\$DIR/server/.env" || echo 'COOKIE_SECURE=1' >> "\$DIR/server/.env"
   grep -q '^CORS_ORIGINS=' "\$DIR/server/.env" || echo 'CORS_ORIGINS=https://maplestory-defense.netlify.app' >> "\$DIR/server/.env"
+  grep -q '^WZ_DIR=' "\$DIR/server/.env" || echo 'WZ_DIR=/home/kevin.chu/artale-web/wz' >> "\$DIR/server/.env"
   # ⚠️ 舊版樣板寫死 ALLOW_DEV_LOGIN=1，等於線上開著「用任意 discordId 登入成該玩家」的後門
   if grep -q '^ALLOW_DEV_LOGIN=1' "\$DIR/server/.env" 2>/dev/null; then
     sed -i 's|^ALLOW_DEV_LOGIN=1|ALLOW_DEV_LOGIN=0|' "\$DIR/server/.env"
@@ -76,15 +88,22 @@ else
 fi
 
 cd "\$DIR/server"
+echo "  npm install(WZ 渲染依賴 @tybys/wz + @napi-rs/canvas)…"
+npm install --omit=dev --no-audit --no-fund 2>&1 | tail -2 || npm install --no-audit --no-fund 2>&1 | tail -2
 if pm2 describe artale-web-api >/dev/null 2>&1; then
   pm2 restart artale-web-api --update-env
 else
   pm2 start src/index.js --name artale-web-api --cwd "\$DIR/server" --update-env
 fi
 pm2 save 2>/dev/null || true
-sleep 1
+# 健康檢查重試(啟動要載 Character.wz 188MB + @napi-rs/canvas,首次較慢,別用單次 sleep 1)
 echo -n "  health: "
-curl -sf "http://127.0.0.1:8787/api/health" || { echo FAIL; pm2 logs artale-web-api --lines 30 --nostream; exit 1; }
+ok=0
+for i in \$(seq 1 20); do
+  if curl -sf "http://127.0.0.1:8787/api/health" >/dev/null 2>&1; then ok=1; curl -sf "http://127.0.0.1:8787/api/health"; break; fi
+  sleep 1
+done
+[ "\$ok" = 1 ] || { echo FAIL; pm2 logs artale-web-api --lines 30 --nostream; exit 1; }
 echo
 pm2 list | grep -E "name|artale-web|artale-prd" || pm2 list
 EOF

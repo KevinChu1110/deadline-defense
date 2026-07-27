@@ -30,6 +30,19 @@ export function apiUrl(p) {
   return `${base.replace(/\/?$/, "/")}${clean}`;
 }
 
+/** WZ 紙娃娃渲染端點 URL(route B)：appearance → dd-server /api/avatar/sheet。
+ *  外觀槽位對到 Character.wz 目錄參數(hat→cap/top→coat/bottom→pants/overall→longcoat)。 */
+export function avatarSheetUrl(appearance = {}) {
+  const map = { skin: "skin", face: "face", hair: "hair", weapon: "weapon", cape: "cape", shoes: "shoes", glove: "glove", hat: "cap", top: "coat", bottom: "pants", overall: "longcoat" };
+  const q = [];
+  for (const [k, param] of Object.entries(map)) {
+    const v = appearance[k];
+    if (v && v > 0) q.push(`${param}=${v}`);
+  }
+  if (!q.some((s) => s.startsWith("skin="))) q.unshift("skin=2000");
+  return apiUrl(`/api/avatar/sheet?${q.join("&")}`);
+}
+
 /** 是否跨站 API（用於錯誤文案） */
 export function isRemoteApi() {
   if (import.meta.env.VITE_API_BASE) return true;

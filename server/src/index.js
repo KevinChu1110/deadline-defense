@@ -35,6 +35,7 @@ import {
   jobAdvance,
 } from "./store.js";
 import * as auth from "./auth.js";
+import { renderAvatarSheet, avatarRenderReady } from "./avatar-render.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -156,6 +157,27 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === "GET" && pathname === "/api/auth/config") {
       return json(res, 200, auth.getAuthConfig(), req);
+    }
+
+    // WZ 紙娃娃渲染(route B):依 appearance 自解 Character.wz 合成動畫 sheet(內嵌 data URL)
+    if (req.method === "GET" && pathname === "/api/avatar/health") {
+      return json(res, 200, avatarRenderReady(), req);
+    }
+    if (req.method === "GET" && pathname === "/api/avatar/sheet") {
+      const q = url.searchParams;
+      const num = (k) => { const v = parseInt(q.get(k), 10); return Number.isFinite(v) ? v : 0; };
+      const app = {
+        skin: num("skin") || 2000, face: num("face"), hair: num("hair"),
+        cap: num("cap"), coat: num("coat"), longcoat: num("longcoat"),
+        pants: num("pants"), shoes: num("shoes"), glove: num("glove"),
+        cape: num("cape"), weapon: num("weapon"),
+      };
+      try {
+        const manifest = await renderAvatarSheet(app);
+        return json(res, 200, manifest, req, { "Cache-Control": "public, max-age=86400" });
+      } catch (e) {
+        return json(res, 500, { error: "avatar render failed", detail: e.message }, req);
+      }
     }
 
     if (req.method === "GET" && pathname === "/api/auth/discord") {

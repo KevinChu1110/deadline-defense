@@ -38,9 +38,9 @@ export function createTown(opts) {
     npcImgCache.set(id, im); return im;
   }
   // 紙娃娃
-  // WZ 紙娃娃(route B)優先:有 wzBase 用自解合成 sheet;否則退回 maplestory.io
+  // WZ 紙娃娃(route B):wzBase 有值就載;maplestory 一律建當「WZ 未就緒/載入失敗」的後備
   const wzAvatar = opts.wzBase ? createWzAvatar(opts.wzBase) : null;
-  const avatar = (!wzAvatar && appearance) ? createAvatar(appearance) : null;
+  const avatar = appearance ? createAvatar(appearance) : null;
 
   // 出生點：指定入口 portal(跨圖 warp 用) > "sp" > 第一個
   const entry = opts.entryPortal ? town.portals.find((p) => p.n === opts.entryPortal) : null;
@@ -302,7 +302,9 @@ export function createTown(opts) {
       if (player.attackT > 0) anim = "swingO1"; else if (!player.onGround) anim = "jump"; else if (moving) anim = "walk1";
       if (player.invuln > 0 && Math.floor(player.invuln * 20) % 2) ctx.globalAlpha = 0.5; // 受傷閃爍
       const dollOpts = { anim, dt: lastDt, flip: player.face, targetH: 74, maxW: 70 };
-      const drawn = wzAvatar ? drawWzAvatar(ctx, wzAvatar, psx, psy + 4, dollOpts)
+      // WZ 就緒→用 WZ;否則(載入中/失敗)退回 maplestory,永不變紅方塊
+      const drawn = (wzAvatar && wzAvatar.ready)
+        ? drawWzAvatar(ctx, wzAvatar, psx, psy + 4, dollOpts)
         : (avatar && drawAvatar(ctx, avatar, psx, psy + 4, dollOpts));
       ctx.globalAlpha = 1;
       if (!drawn) { ctx.fillStyle = "#f87171"; ctx.fillRect(psx - 10, psy - 44, 20, 44); }

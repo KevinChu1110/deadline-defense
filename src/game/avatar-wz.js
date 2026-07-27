@@ -12,18 +12,22 @@
 // town.js 的 anim 名 → WZ stance
 const ANIM_MAP = { idle: "stand1", stand1: "stand1", walk1: "walk1", walk: "walk1", jump: "jump", swingO1: "swingO1", alert: "alert" };
 
-/** 建一個 WZ 紙娃娃：載入 <base>/sheet.json + <base>/sheet.png */
-export function createWzAvatar(base) {
-  const av = { base, manifest: null, sheet: null, ready: false, _t: {} };
-  fetch(`${base}/sheet.json`)
+/** 建一個 WZ 紙娃娃。src 可為：
+ *  - 靜態目錄(載 <src>/sheet.json + <src>/sheet.png)
+ *  - dd-server 端點(含 ? 或 .json;回傳 manifest 內嵌 sheet data URL) */
+export function createWzAvatar(src) {
+  const av = { src, manifest: null, sheet: null, ready: false, _t: {} };
+  const isEndpoint = /[?]|\.json($|\?)/.test(src);
+  const manifestUrl = isEndpoint ? src : `${src}/sheet.json`;
+  fetch(manifestUrl)
     .then((r) => r.json())
     .then((m) => {
       av.manifest = m;
       const img = new Image();
       img.onload = () => { av.sheet = img; av.ready = true; };
-      img.src = `${base}/sheet.png`;
+      img.src = m.sheet || `${src}/sheet.png`; // 端點內嵌 data URL;靜態退回 png
     })
-    .catch(() => { /* 載入失敗 → ready 保持 false，呼叫端 fallback */ });
+    .catch(() => { /* 載入失敗 → ready 保持 false，呼叫端 fallback maplestory.io */ });
   return av;
 }
 
