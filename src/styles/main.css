@@ -7354,7 +7354,7 @@ body.mode-bc .wave-cta {
 #town-overlay .maple-panel::before, #town-overlay .maple-panel::after,
 #town-overlay .maple-ornament::before, #town-overlay .maple-ornament::after { display: none !important; } /* 去外木框裝飾 */
 #town-overlay #town-canvas { width: min(100%, 177.78vh); height: auto; margin: 0 auto; display: block; }
-/* 頂部:透明浮層,只留小小地圖名+離開;按鍵提示收掉 */
+/* 頂部:只留地圖名 */
 #town-overlay .action-raid-bar {
   position: absolute; top: 0; left: 0; right: 0; z-index: 6;
   background: linear-gradient(180deg, rgba(0,0,0,0.4), rgba(0,0,0,0));
@@ -7362,31 +7362,74 @@ body.mode-bc .wave-cta {
 }
 #town-overlay .action-raid-bar .overlay-kicker { display: none; }
 #town-overlay .action-raid-bar h2 { margin: 0; font-size: 0.85rem; color: #fff; text-shadow: 0 1px 3px #000; font-weight: 800; }
-#town-overlay .action-raid-bar-actions .muted { display: none; }
-#town-overlay #btn-town-exit {
-  pointer-events: auto; padding: 3px 12px; font-size: 0.8rem;
-  background: rgba(20,16,10,0.65); color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px;
+
+/*
+ * 官方 StatusBar 功能鍵 = 右下角（在 HP 列 / quickslot 旁）
+ * 上排：Equip / Inven / Stat / Skill / KeySet
+ * 下排：BtShop / BtShort / BtMenu / BtNPT + 離開
+ */
+#town-overlay .town-menu-bar {
+  position: absolute;
+  right: max(8px, calc(50% - min(100%, 177.78vh) / 2 + 8px));
+  bottom: 8px;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  pointer-events: none; /* 子元素再開 */
 }
-/* 頂部 chrome：原版 StatusBar 快捷鍵圖示（EquipKey/InvenKey…） */
-#town-overlay .town-chrome-actions {
-  display: flex; gap: 3px; align-items: center; pointer-events: auto; flex-wrap: wrap; justify-content: flex-end;
+#town-overlay .town-menu-keys,
+#town-overlay .town-menu-sys {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 2px;
+  pointer-events: auto;
 }
 #town-overlay .ms-key-btn {
-  pointer-events: auto; padding: 0; margin: 0; border: 0; background: transparent;
+  padding: 0; margin: 0; border: 0; background: transparent;
   cursor: pointer; line-height: 0; image-rendering: pixelated;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.65));
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.7));
 }
+/* EquipKey 等 28×20 → 約 2× 放大，才跟官方可點尺寸接近 */
 #town-overlay .ms-key-btn img {
-  display: block; width: auto; height: 22px; image-rendering: pixelated;
+  display: block; width: 42px; height: 30px;
+  image-rendering: pixelated; object-fit: fill;
 }
-#town-overlay .ms-key-btn.ms-key-wide img { height: 28px; }
-#town-overlay .ms-key-btn:hover { filter: drop-shadow(0 0 3px #ffe9a8) brightness(1.12); }
-#town-overlay .ms-key-btn:active { transform: translateY(1px); filter: brightness(0.92); }
+#town-overlay .ms-sys-btn {
+  padding: 0; margin: 0; border: 0; background: transparent;
+  cursor: pointer; line-height: 0; image-rendering: pixelated;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.7));
+}
+/* BtShop 等 54×34 原尺寸 ×1.15 */
+#town-overlay .ms-sys-btn img {
+  display: block; width: 62px; height: 39px;
+  image-rendering: pixelated; object-fit: fill;
+}
+#town-overlay .ms-key-btn:hover,
+#town-overlay .ms-sys-btn:hover {
+  filter: drop-shadow(0 0 3px #ffe9a8) brightness(1.1);
+}
+#town-overlay .ms-key-btn:active,
+#town-overlay .ms-sys-btn:active {
+  transform: translateY(1px); filter: brightness(0.92);
+}
 #town-overlay .town-exit-btn {
-  pointer-events: auto; padding: 3px 10px; font-size: 0.78rem; margin-left: 4px;
-  background: rgba(20,16,10,0.72); color: #fff; border: 1px solid rgba(255,233,168,0.4); border-radius: 4px;
+  padding: 6px 12px; font-size: 0.8rem; font-weight: 800; margin-left: 2px;
+  align-self: stretch;
+  background: rgba(20,16,10,0.82); color: #fff;
+  border: 1px solid rgba(255,233,168,0.45); border-radius: 4px;
+  cursor: pointer;
 }
-#town-overlay .town-exit-btn:hover { background: rgba(60,40,20,0.9); }
+#town-overlay .town-exit-btn:hover { background: rgba(60,40,20,0.95); }
+
+/* 窄螢幕：鍵略縮小，仍貼右下 */
+@media (max-width: 720px) {
+  #town-overlay .ms-key-btn img { width: 34px; height: 24px; }
+  #town-overlay .ms-sys-btn img { width: 50px; height: 32px; }
+  #town-overlay .town-menu-bar { bottom: 6px; right: 6px; }
+}
 
 /* 右下角迷你狀態（預設 hidden；主狀態用 canvas StatusBar） */
 .town-status-bar { display: none; }
