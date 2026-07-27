@@ -70,7 +70,10 @@ import { createActionRaid } from "./game/action-raid.js";
 import { createHunt, keyLabel, DEFAULT_KEYBINDS } from "./game/hunt.js";
 import { createTown } from "./game/town.js";
 import { connectTown } from "./game/town-net.js";
-import { listTownSkills, defaultHotbar, TOWN_SKILL_DEFS, FAMILY_ZH as TOWN_FAMILY_ZH, iconUrl } from "./game/town-skills.js";
+import {
+  listTownSkills, defaultHotbar, TOWN_SKILL_DEFS, FAMILY_ZH as TOWN_FAMILY_ZH,
+  iconUrl, sanitizeHotbar, hasDoubleJump,
+} from "./game/town-skills.js";
 import { WORLD, REGION_COLOR, HOME_MAP, AVAILABLE_MAPS, padMapId } from "./data/world.js";
 import { createQuestSystem } from "./game/quest.js";
 import MI_QUESTS from "./data/quests/maple-island.json";
@@ -580,15 +583,41 @@ function avatarUrl(appearance, anim = "stand1", frame = 0) {
 }
 function itemIconUrl(id) { return `${MSIO}/GMS/214/item/${id}/icon`; }
 
-// 城鎮 E/I：開「真」裝備介面（Hub 穿脫，bot 權威），不再只是紙娃娃預覽框
+// 城鎮 E/I：優先 Hub 裝備頁；失敗則開紙娃娃預覽（保證有畫面）
 async function openEquip() {
-  // 在城鎮中 → 疊 Hub 裝備頁；否則開輕量紙娃娃預覽（角色選單等）
   const inTown = document.querySelector("#town-overlay")?.classList.contains("is-open");
-  if (inTown && hubState.me) return openTownHub("equip");
+  if (inTown) {
+    try {
+      if (!hubState.me) {
+        // 補 session，避免「已登入進城鎮卻 me 空」
+        try {
+          const sess = await artaleHub.fetchSessionMe();
+          if (sess?.me) {
+            hubState.me = sess.me;
+            hubState.session = sess.session;
+          }
+        } catch { /* ignore */ }
+      }
+      if (hubState.me) {
+        await openTownHub("equip");
+        // Hub 必須蓋在 town 上面（兩者原本同 z-index 會被擋住）
+        if (els.artaleHubOverlay) els.artaleHubOverlay.style.zIndex = "120";
+        return;
+      }
+    } catch (e) {
+      console.warn("[openEquip] hub failed", e);
+      showToast(e?.message || "裝備介面開啟失敗，改開預覽");
+    }
+  }
   const c = (hubState.me?.characters || []).find((x) => x.isActive) || (hubState.me?.characters || [])[0];
   let app;
   try { app = equipToAppearance(await artaleHub.fetchEquip(), c?.class); }
   catch { app = loadAppearance(c?.charId, c?.class); }
+  // combat look 補武器
+  try {
+    const cp = _lastCp || (await artaleHub.fetchCombatProfile().catch(() => null));
+    if (cp?.look) app = applyLook(app, cp.look, cp.family);
+  } catch { /* ignore */ }
   const setSlot = (cls, id) => {
     const img = document.querySelector(`#equip-overlay .${cls} img`);
     if (!img) return;
@@ -602,7 +631,9 @@ async function openEquip() {
   setSlot("es-weapon", app.weapon);
   setSlot("es-bottom", app.overall || app.bottom);
   setSlot("es-shoes", app.shoes);
-  setOverlayOpen(document.querySelector("#equip-overlay"), true);
+  const eo = document.querySelector("#equip-overlay");
+  if (eo) eo.style.zIndex = "125";
+  setOverlayOpen(eo, true);
   sfx.play("uiClick");
 }
 
@@ -883,6 +914,7 @@ function paintHub() {
     },
     onBackTitle: () => {
       setOverlayOpen(els.artaleHubOverlay, false);
+      if (els.artaleHubOverlay) els.artaleHubOverlay.style.zIndex = "";
       if (_hubReturnTown) {
         _hubReturnTown = false;
         townSession?.resume();
@@ -4325,11 +4357,12 @@ async function openTown() {
   // 即時多人:連城鎮房(看得到別人+聊天);sheet 用自己的 WZ 紙娃娃 URL
   const townSheet = (typeof window !== "undefined" && window.__wzBase) || artaleHub.avatarSheetUrl(appearance);
   const net = connectTown({ name: profile?.name || activeChar?.name || "冒險者", sheet: townSheet, x: sp.x, y: sp.y, face: 1 });
-  // 快捷欄：localStorage 或職系預設
+  // 快捷欄：localStorage（清洗錯誤職系技能）或職系預設
   let townHotbar = null;
+  const fam0 = profile.family || cp?.family || "beginner";
   try {
     const raw = localStorage.getItem("dd-town-hotbar");
-    if (raw) townHotbar = JSON.parse(raw);
+    if (raw) townHotbar = sanitizeHotbar(JSON.parse(raw), fam0);
   } catch { /* ignore */ }
   townSession = createTown({
     canvas: document.querySelector("#town-canvas"),
@@ -4337,7 +4370,7 @@ async function openTown() {
     wzBase: townSheet,
     net,
     town, appearance, charClass: activeChar?.class, profile, acts,
-    family: profile.family || cp?.family || "beginner",
+    family: fam0,
     hotbar: townHotbar,
     onAct: (a) => {
       if (a.act?.startsWith("travel:")) { const tid = a.act.slice(7); void openWorldMap(tid); return; }
@@ -4365,6 +4398,13 @@ function openTownWindow(which) {
   if (which === "status") return openStatusWindow();
   if (which === "hotkey" || which === "help") return openHotkeyWindow();
   if (which === "shop") return openShopWindow();
+  if (which === "customize") {
+    townSession?.pause();
+    openCustomize();
+    const cz = document.querySelector("#customize-overlay");
+    if (cz) cz.style.zIndex = "125";
+    return;
+  }
   if (which === "settings") return openSettingsOverlay();
   if (which === "scroll") return openTownHub("scroll");
   if (which === "star") return openTownHub("star");
@@ -4381,21 +4421,25 @@ const TOWN_WINDOW_IDS = [
   "artale-hub-overlay",
 ];
 
+/** 技能窗：先點快捷格 1～4，再點技能裝上 */
+let _skPickSlot = 0;
 function openSkillWindow() {
   const fam = _lastCp?.family || _lastTownProfile?.family || "beginner";
   const skills = listTownSkills(fam);
-  const hotbar = townSession?.getHotbar?.() || defaultHotbar(fam);
+  const hotbar = sanitizeHotbar(townSession?.getHotbar?.() || defaultHotbar(fam), fam);
+  townSession?.setHotbar?.(hotbar);
   const body = document.querySelector("#skill-window-body");
   if (body) {
     body.innerHTML = `<p class="wzw-title">技能</p>`
       + `<div class="wzw-row"><span class="k">職業</span><span>${escapeHtml(FAMILY_ZH[fam] || TOWN_FAMILY_ZH[fam] || fam)}</span></div>`
-      + `<p class="wzw-note" style="margin:6px 0 4px">點技能 → 裝到快捷 1～4 · 空白鍵二段跳</p>`
+      + `<p class="wzw-note" style="margin:6px 0 4px">① 點快捷格 1～4 → ② 點技能裝上 · 再點可卸下</p>`
       + `<div class="sk-hotbar-preview">${[0, 1, 2, 3].map((i) => {
         const id = hotbar[i];
         const def = id && TOWN_SKILL_DEFS[id];
         const ic = def?.wzId ? `<img class="sk-ico-img" src="${iconUrl(def.wzId)}" alt="" draggable="false" />` : "";
-        return `<span class="sk-slot" data-sk-slot="${i}" title="快捷 ${i + 1}">`
-          + `<em>${i + 1}</em>${ic}<span>${def ? escapeHtml(def.name) : "—"}</span></span>`;
+        const on = _skPickSlot === i ? " is-pick" : "";
+        return `<button type="button" class="sk-slot${on}" data-sk-slot="${i}" title="快捷 ${i + 1}">`
+          + `<em>${i + 1}</em>${ic}<span>${def ? escapeHtml(def.name) : "空"}</span></button>`;
       }).join("")}</div>`
       + skills.map((s) => {
         const passive = s.passive ? " is-passive" : "";
@@ -4408,19 +4452,23 @@ function openSkillWindow() {
           + `<small>${escapeHtml(s.desc || "")}${s.note ? " · " + escapeHtml(s.note) : ""}</small></span>`
           + `<kbd>${escapeHtml(s.keyHint || "")}</kbd></button>`;
       }).join("")
-      + `<p class="wzw-note">1 速度激發 · 2 瞬間移動/衝鋒 · 空白 跳/二段跳</p>`;
-    let assignIdx = 0;
+      + `<p class="wzw-note">空白＝跳${hasDoubleJump(fam) ? "／二段跳" : ""} · 只顯示本職技能</p>`;
+    body.querySelectorAll("[data-sk-slot]").forEach((btn) => {
+      btn.addEventListener("click", () => withAudio(() => {
+        _skPickSlot = Number(btn.getAttribute("data-sk-slot")) || 0;
+        openSkillWindow();
+      }));
+    });
     body.querySelectorAll("[data-sk-id]").forEach((btn) => {
       btn.addEventListener("click", () => withAudio(() => {
         const id = btn.getAttribute("data-sk-id");
-        if (!id || !TOWN_SKILL_DEFS[id]) return;
-        const hb = townSession?.getHotbar?.() || defaultHotbar(fam);
+        if (!id || !TOWN_SKILL_DEFS[id] || TOWN_SKILL_DEFS[id].passive) return;
+        const hb = sanitizeHotbar(townSession?.getHotbar?.() || defaultHotbar(fam), fam).slice();
+        while (hb.length < 4) hb.push(null);
         const exist = hb.indexOf(id);
-        if (exist >= 0) hb[exist] = null;
-        else {
-          hb[assignIdx % 4] = id;
-          assignIdx = (assignIdx + 1) % 4;
-        }
+        if (exist === _skPickSlot) hb[_skPickSlot] = null;
+        else if (exist >= 0) { hb[exist] = null; hb[_skPickSlot] = id; }
+        else hb[_skPickSlot] = id;
         townSession?.setHotbar?.(hb);
         try { localStorage.setItem("dd-town-hotbar", JSON.stringify(hb)); } catch { /* ignore */ }
         openSkillWindow();
@@ -4444,12 +4492,12 @@ function openMapWindow() {
   setOverlayOpen(document.querySelector("#map-window-overlay"), true);
   sfx.play("uiClick");
 }
-/** 能力值窗(S)：官方 Stat 框 + 真實 combat profile 數值 */
+/** 能力值窗(S)：乾淨木框 + 完整欄位（不用會跑版的 stat.png 烤死標籤） */
 function openStatusWindow() {
   const p = _lastTownProfile || {};
   const cp = _lastCp || {};
-  const fam = cp.family || "beginner";
-  const st = cp.stats || {};
+  const fam = cp.family || p.family || "beginner";
+  const st = cp.stats || p.stats || {};
   const name = p.name || cp.name || "冒險者";
   const lv = p.level || cp.level || 1;
   const maxHp = p.maxHp || cp.maxHp || 100;
@@ -4457,28 +4505,29 @@ function openStatusWindow() {
   const atk = p.atk || cp.atk || 45;
   const basicMin = p.basicMin ?? cp.basicMin ?? atk;
   const basicMax = p.basicMax ?? cp.basicMax ?? atk;
-  const weapon = cp.weaponName || "—";
-  const job = FAMILY_ZH[fam] || fam;
-  // 能力值欄：對齊官方 Stat 窗大致列位（百分比定位，放大後仍可讀）
+  const weapon = cp.weaponName || p.weaponName || "—";
+  const job = FAMILY_ZH[fam] || TOWN_FAMILY_ZH[fam] || fam;
   const rows = [
-    { cls: "sf-name", label: "名稱", val: name },
-    { cls: "sf-job", label: "職業", val: job },
-    { cls: "sf-lv", label: "等級", val: String(lv) },
-    { cls: "sf-hp", label: "HP", val: `${maxHp} / ${maxHp}` },
-    { cls: "sf-mp", label: "MP", val: `${maxMp} / ${maxMp}` },
-    { cls: "sf-str", label: "力量", val: String(st.str ?? "—") },
-    { cls: "sf-dex", label: "敏捷", val: String(st.dex ?? "—") },
-    { cls: "sf-int", label: "智力", val: String(st.int ?? "—") },
-    { cls: "sf-luk", label: "幸運", val: String(st.luk ?? "—") },
-    { cls: "sf-atk", label: "攻擊", val: `${basicMin} ~ ${basicMax}` },
-    { cls: "sf-wep", label: "武器", val: weapon },
+    ["名稱", name],
+    ["職業", job],
+    ["等級", `Lv. ${lv}`],
+    ["HP", `${maxHp} / ${maxHp}`],
+    ["MP", `${maxMp} / ${maxMp}`],
+    ["力量 STR", String(st.str ?? 0)],
+    ["敏捷 DEX", String(st.dex ?? 0)],
+    ["智力 INT", String(st.int ?? 0)],
+    ["幸運 LUK", String(st.luk ?? 0)],
+    ["攻擊力", `${basicMin} ~ ${basicMax}`],
+    ["武器", weapon],
   ];
   const body = document.querySelector("#status-window-body");
   if (body) {
-    body.innerHTML = rows.map((r) =>
-      `<div class="stat-row ${r.cls}"><span class="stat-k">${escapeHtml(r.label)}</span>`
-      + `<span class="stat-v">${escapeHtml(r.val)}</span></div>`
-    ).join("");
+    body.innerHTML = `<p class="wzw-title">角色資料</p>`
+      + rows.map(([k, v]) =>
+        `<div class="stat-line"><span class="stat-k">${escapeHtml(k)}</span>`
+        + `<span class="stat-v">${escapeHtml(v)}</span></div>`
+      ).join("")
+      + `<p class="wzw-note">數值來自 Discord 角色戰力快照</p>`;
   }
   setOverlayOpen(document.querySelector("#status-window-overlay"), true);
   sfx.play("uiClick");
@@ -4490,10 +4539,10 @@ function openHotkeyWindow() {
     ["空白鍵", "跳躍"],
     ["↑ / 點擊", "與 NPC / 傳送門互動"],
     ["Enter", "聚焦聊天輸入"],
-    ["空白鍵", "跳 / 空中再按＝二段跳"],
-    ["1", "速度激發"],
-    ["2", "瞬移（法）/ 突刺（其他）"],
-    ["3 / 4", "自訂快捷（技能窗設定）"],
+    ["空白鍵", "跳（盜賊/弓可二段跳）"],
+    ["1", "疾風之步／速度激發（依職業）"],
+    ["2", "法師瞬移 · 劍士劍氣 · 海盜衝鋒"],
+    ["3 / 4", "K 技能窗：先點格再點技能"],
     ["E / I", "裝備 · 道具"],
     ["K", "技能（可裝快捷）"],
     ["B", "衝卷"],
@@ -4621,7 +4670,11 @@ async function loadAppearanceForActive() {
   // 真實裝備 → 紙娃娃外觀:武器依實際裝備類別精準對應;有裝防具槽給職業近似外觀
   const FAMILY_WEAPON = { warrior: 1302000, mage: 1382000, archer: 1452000, thief: 1332000, pirate: 1482000 };
   if (cp?.look) appearance = applyLook(appearance, cp.look, cp.family);
+  // 武器：look → 職業預設 → 確保有武器可顯示
   if (cp?.family && FAMILY_WEAPON[cp.family] && !appearance.weapon) appearance.weapon = FAMILY_WEAPON[cp.family];
+  if (!appearance.weapon && FAMILY_WEAPON[cp?.family || "warrior"]) {
+    appearance.weapon = FAMILY_WEAPON[cp?.family || "warrior"];
+  }
   return { activeChar, appearance, cp };
 }
 /** 依真實 combat profile 組 town profile(HP/MP/攻擊皆真值) */
@@ -4638,6 +4691,7 @@ function buildTownProfile(activeChar, cp) {
     stats: cp?.stats || null,
     weaponName: cp?.weaponName || null,
     family: cp?.family || null,
+    look: cp?.look || null,
   };
 }
 
@@ -4793,11 +4847,18 @@ window.addEventListener("keydown", (e) => {
 document.querySelectorAll("[data-town-act]").forEach((btn) => {
   btn.addEventListener("click", () => withAudio(() => {
     const act = btn.getAttribute("data-town-act");
-    if (act === "equip" || act === "item") return openTownWindow(act);
+    if (act === "equip" || act === "item") return openEquip();
     if (act === "skill") return openSkillWindow();
     if (act === "status") return openStatusWindow();
     if (act === "hotkey") return openHotkeyWindow();
     if (act === "shop") return openShopWindow();
+    if (act === "customize") {
+      townSession?.pause();
+      openCustomize();
+      const cz = document.querySelector("#customize-overlay");
+      if (cz) cz.style.zIndex = "125";
+      return;
+    }
     if (act === "settings") return openSettingsOverlay();
     if (act === "scroll") return openTownHub("scroll");
     if (act === "star") return openTownHub("star");

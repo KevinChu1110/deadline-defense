@@ -18,7 +18,13 @@ export function connectTown({ name, sheet, x, y, face } = {}) {
         net.connected = true;
         net.self = room.sessionId;
         room.onMessage("town", (snap) => {
-          net.players = (snap.players || []).filter((p) => p.id !== room.sessionId);
+          // 排除自己（避免畫出第二個自己）
+          const selfId = room.sessionId || net.self;
+          net.players = (snap.players || []).filter((p) => {
+            if (!p) return false;
+            if (selfId && (p.id === selfId || p.sessionId === selfId)) return false;
+            return true;
+          });
         });
         room.onLeave(() => { net.connected = false; net.players = []; });
         room.onError?.((code, msg) => console.warn("[town-net] room error", code, msg));

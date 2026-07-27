@@ -8,7 +8,9 @@ import { createWzAvatar, drawWzAvatar } from "./avatar-wz.js";
 import { drawHud as drawOfficialHud } from "./hud.js";
 import { createMapCombat } from "./map-combat.js";
 import { sfx } from "../audio/sfx.js";
-import { TOWN_SKILL_DEFS, defaultHotbar, getSkillIconImg } from "./town-skills.js";
+import {
+  TOWN_SKILL_DEFS, defaultHotbar, getSkillIconImg, hasDoubleJump, sanitizeHotbar,
+} from "./town-skills.js";
 import { spawnSkillFx, updateSkillFx, drawSkillFx, preloadSkillFx } from "./skill-fx.js";
 
 const W = 960, H = 540;
@@ -97,24 +99,25 @@ export function createTown(opts) {
   // 可 warp 的真實地圖門(pt=2 且有目標圖)
   const warpPortals = (town.portals || []).filter((p) => p.t === 2 && p.tm && p.tm !== 999999999);
   const family = profile?.family || opts.family || "beginner";
+  const canDoubleJump = hasDoubleJump(family);
   const player = {
     x: sp.x, y: sp.y, vx: 0, vy: 0, w: 34, h: 54, face: 1, onGround: false, anim: "idle", animT: 0,
     attackT: 0, invuln: 0,
-    // 社交技能狀態
-    jumpsLeft: 2, jumpsMax: 2,
+    jumpsLeft: canDoubleJump ? 2 : 1,
+    jumpsMax: canDoubleJump ? 2 : 1,
     hasteUntil: 0,
-    skillCd: { haste: 0, teleport: 0, flash: 0 },
+    skillCd: { haste: 0, haste_thief: 0, teleport: 0, flash: 0, slash: 0 },
   };
-  // 快捷欄 1～4（可被技能窗改；預設 速度激發 / 職業位移）
-  let hotbar = Array.isArray(opts.hotbar) ? opts.hotbar.slice(0, 4) : defaultHotbar(family);
-  while (hotbar.length < 4) hotbar.push(null);
-  // WZ 技能特效（skill-fx.js；座標先存世界，畫時轉螢幕）
+  // 快捷欄：清洗舊的錯誤技能 id（例如劍士不該有海盜衝鋒）
+  let hotbar = sanitizeHotbar(opts.hotbar, family);
   const skillFx = [];
-  // 預載本職會用到的特效
   preloadSkillFx([
     TOWN_SKILL_DEFS.haste.wzId,
+    TOWN_SKILL_DEFS.haste_thief.wzId,
     TOWN_SKILL_DEFS.teleport.wzId,
     TOWN_SKILL_DEFS.flash.wzId,
+    TOWN_SKILL_DEFS.slash.wzId,
+    "j0_2",
   ]);
   // camera 世界中心
   let camCX = player.x, camCY = player.y - 80;
@@ -182,28 +185,40 @@ export function createTown(opts) {
     if ((player.skillCd[id] || 0) > 0) return;
     const now = performance.now() / 1000;
 
-    if (id === "haste") {
+    if (id === "haste" || id === "haste_thief") {
       player.hasteUntil = now + HASTE_DUR;
-      player.skillCd.haste = def.cd;
+      player.skillCd[id] = def.cd;
       playWzFx(def.wzId, 0, -40);
       try { sfx.play("uiOk"); } catch { /* ignore */ }
       return;
     }
-    if (id === "teleport" || id === "flash") {
+    if (id === "teleport" || id === "flash" || id === "slash") {
       const dist = def.dist || 100;
-      playWzFx(def.wzId, 0, -30); // 起點
+      playWzFx(def.wzId, 0, -30);
       const nx = clampX(player.x + player.face * dist);
       player.x = nx;
-      // 瞬移後若下方有 foothold 就貼地，避免卡空
       const g = footAt(player.x, player.y - 4);
-      if (g !== null && Math.abs(g - player.y) < 80) { player.y = g; player.vy = 0; player.onGround = true; player.jumpsLeft = player.jumpsMax; }
-      else { player.onGround = false; if (id === "flash") player.vy = Math.min(player.vy, -80); }
-      if (id === "flash") { player.attackT = 0.28; player.anim = "swingO1"; player.animT = 0.28; }
-      else { player.invuln = 0.2; }
+      if (g !== null && Math.abs(g - player.y) < 80) {
+        player.y = g; player.vy = 0; player.onGround = true; player.jumpsLeft = player.jumpsMax;
+      } else {
+        player.onGround = false;
+        if (id === "flash" || id === "slash") player.vy = Math.min(player.vy, -80);
+      }
+      if (id === "flash" || id === "slash") {
+        player.attackT = 0.28; player.anim = "swingO1"; player.animT = 0.28;
+      } else {
+        player.invuln = 0.2;
+      }
       player.skillCd[id] = def.cd;
-      playWzFx(def.wzId, 0, -30); // 終點
+      playWzFx(def.wzId, 0, -30);
       try { sfx.play(id === "teleport" ? "uiSelect" : "mapleJump"); } catch { /* ignore */ }
-      if (net) net.sendMove({ x: player.x, y: player.y, face: player.face, anim: id === "flash" ? "swingO1" : "jump", skill: id });
+      if (net) {
+        net.sendMove({
+          x: player.x, y: player.y, face: player.face,
+          anim: (id === "flash" || id === "slash") ? "swingO1" : "jump",
+          skill: id,
+        });
+      }
     }
   }
 
@@ -471,10 +486,10 @@ export function createTown(opts) {
         : (avatar && drawAvatar(ctx, avatar, psx, psy + 4, dollOpts));
       ctx.globalAlpha = 1;
       if (!drawn) { ctx.fillStyle = "#f87171"; ctx.fillRect(psx - 10, psy - 44, 20, 44); }
-      // 速度激發：頭上官方技能 icon（非 emoji）
       const nowSec = performance.now() / 1000;
       if (nowSec < player.hasteUntil) {
-        const ico = getSkillIconImg(TOWN_SKILL_DEFS.haste.wzId);
+        const hasteWz = family === "thief" ? TOWN_SKILL_DEFS.haste_thief.wzId : TOWN_SKILL_DEFS.haste.wzId;
+        const ico = getSkillIconImg(hasteWz);
         if (ico?.complete && ico.naturalWidth) {
           const s = 22;
           ctx.save();

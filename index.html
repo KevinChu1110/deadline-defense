@@ -455,13 +455,11 @@
             </div>
           </div>
 
-          <!-- 能力值(S)：UI.wz UIWindow/Stat 官方框 175×337 -->
+          <!-- 能力值(S)：UtilDlgEx 木框（避免 stat.png 烤死標籤跑版） -->
           <div id="status-window-overlay" class="overlay dialog-overlay" hidden>
-            <div class="stat-window" role="dialog" aria-modal="true" aria-label="能力值">
-              <button type="button" class="stat-close" data-close="status-window-overlay" aria-label="關閉">✕</button>
-              <div class="stat-fields" id="status-window-body">
-                <!-- 由 openStatusWindow 填入定位欄位 -->
-              </div>
+            <div class="wz-window wzw-status" role="dialog" aria-modal="true" aria-label="角色資料">
+              <button type="button" class="wz-window-close" data-close="status-window-overlay" aria-label="關閉">✕</button>
+              <div class="wz-window-body" id="status-window-body"></div>
             </div>
           </div>
 
@@ -566,20 +564,18 @@
                   </button>
                 </div>
                 <div class="town-menu-sys">
-                  <button type="button" class="ms-sys-btn" id="btn-town-shop" title="商店 (P)" data-town-act="shop">
+                  <!-- 購物商場 → 造型工房（換玩家外觀） -->
+                  <button type="button" class="ms-sys-btn" id="btn-town-shop" title="購物商場 · 造型 (P)" data-town-act="customize">
                     <img src="/ui/hud/bt/BtShop_normal_0.png" alt="購物商場" draggable="false" />
                   </button>
-                  <button type="button" class="ms-sys-btn" id="btn-town-scroll" title="衝卷 (B)" data-town-act="scroll">
-                    <img src="/ui/hud/bt/BtShort_normal_0.png" alt="衝卷" draggable="false" />
+                  <button type="button" class="ms-sys-btn" id="btn-town-hotkey2" title="熱鍵選項" data-town-act="hotkey">
+                    <img src="/ui/hud/bt/BtShort_normal_0.png" alt="熱鍵選項" draggable="false" />
                   </button>
-                  <button type="button" class="ms-sys-btn" id="btn-town-star" title="星力 (R)" data-town-act="star">
+                  <button type="button" class="ms-sys-btn" id="btn-town-star" title="目錄 · 星力 (R)" data-town-act="star">
                     <img src="/ui/hud/bt/BtMenu_normal_0.png" alt="目錄" draggable="false" />
                   </button>
-                  <button type="button" class="ms-sys-btn" id="btn-town-gacha" title="轉蛋 (G)" data-town-act="gacha">
-                    <img src="/ui/hud/bt/BtNPT_normal_0.png" alt="拍賣/轉蛋" draggable="false" />
-                  </button>
-                  <button type="button" class="ms-sys-btn" id="btn-town-settings" title="設定 (O)" data-town-act="settings">
-                    <img src="/ui/hud/bt/BtMenu_normal_0.png" alt="設定" draggable="false" />
+                  <button type="button" class="ms-sys-btn" id="btn-town-gacha" title="拍賣 · 轉蛋 (G)" data-town-act="gacha">
+                    <img src="/ui/hud/bt/BtNPT_normal_0.png" alt="拍賣" draggable="false" />
                   </button>
                   <button type="button" class="btn town-exit-btn" id="btn-town-exit">離開</button>
                 </div>
