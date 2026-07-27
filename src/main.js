@@ -317,7 +317,7 @@ let actionRaidSession = null;
 let townSession = null, _townData = null, _townReturn = false;
 let lastRaidBossId = "zakum";
 
-/** Artale 主城狀態 */
+/** 主城 Hub 狀態 */
 let hubState = {
   tab: "home",
   me: null,
@@ -965,7 +965,7 @@ async function openArtaleHub() {
     hubState.oauthOk = false;
     const msg = e?.message || String(e);
     hubState.error = artaleHub.isRemoteApi()
-      ? `連不上 API（ngrok）。請確認 sit-kevin 上 artale-web-api / ngrok 有在跑。${msg ? " · " + msg : ""}`
+      ? `連不上 API（ngrok）。請確認伺服器 API / ngrok 有在跑。${msg ? " · " + msg : ""}`
       : "API 未啟動。本機請執行：npm run dev:api";
   }
   // 登入且有角色 → 先進楓之谷風角色選擇（一次 session 一次）

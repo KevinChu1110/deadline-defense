@@ -943,7 +943,7 @@ body.is-dragging-job .specialist-card {
 .maple-book-mode .title-float-leaves {
   display: none;
 }
-/* Artale 招牌 + 選單：木牌吊牌伺服器選擇風，落在書本右頁(像官方 signboard) */
+/* 登入招牌 + 選單：木牌吊牌伺服器選擇風，落在書本右頁(像官方 signboard) */
 /* 相對書本(共用 50% 中心)絕對定位，寬螢幕才不會跑出書外 */
 .maple-book-mode .title-menu:not([hidden]) { display: flex; }
 .maple-book-mode .title-menu {
@@ -1069,18 +1069,19 @@ body.is-dragging-job .specialist-card {
   align-items: center;
   gap: 8px;
 }
+.tl-logo-img {
+  display: block;
+  height: clamp(48px, 12vh, 88px);
+  width: auto;
+  image-rendering: auto;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.35));
+  margin: 0 auto 6px;
+}
 .tl-artale {
-  font-family: "Brush Script MT", "Snell Roundhand", "Georgia", cursive;
-  font-size: clamp(2.4rem, 8vh, 4.6rem);
-  font-weight: 800;
-  color: #2a2118;
-  text-shadow: 0 2px 3px rgba(255, 255, 255, 0.7), 0 4px 8px rgba(0, 0, 0, 0.2);
+  /* 舊 class 保留避免殘留樣式；已改用 .tl-logo-img */
+  display: none;
 }
-.tl-leaf {
-  font-size: clamp(2.6rem, 9vh, 5rem);
-  filter: hue-rotate(-15deg) saturate(1.6) drop-shadow(0 3px 4px rgba(0, 0, 0, 0.3));
-  transform: rotate(12deg);
-}
+.tl-leaf { display: none; }
 .tl-signboard {
   display: flex;
   flex-direction: column;
@@ -5495,7 +5496,7 @@ body.mode-bc .wave-cta {
   text-align: left;
 }
 
-/* ===== Artale Hub ===== */
+/* ===== 主城 Hub ===== */
 .hub-overlay {
   position: fixed !important;
   z-index: 85 !important;

@@ -1,5 +1,5 @@
 /**
- * Artale Web API
+ * 楓之谷防衛戰 Web API
  *
  *   npm run dev:api
  *   環境變數見 server/env.example

@@ -5,7 +5,7 @@
 import OFFICIAL from "./official-items.json";
 import { defaultAppearance } from "./avatar-items.js";
 
-// Artale equipType/slot → avatar 部位
+// 裝備槽位 equipType/slot → avatar 部位
 const SLOT_MAP = {
   weapon: "weapon", bullet: null,
   helmet: "hat", hat: "hat", cap: "hat",

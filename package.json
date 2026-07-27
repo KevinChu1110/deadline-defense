@@ -2,7 +2,7 @@
   "name": "deadline-defense",
   "version": "0.1.0",
   "private": true,
-  "description": "Artale Web — Maple 養成/突襲 + 神木防衛戰",
+  "description": "楓之谷防衛戰 — Maple 養成/突襲 + 神木防衛戰",
   "type": "module",
   "scripts": {
     "dev": "vite",

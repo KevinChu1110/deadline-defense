@@ -1,5 +1,5 @@
 /**
- * Artale 主城 Hub — Discord OAuth 登入 + 角色／裝備／星力／潛能
+ * 主城 Hub — Discord OAuth 登入 + 角色／裝備／星力／潛能
  */
 import { getWorldChapters } from "./data/world-stages.js";
 
@@ -447,7 +447,7 @@ export function renderHubShell(els, state) {
 
     root.innerHTML = `
       <div class="hub-login maple-panel maple-ornament">
-        <p class="overlay-kicker">ARTALE · 主城</p>
+        <p class="overlay-kicker">楓之谷防衛戰 · 主城</p>
         <h2>歡迎回來，冒險家</h2>
         <p class="muted hub-lead">
           使用 Discord 登入，同步你的角色、裝備與進度。<br/>
