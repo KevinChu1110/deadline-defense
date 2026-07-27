@@ -56,9 +56,9 @@ BOT_ROOT=/home/kevin.chu/artale-bot
 PLAYER_DATA_PATH=/home/kevin.chu/artale-bot/player-data.json
 STATIC_DIR=/home/kevin.chu/artale-web/dist
 WZ_DIR=/home/kevin.chu/artale-web/wz
-# 對外走 ngrok（VPN 擋 DuckDNS）；與 artale-games 共用固定網域
-WEB_ORIGIN=https://primary-marmoset-publicly.ngrok-free.app/defense
-DISCORD_REDIRECT_URI=https://primary-marmoset-publicly.ngrok-free.app/defense/api/auth/discord/callback
+# 前端 netlify;API 走 netlify Edge Function 同源反代(/defense-api)→ngrok(繞攔截頁+第一方cookie)
+WEB_ORIGIN=https://maplestory-defense.netlify.app
+DISCORD_REDIRECT_URI=https://maplestory-defense.netlify.app/defense-api/api/auth/discord/callback
 # ⚠️ 不要在正式環境開 ALLOW_DEV_LOGIN：開了等於任何人都能用任意 discordId 登入成該玩家
 COOKIE_SECURE=1
 # CORS 白名單（前端實際所在的 origin）。原本靠「結尾是 .netlify.app 就放行」，
@@ -79,11 +79,11 @@ else
     sed -i 's|^ALLOW_DEV_LOGIN=1|ALLOW_DEV_LOGIN=0|' "\$DIR/server/.env"
     echo "  已關閉線上 dev-login 後門"
   fi
-  # 強制改為 ngrok 對外網址（DuckDNS 在 VPN 外會被擋）
-  if grep -q 'maplestory-word.duckdns.org' "\$DIR/server/.env" 2>/dev/null; then
-    sed -i 's|https://maplestory-word.duckdns.org/defense|https://primary-marmoset-publicly.ngrok-free.app/defense|g' "\$DIR/server/.env"
-    echo "  已將 WEB_ORIGIN/Redirect 改為 ngrok"
-  fi
+  # 強制:OAuth 走 netlify 同源代理(繞 ngrok 攔截頁)。WEB_ORIGIN=netlify、
+  # DISCORD_REDIRECT_URI=netlify /defense-api 回呼。舊的 ngrok/duckdns 直連值一律改掉。
+  sed -i 's|^WEB_ORIGIN=.*|WEB_ORIGIN=https://maplestory-defense.netlify.app|' "\$DIR/server/.env"
+  sed -i 's|^DISCORD_REDIRECT_URI=.*|DISCORD_REDIRECT_URI=https://maplestory-defense.netlify.app/defense-api/api/auth/discord/callback|' "\$DIR/server/.env"
+  echo "  已將 WEB_ORIGIN/Redirect 設為 netlify 同源代理"
   echo "  保留既有 server/.env"
 fi
 

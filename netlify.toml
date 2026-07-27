@@ -5,12 +5,18 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  # 跨站 API：ngrok 只暴露 API（經 artale-games /defense 反代到 :8787）
-  VITE_API_BASE = "https://primary-marmoset-publicly.ngrok-free.app/defense"
+  # API 同源:走 Netlify Edge Function(/defense-api/*)反代到 ngrok 並補 skip header,
+  # 繞過 ngrok 攔截頁 + session cookie 變第一方(手機也能登入)。見 netlify/edge-functions/api-proxy.js
+  VITE_API_BASE = "/defense-api"
   # 前端 root，不要 /defense base
   VITE_BASE = "/"
 
-# SPA fallback
+# Edge Function 反代 /defense-api/* → ngrok(補 skip header);先於 SPA fallback
+[[edge_functions]]
+  path = "/defense-api/*"
+  function = "api-proxy"
+
+# SPA fallback(不含 /defense-api,已被 edge function 攔)
 [[redirects]]
   from = "/*"
   to = "/index.html"
