@@ -22,7 +22,7 @@ export default async (request) => {
   headers.delete("host"); // 讓 fetch 用後端 host
 
   const init = { method: request.method, headers, redirect: "manual" };
-  if (!["GET", "HEAD"].includes(request.method)) init.body = request.body;
+  if (!["GET", "HEAD"].includes(request.method)) { init.body = request.body; init.duplex = "half"; }
 
   const resp = await fetch(target, init);
 
