@@ -35,5 +35,4 @@ export default async (request) => {
   }
   return new Response(resp.body, { status: resp.status, statusText: resp.statusText, headers: outHeaders });
 };
-
-export const config = { path: "/defense-api/*" };
+// 路由宣告在 netlify.toml [[edge_functions]] path="/defense-api/*"(勿在此重複宣告 config)
